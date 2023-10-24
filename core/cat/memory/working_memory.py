@@ -38,6 +38,9 @@ class WorkingMemory(dict):
     def history(self) -> list:
         return self["history"]
 
+    def remove_last_turn(self):
+        self["history"] = self["history"][:-2]
+
     def get_user_id(self):
         """Get current user id."""
         
