@@ -8,6 +8,8 @@ from cat.mad_hatter.registry import registry_search_plugins, registry_download_p
 from urllib.parse import urlparse
 import requests
 
+import debugpy
+
 from pydantic import ValidationError
 
 router = APIRouter()
@@ -216,6 +218,10 @@ async def get_plugins_settings(request: Request) -> Dict:
 
     # access cat instance
     ccat = request.app.state.ccat
+    print("-------------------------------------------------------------------------------------------------------")
+    print("-------------------------------------------------------------------------------------------------------")
+    print("-------------------------------------------------------------------------------------------------------")
+    print("-------------------------------------------------------------------------------------------------------")
 
     settings = []
 
@@ -243,7 +249,15 @@ async def get_plugins_settings(request: Request) -> Dict:
 async def get_plugin_settings(request: Request, plugin_id: str) -> Dict:
     """Returns the settings of a specific plugin"""
 
+
+    print("-------------------------------------------------------------------------------------------------------")
+    print("-----------SETTINGS-----------------------------------------------------------------------")
+    print("-------------------------------------------------------------------------------------------------------")
+    print("-------------------------------------------------------------------------------------------------------")
+    # breakpoint()
     # access cat instance
+
+    debugpy.breakpoint()
     ccat = request.app.state.ccat
 
     if not ccat.mad_hatter.plugin_exists(plugin_id):

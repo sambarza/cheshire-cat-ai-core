@@ -69,7 +69,9 @@ class AgentManager:
             verbose=True
         )
 
+        print("<<<<<<<<<< ----------------- Executing tool agent chain -------------------------->>>>>>>><<")
         out = agent_executor(agent_input)
+        print("<<<<<<<<<< ----------------- Tool agent chain finished -------------------------->>>>>>>><<")
         return out
     
 
@@ -82,13 +84,17 @@ class AgentManager:
             input_variables=input_variables
         )
 
+        working_memory.last_used_prompt = memory_prompt.format(**agent_input)
+
         memory_chain = LLMChain(
             prompt=memory_prompt,
             llm=self.cat._llm,
             verbose=True
         )
 
+        print("<<<<<<<<<< ----------------- Executing Memory Chain -------------------------->>>>>>>><<")
         out = memory_chain(agent_input, callbacks=[NewTokenHandler(self.cat, working_memory)])
+        print("<<<<<<<<<< ----------------- Memory Chain finished -------------------------->>>>>>>><<")
         out["output"] = out["text"]
         del out["text"]
         return out
@@ -151,13 +157,13 @@ class AgentManager:
 
                     # execute_tool_agent returns immediately when a tool with return_direct is called, 
                     # so if one is used it is definitely the last one used
-                    if used_tools[-1][0][0] in return_direct_tools:
+                    if len(used_tools) > 0 and used_tools[-1][0][0] in return_direct_tools:
                         # intermediate_steps still contains the information of all the tools used even if their output is not returned
                         tools_result["intermediate_steps"] = used_tools
                         return tools_result
 
                     #Adding the tools_output key in agent input, needed by the memory chain
-                    agent_input["tools_output"] = "## Tools output: \n" + tools_result["output"] if tools_result["output"] else ""
+                    # agent_input["tools_output"] = "## Tools output: \n" + tools_result["output"] if tools_result["output"] else ""
 
                     # Execute the memory chain
                     out = self.execute_memory_chain(agent_input, prompt_prefix, prompt_suffix, working_memory)
@@ -264,6 +270,8 @@ class AgentManager:
         memories_separator = "\n  - "
         memory_content = "## Context of things the Human said in the past: " + \
             memories_separator + memories_separator.join(memory_texts)
+
+        memory_texts = ""
 
         # if no data is retrieved from memory don't erite anithing in the prompt
         if len(memory_texts) == 0:

@@ -31,3 +31,4 @@ core/cat/plugins/*
 # tests plugin folder
 plugin_folder
 
+/core/debug.log/**

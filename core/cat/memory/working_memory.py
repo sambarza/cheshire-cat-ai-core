@@ -22,6 +22,22 @@ class WorkingMemory(dict):
         self.ws_messages = asyncio.Queue()
         super().__init__(history=[])
 
+    @property
+    def episodic_memory(self) -> list:
+        return self["episodic_memories"]
+
+    @property
+    def declarative_memory(self) -> list:
+        return self["declarative_memories"]
+    
+    @property
+    def procedural_memory(self) -> list:
+        return self["procedural_memories"]
+
+    @property
+    def history(self) -> list:
+        return self["history"]
+
     def get_user_id(self):
         """Get current user id."""
         
@@ -44,7 +60,7 @@ class WorkingMemory(dict):
         self["history"].append({"who": who, "message": message})
 
         # do not allow more than k messages in convo history (+2 which are the current turn)
-        k = 3
+        k = 100
         self["history"] = self["history"][(-k - 1):]
 
 
@@ -67,6 +83,6 @@ class WorkingMemoryList(dict):
     def __init__(self):
         super().__init__(user=WorkingMemory())
 
-    def get_working_memory(self, user_id='user'):
+    def get_working_memory(self, user_id='user') -> WorkingMemory:
         self[user_id] = self.get(user_id, WorkingMemory())
         return self[user_id]

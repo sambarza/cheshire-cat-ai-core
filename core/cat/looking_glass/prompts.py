@@ -36,10 +36,14 @@ You can only reply using these tools:
 none_of_the_others: none_of_the_others(None) - Use this tool if none of the others tools help. Input is always None.
 
 If you want to use tools, use the following format:
+Question: the input question you must answer
+Thought: you should always think about what to do
 Action: the name of the action to take, should be one of [{tool_names}]
 Action Input: the input to the action
 Observation: the result of the action
 ...
+Question: the input question you must answer
+Thought: you should always think about what to do
 Action: the name of the action to take, should be one of [{tool_names}]
 Action Input: the input to the action
 Observation: the result of the action
