@@ -41,6 +41,9 @@ class WorkingMemory(dict):
     def remove_last_turn(self):
         self["history"] = self["history"][:-2]
 
+    def keep_up_to_turn(self, turn_number):
+        self["history"] = self["history"][:turn_number]
+
     def get_user_id(self):
         """Get current user id."""
         
