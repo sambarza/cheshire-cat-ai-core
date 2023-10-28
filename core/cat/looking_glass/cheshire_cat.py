@@ -480,16 +480,19 @@ class CheshireCat():
 
         # update conversation history
         user_message = user_working_memory["user_message_json"]["text"]
-        user_working_memory.update_conversation_history(who="Human", message=user_message)
-        user_working_memory.update_conversation_history(who="AI", message=cat_message["output"])
 
-        # store user message in episodic memory
-        # TODO: vectorize and store also conversation chunks
-        #   (not raw dialog, but summarization)
-        _ = self.memory.vectors.episodic.add_texts(
-            [user_message],
-            [{"source": user_id, "when": time.time()}],
-        )
+        # don't remember the message if it is a dot command
+        if not user_message[0] == ".":
+            user_working_memory.update_conversation_history(who="Human", message=user_message)
+            user_working_memory.update_conversation_history(who="AI", message=cat_message["output"])
+
+            # store user message in episodic memory
+            # TODO: vectorize and store also conversation chunks
+            #   (not raw dialog, but summarization)
+            _ = self.memory.vectors.episodic.add_texts(
+                [user_message],
+                [{"source": user_id, "when": time.time()}],
+            )
 
         # build data structure for output (response and why with memories)
         episodic_report = [dict(d[0]) | {"score": float(d[1]), "id": d[3]} for d in user_working_memory["episodic_memories"]]
