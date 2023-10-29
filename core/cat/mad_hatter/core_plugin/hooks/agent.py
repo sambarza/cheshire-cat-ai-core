@@ -97,5 +97,7 @@ def agent_allowed_tools(allowed_tools: List[str], cat) -> List[str]:
 
     return allowed_tools
 
+@hook(priority=0)
+def agent_after_execution_memory_chain(out, cat) -> Dict:
 
-
+    return out

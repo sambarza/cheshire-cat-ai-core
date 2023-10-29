@@ -185,6 +185,8 @@ class AgentManager:
         # Execute the memory chain
         out = self.execute_memory_chain(agent_input, prompt_prefix, prompt_suffix, working_memory)
 
+        out = mad_hatter.execute_hook("agent_after_execution_memory_chain", out)
+
         return out
     
     def format_agent_input(self, working_memory):
