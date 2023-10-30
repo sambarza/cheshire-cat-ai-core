@@ -316,11 +316,11 @@ class CheshireCat():
         for config, memory_type in zip(recall_configs, memory_types):
             memory_key = f"{memory_type}_memories"
 
-            # recall relevant memories for collection
-            vector_memory = getattr(self.memory.vectors, memory_type)
-            memories = vector_memory.recall_memories_from_embedding(**config)
+            # # recall relevant memories for collection
+            # vector_memory = getattr(self.memory.vectors, memory_type)
+            # memories = vector_memory.recall_memories_from_embedding(**config)
 
-            working_memory[memory_key] = memories
+            working_memory[memory_key] = []
 
         # hook to modify/enrich retrieved memories
         self.mad_hatter.execute_hook("after_cat_recalls_memories")
