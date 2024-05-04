@@ -1,7 +1,12 @@
 import os
 import fnmatch
 
-from fastapi import Request
+from typing import Annotated
+
+from fastapi import (
+    WebSocket,
+    Request,
+)
 from fastapi import Security, HTTPException
 from fastapi.security.api_key import APIKeyHeader
 
@@ -18,7 +23,31 @@ The keys are piped with a `|`, hence the list takes care of splitting and storin
 
 api_key_header = APIKeyHeader(name="access_token", auto_error=False)
 
+def check_ws_with_authorizator(
+    websocket: WebSocket,
+    ) -> None | str:
+    """Authenticate endpoint.
 
+    Check the provided key is available in API keys list.
+
+    Parameters
+    ----------
+    request : Request
+        HTTP request.
+
+    Returns
+    -------
+    api_key : str | None
+        Returns the valid key if set in the `.env`, otherwise return None.
+
+    Raises
+    ------
+    HTTPException
+        Error with status code `403` if the provided key is not valid.
+
+    """
+    return websocket.app.state.ccat.authorizator.is_allowed_ws(websocket)
+    
 def check_api_key(request: Request, api_key: str = Security(api_key_header)) -> None | str:
     """Authenticate endpoint.
 
