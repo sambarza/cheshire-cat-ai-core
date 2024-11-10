@@ -25,6 +25,18 @@ RUN pip install -U pip && \
 ### COPY CAT CODE INSIDE THE CONTAINER (so it can be run standalone) ###
 COPY ./cat /app/cat
 
+### COPY CAT STUBS
+COPY ./cat_typings /app/cat_typings
+
+### COPY CAT STUBS
+COPY ./vscode_settings /app/vscode_settings
+
+### COPY CAT STUBS FILE SETTINGS ###
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+
 ### INSTALL PYTHON DEPENDENCIES (Plugins) ###
 COPY ./install_plugin_dependencies.py /app/install_plugin_dependencies.py
 RUN python3 install_plugin_dependencies.py
