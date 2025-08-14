@@ -4,10 +4,117 @@ from cat.utils import extract_domain_from_url, is_https
 
 from qdrant_client import QdrantClient
 
-from cat.memory.vector_memory_collection import VectorMemoryCollection
+from .vector_memory_collection import VectorMemoryCollection
 from cat.log import log
 from cat.env import get_env
 from cat.utils import get_base_path
+from cat.mad_hatter.decorators import hook
+
+
+@hook
+def before_cat_bootstrap(cat):
+    # Load Memory and add it to CheshireCat core
+
+    # Get embedder size (langchain classes do not store it)
+    embedder_size = len(cat.embedder.embed_query("hello world"))
+
+    # Get embedder name (useful for for vectorstore aliases)
+    if hasattr(cat.embedder, "model"):
+        embedder_name = cat.embedder.model
+    elif hasattr(cat.embedder, "repo_id"):
+        embedder_name = cat.embedder.repo_id
+    else:
+        embedder_name = "default_embedder"
+
+    # instantiate long term memory
+    vector_memory_config = {
+        "embedder_name": embedder_name,
+        "embedder_size": embedder_size,
+    }
+
+    # TODOV2: still not attached to core
+
+
+@hook
+def after_cat_bootstrap(cat):
+    # Load Memory and add it to CheshireCat core
+
+    # Get embedder size (langchain classes do not store it)
+    embedder_size = len(cat.embedder.embed_query("hello world"))
+
+    # Get embedder name (useful for for vectorstore aliases)
+    if hasattr(cat.embedder, "model"):
+        embedder_name = cat.embedder.model
+    elif hasattr(cat.embedder, "repo_id"):
+        embedder_name = cat.embedder.repo_id
+    else:
+        embedder_name = "default_embedder"
+
+    # instantiate long term memory
+    vector_memory_config = {
+        "embedder_name": embedder_name,
+        "embedder_size": embedder_size,
+    }
+
+    # TODOV2: still not attached to core
+
+
+# TODOV2: still not attached to core
+def embed_procedures(self):
+    # Retrieve from vectorDB all procedural embeddings
+    embedded_procedures, _ = self.memory.vectors.procedural.get_all_points()
+    embedded_procedures_hashes = self.build_embedded_procedures_hashes(
+        embedded_procedures
+    )
+
+    # Easy access to active procedures in mad_hatter (source of truth!)
+    active_procedures_hashes = self.build_active_procedures_hashes(
+        self.mad_hatter.procedures
+    )
+
+    # points_to_be_kept     = set(active_procedures_hashes.keys()) and set(embedded_procedures_hashes.keys()) not necessary
+    points_to_be_deleted = set(embedded_procedures_hashes.keys()) - set(
+        active_procedures_hashes.keys()
+    )
+    points_to_be_embedded = set(active_procedures_hashes.keys()) - set(
+        embedded_procedures_hashes.keys()
+    )
+
+    points_to_be_deleted_ids = [
+        embedded_procedures_hashes[p] for p in points_to_be_deleted
+    ]
+    if points_to_be_deleted_ids:
+        log.info("Deleting procedural triggers:")
+        log.info(points_to_be_deleted)
+        self.memory.vectors.procedural.delete_points(points_to_be_deleted_ids)
+
+    active_triggers_to_be_embedded = [
+        active_procedures_hashes[p] for p in points_to_be_embedded
+    ]
+    
+    if active_triggers_to_be_embedded:
+        log.info("Embedding new procedural triggers:")
+    for t in active_triggers_to_be_embedded:
+
+
+        metadata = {
+            "source": t["source"],
+            "type": t["type"],
+            "trigger_type": t["trigger_type"],
+            "when": time.time(),
+        }
+
+        trigger_embedding = self.embedder.embed_documents([t["content"]])
+        self.memory.vectors.procedural.add_point(
+            t["content"],
+            trigger_embedding[0],
+            metadata,
+        )
+
+        log.info(
+            f" {t['source']}.{t['trigger_type']}.{t['content']}"
+        )
+
 
 
 # @singleton REFACTOR: worth it to have this (or LongTermMemory) as singleton?

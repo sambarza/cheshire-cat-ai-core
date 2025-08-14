@@ -73,7 +73,7 @@ class StrayCat:
     def __repr__(self):
         return f"StrayCat(user_id={self.user_id}, user_name={self.user_data.name})"
 
-    def __send_ws_json(self, data: Any):
+    async def __send_ws_json(self, data: Any):
         # Run the corutine in the main event loop in the main thread
         # and wait for the result
 
@@ -84,10 +84,8 @@ class StrayCat:
             log.debug(f"No websocket connection is open for user {self.user_id}")
             return
 
-        asyncio.run_coroutine_threadsafe(
-            ws_connection.send_json(data),
-            app.state.event_loop,
-        ).result()
+        await ws_connection.send_json(data)
+
 
     def __build_why(self) -> MessageWhy:
         # build data structure for output (response and why with memories)
@@ -119,6 +117,16 @@ class StrayCat:
 
         return why
     
+    async def recall(self, query=None):
+        """Recall long term memories."""
+        await self.memory.recall(cat=self, query=query)
+
+
+    async def store(self, item=None):
+        """Store info in long term memory"""
+        await self.memory.store(cat=self, item=item)
+
+
     def load_working_memory_from_cache(self):
         """Load the working memory from the cache."""
         
@@ -131,7 +139,7 @@ class StrayCat:
         updated_cache_item = CacheItem(f"{self.user_id}_working_memory", self.working_memory, -1)
         self.cache.insert(updated_cache_item)
 
-    def send_ws_message(self, content: str | dict, msg_type: MSG_TYPES = "notification"):
+    async def send_ws_message(self, content: str | dict, msg_type: MSG_TYPES = "notification"):
         """Send a message via websocket.
 
         This method is useful for sending a message via websocket directly without passing through the LLM.  
@@ -147,16 +155,16 @@ class StrayCat:
         Examples
         --------
         Send a notification via websocket
-        >>> cat.send_ws_message("Hello, I'm a notification!")
+        >>> await cat.send_ws_message("Hello, I'm a notification!")
 
         Send a chat message via websocket
-        >>> cat.send_ws_message("Meooow!", msg_type="chat")
+        >>> await cat.send_ws_message("Meooow!", msg_type="chat")
         
         Send an error message via websocket
-        >>> cat.send_ws_message("Something went wrong", msg_type="error")
+        >>> await cat.send_ws_message("Something went wrong", msg_type="error")
 
         Send custom data
-        >>> cat.send_ws_message({"What day it is?": "It's my unbirthday"})
+        >>> await cat.send_ws_message({"What day it is?": "It's my unbirthday"})
         """
 
         options = get_args(MSG_TYPES)
@@ -167,13 +175,13 @@ class StrayCat:
             )
 
         if msg_type == "error":
-            self.__send_ws_json(
+            await self.__send_ws_json(
                 {"type": msg_type, "name": "GenericError", "description": str(content)}
             )
         else:
-            self.__send_ws_json({"type": msg_type, "content": content})
+            await self.__send_ws_json({"type": msg_type, "content": content})
 
-    def send_chat_message(self, message: str | CatMessage, save=False):
+    async def send_chat_message(self, message: str | CatMessage, save=False):
         """Sends a chat message to the user using the active WebSocket connection.  
         In case there is no connection the message is skipped and a warning is logged
 
@@ -203,9 +211,10 @@ class StrayCat:
                 message
             )
 
-        self.__send_ws_json(message.model_dump())
+        await self.__send_ws_json(message.model_dump())
 
-    def send_notification(self, content: str):
+
+    async def send_notification(self, content: str):
         """Sends a notification message to the user using the active WebSocket connection.  
         In case there is no connection the message is skipped and a warning is logged
 
@@ -219,9 +228,9 @@ class StrayCat:
         Send a notification to the user
         >>> cat.send_notification("It's late!")
         """
-        self.send_ws_message(content=content, msg_type="notification")
+        await self.send_ws_message(content=content, msg_type="notification")
 
-    def send_error(self, error: Union[str, Exception]):
+    async def send_error(self, error: Union[str, Exception]):
         """Sends an error message to the user using the active WebSocket connection.
 
         In case there is no connection the message is skipped and a warning is logged
@@ -252,126 +261,7 @@ class StrayCat:
                 "description": str(error),
             }
 
-        self.__send_ws_json(error_message)
-
-    def recall_relevant_memories_to_working_memory(self, query=None):
-        """Retrieve context from memory.
-
-        The method retrieves the relevant memories from the vector collections that are given as context to the LLM.
-        Recalled memories are stored in the working memory.
-
-        Parameters
-        ----------
-        query : str, optional
-            The query used to make a similarity search in the Cat's vector memories.  
-            If not provided, the query will be derived from the last user's message.
-
-        Examples
-        --------
-        Recall memories from custom query
-        >>> cat.recall_relevant_memories_to_working_memory(query="What was written on the bottle?")
-
-        Notes
-        -----
-        The user's message is used as a query to make a similarity search in the Cat's vector memories.
-        Five hooks allow to customize the recall pipeline before and after it is done.
-
-        See Also
-        --------
-        cat_recall_query
-        before_cat_recalls_memories
-        before_cat_recalls_episodic_memories
-        before_cat_recalls_declarative_memories
-        before_cat_recalls_procedural_memories
-        after_cat_recalls_memories
-        """
-
-        recall_query = query
-
-        if query is None:
-            # If query is not provided, use the user's message as the query
-            recall_query = self.working_memory.user_message_json.text
-
-        # We may want to search in memory
-        recall_query = self.mad_hatter.execute_hook(
-            "cat_recall_query", recall_query, cat=self
-        )
-        log.info(f"Recall query: '{recall_query}'")
-
-        # Embed recall query
-        recall_query_embedding = self.embedder.embed_query(recall_query)
-        self.working_memory.recall_query = recall_query
-
-        # keep track of embedder model usage
-        self.working_memory.model_interactions.append(
-            EmbedderModelInteraction(
-                prompt=[recall_query],
-                source=utils.get_caller_info(skip=1),
-                reply=recall_query_embedding, # TODO: should we avoid storing the embedding?
-                input_tokens=len(tiktoken.get_encoding("cl100k_base").encode(recall_query)),
-            )
-        )
-
-        # hook to do something before recall begins
-        self.mad_hatter.execute_hook("before_cat_recalls_memories", cat=self)
-
-        # Setting default recall configs for each memory
-        # TODO: can these data structures become instances of a RecallSettings class?
-        default_episodic_recall_config = {
-            "embedding": recall_query_embedding,
-            "k": 3,
-            "threshold": 0.7,
-            "metadata": {"source": self.user_id},
-        }
-
-        default_declarative_recall_config = {
-            "embedding": recall_query_embedding,
-            "k": 3,
-            "threshold": 0.7,
-            "metadata": {},
-        }
-
-        default_procedural_recall_config = {
-            "embedding": recall_query_embedding,
-            "k": 3,
-            "threshold": 0.7,
-            "metadata": {},
-        }
-
-        # hooks to change recall configs for each memory
-        recall_configs = [
-            self.mad_hatter.execute_hook(
-                "before_cat_recalls_episodic_memories",
-                default_episodic_recall_config,
-                cat=self,
-            ),
-            self.mad_hatter.execute_hook(
-                "before_cat_recalls_declarative_memories",
-                default_declarative_recall_config,
-                cat=self,
-            ),
-            self.mad_hatter.execute_hook(
-                "before_cat_recalls_procedural_memories",
-                default_procedural_recall_config,
-                cat=self,
-            ),
-        ]
-
-        memory_types = self.memory.vectors.collections.keys()
-
-        for config, memory_type in zip(recall_configs, memory_types):
-            memory_key = f"{memory_type}_memories"
-
-            # recall relevant memories for collection
-            vector_memory = getattr(self.memory.vectors, memory_type)
-            memories = vector_memory.recall_memories_from_embedding(**config)
-
-            setattr(
-                self.working_memory, memory_key, memories
-            )  # self.working_memory.procedural_memories = ...
-
-        # hook to modify/enrich retrieved memories
-        self.mad_hatter.execute_hook("after_cat_recalls_memories", cat=self)
+        await self.__send_ws_json(error_message)
 
 
     def llm(self, prompt: str, stream: bool = False) -> str:
@@ -434,7 +324,7 @@ class StrayCat:
 
         return output
 
-    def __call__(self, message_dict):
+    async def __call__(self, message_dict):
         """Run the conversation turn.
 
         This method is called on the user's message received from the client.  
@@ -489,7 +379,7 @@ class StrayCat:
         # recall episodic and declarative memories from vector collections
         #   and store them in working_memory
         try:
-            self.recall_relevant_memories_to_working_memory()
+            await self.recall()
         except Exception:
             log.error("Error during recall.")
 
@@ -524,10 +414,8 @@ class StrayCat:
 
         log.info(agent_output)
 
-        self._store_user_message_in_episodic_memory(
-            self.working_memory.user_message_json.text
-        )
-
+        await self.store()
+        
         # why this response?
         why = self.__build_why()
         # TODO: should these assignations be included in self.__build_why ?
@@ -549,12 +437,13 @@ class StrayCat:
             final_output
         )
 
+
         return final_output
 
-    def run(self, user_message_json, return_message=False):
+    async def run(self, user_message_json, return_message=False):
         try:
             # run main flow
-            cat_message = self.__call__(user_message_json)
+            cat_message = await self.__call__(user_message_json)
             # save working memory to cache
             self.update_working_memory_cache()
 
@@ -563,14 +452,14 @@ class StrayCat:
                 return cat_message
             else:
                 # send message back to client via WS
-                self.send_chat_message(cat_message)
+                await self.send_chat_message(cat_message)
         except Exception as e:
             log.error(e)
             if return_message:
                 return {"error": str(e)}
             else:
                 try:
-                    self.send_error(e)
+                    await self.send_error(e)
                 except ConnectionClosedOK as ex:
                     log.warning(ex)
 
@@ -644,24 +533,6 @@ Allowed classes are:
     def stringify_chat_history(self, latest_n: int = 20) -> str:
         """Redirects to WorkingMemory.stringify_chat_history. Will be removed from this class in v2."""
         return self.working_memory.stringify_chat_history(latest_n)
-
-    def _store_user_message_in_episodic_memory(self, user_message_text: str):
-        doc = Document(
-            page_content=user_message_text,
-            metadata={"source": self.user_id, "when": time.time()},
-        )
-        doc = self.mad_hatter.execute_hook(
-            "before_cat_stores_episodic_memory", doc, cat=self
-        )
-        # store user message in episodic memory
-        # TODO: vectorize and store also conversation chunks
-        #   (not raw dialog, but summarization)
-        user_message_embedding = self.embedder.embed_documents([user_message_text])
-        _ = self.memory.vectors.episodic.add_point(
-            doc.page_content,
-            user_message_embedding[0],
-            doc.metadata,
-        )
 
     @property
     def user_id(self) -> str:

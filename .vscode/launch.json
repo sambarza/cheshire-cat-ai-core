@@ -6,7 +6,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Remote Attach to Cat",
+            "name": "Cheshire Cat (docker)",
             "type": "debugpy",
             "request": "attach",
             "connect": {
@@ -20,6 +20,17 @@
                 }
             ],
             "justMyCode": true
+        },
+        {
+            "name": "Cheshire Cat (local Python)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": ".venv/bin/activate && uv run cat.main:main",
+            "args": [
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            //"preLaunchTask": "uv sync"
         }
     ]
 }

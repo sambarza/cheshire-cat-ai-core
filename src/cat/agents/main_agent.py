@@ -11,6 +11,7 @@ from cat.env import get_env
 from cat.agents import BaseAgent, AgentOutput
 from cat.agents.memory_agent import MemoryAgent
 from cat.agents.procedures_agent import ProceduresAgent
+from cat.log import log
 
 
 class MainAgent(BaseAgent):
@@ -54,6 +55,7 @@ class MainAgent(BaseAgent):
             return agent_fast_reply
         if isinstance(agent_fast_reply, dict) and "output" in agent_fast_reply:
             return AgentOutput(**agent_fast_reply)
+        
 
         # obtain prompt parts from plugins
         prompt_prefix = self.mad_hatter.execute_hook(

@@ -19,8 +19,8 @@ async def handle_messages(websocket: WebSocket, cat: StrayCat):
         # http endpoints may have been called while waiting for a message
         cat.load_working_memory_from_cache()
 
-        # Run the `cat` object's method in a threadpool since it might be a CPU-bound operation.
-        await run_in_threadpool(cat.run, user_message, return_message=False)
+        # Run the `cat` message main flow
+        await cat.run(user_message, return_message=False)
 
 
 @router.websocket("/ws")

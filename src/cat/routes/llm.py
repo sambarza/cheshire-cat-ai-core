@@ -126,19 +126,7 @@ def upsert_llm_setting(
     ccat = request.app.state.ccat
     # reload llm and embedder of the cat
     ccat.load_natural_language()
-    # crete new collections
-    # (in case embedder is not configured, it will be changed automatically and aligned to vendor)
-    # TODO: should we take this feature away?
-    # Exception handling in case an incorrect key is loaded.
-    try:
-        ccat.load_memory()
-    except Exception as e:
-        log.error("Error while changing LLM")
-        crud.delete_settings_by_category(category=LLM_SELECTED_CATEGORY)
-        crud.delete_settings_by_category(category=LLM_CATEGORY)
-        raise HTTPException(
-            status_code=400, detail={"error": utils.explicit_error_message(e)}
-        )
+
     # recreate tools embeddings
     ccat.mad_hatter.find_plugins()
 

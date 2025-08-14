@@ -28,5 +28,4 @@ async def message_with_cat(
 ) -> Dict:
     """Get a response from the Cat"""
     user_message_json = {"user_id": cat.user_id, **payload}
-    answer = await run_in_threadpool(cat.run, user_message_json, True)
-    return answer
+    return await cat.run(user_message_json, True)

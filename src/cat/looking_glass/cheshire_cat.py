@@ -19,6 +19,7 @@ from cat.factory.embedder import get_embedder_from_name
 import cat.factory.embedder as embedders
 from cat.factory.llm import LLMDefaultConfig
 from cat.factory.llm import get_llm_from_name
+from cat.memory.long_term_memory import LongTermMemory
 from cat.agents.main_agent import MainAgent
 from cat.log import log
 from cat.mad_hatter.mad_hatter import MadHatter
@@ -59,13 +60,16 @@ class CheshireCat:
     def __init__(self, fastapi_app):
         """Cat initialization.
 
-        At init time the Cat executes the bootstrap.
+        At init time the Cat executes the bootstrap, loading all main componetns and components added by plugins.
         """
 
         # bootstrap the Cat! ^._.^
 
         # get reference to the FastAPI app
         self.fastapi_app = fastapi_app
+
+        # long term memory
+        self.memory = LongTermMemory()
 
         # load AuthHandler
         self.load_auth()
@@ -78,15 +82,6 @@ class CheshireCat:
 
         # load LLM and embedder
         self.load_natural_language()
-
-        # Load memories (vector collections and working_memory)
-        self.load_memory()
-
-        # After memory is loaded, we can get/create tools embeddings      
-        self.mad_hatter.on_finish_plugins_sync_callback = self.on_finish_plugins_sync_callback
- 
-        # First time launched manually       
-        self.on_finish_plugins_sync_callback()
 
         # Main agent instance (for reasoning)
         self.main_agent = MainAgent()
@@ -273,26 +268,6 @@ class CheshireCat:
         self.custom_auth_handler = auth_handler
         self.core_auth_handler = CoreAuthHandler()
 
-    def load_memory(self):
-        """Load memory"""
-        
-        # Get embedder size (langchain classes do not store it)
-        embedder_size = len(self.embedder.embed_query("hello world"))
-
-        # Get embedder name (useful for for vectorstore aliases)
-        if hasattr(self.embedder, "model"):
-            embedder_name = self.embedder.model
-        elif hasattr(self.embedder, "repo_id"):
-            embedder_name = self.embedder.repo_id
-        else:
-            embedder_name = "default_embedder"
-
-        # instantiate long term memory
-        #vector_memory_config = {
-        #    "embedder_name": embedder_name,
-        #    "embedder_size": embedder_size,
-        #}
-        #self.memory = LongTermMemory(vector_memory_config=vector_memory_config)
 
     def build_embedded_procedures_hashes(self, embedded_procedures):
         hashes = {}
@@ -323,69 +298,13 @@ class CheshireCat:
                     }
         return hashes
 
-    def on_finish_plugins_sync_callback(self):
-        self.activate_endpoints()
-        self.embed_procedures()
 
     def activate_endpoints(self):
         for endpoint in self.mad_hatter.endpoints:
             if endpoint.plugin_id in self.mad_hatter.active_plugins:
                 endpoint.activate(self.fastapi_app)
 
-    def embed_procedures(self):
-        # Retrieve from vectorDB all procedural embeddings
-        embedded_procedures, _ = self.memory.vectors.procedural.get_all_points()
-        embedded_procedures_hashes = self.build_embedded_procedures_hashes(
-            embedded_procedures
-        )
 
-        # Easy access to active procedures in mad_hatter (source of truth!)
-        active_procedures_hashes = self.build_active_procedures_hashes(
-            self.mad_hatter.procedures
-        )
-
-        # points_to_be_kept     = set(active_procedures_hashes.keys()) and set(embedded_procedures_hashes.keys()) not necessary
-        points_to_be_deleted = set(embedded_procedures_hashes.keys()) - set(
-            active_procedures_hashes.keys()
-        )
-        points_to_be_embedded = set(active_procedures_hashes.keys()) - set(
-            embedded_procedures_hashes.keys()
-        )
-
-        points_to_be_deleted_ids = [
-            embedded_procedures_hashes[p] for p in points_to_be_deleted
-        ]
-        if points_to_be_deleted_ids:
-            log.info("Deleting procedural triggers:")
-            log.info(points_to_be_deleted)
-            self.memory.vectors.procedural.delete_points(points_to_be_deleted_ids)
-
-        active_triggers_to_be_embedded = [
-            active_procedures_hashes[p] for p in points_to_be_embedded
-        ]
-        
-        if active_triggers_to_be_embedded:
-            log.info("Embedding new procedural triggers:")
-        for t in active_triggers_to_be_embedded:
-
-
-            metadata = {
-                "source": t["source"],
-                "type": t["type"],
-                "trigger_type": t["trigger_type"],
-                "when": time.time(),
-            }
-
-            trigger_embedding = self.embedder.embed_documents([t["content"]])
-            self.memory.vectors.procedural.add_point(
-                t["content"],
-                trigger_embedding[0],
-                metadata,
-            )
-
-            log.info(
-                f" {t['source']}.{t['trigger_type']}.{t['content']}"
-            )
 
     def send_ws_message(self, content: str, msg_type="notification"):
         log.error("CheshireCat has no websocket connection. Call `send_ws_message` from a StrayCat instance.")
