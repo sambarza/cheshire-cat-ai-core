@@ -4,7 +4,7 @@ from langchain_core.prompts.chat import SystemMessagePromptTemplate
 from langchain_core.runnables import RunnableConfig, RunnableLambda
 from langchain_core.output_parsers.string import StrOutputParser
 
-from cat.looking_glass.callbacks import NewTokenHandler, ModelInteractionHandler
+from cat.looking_glass.callbacks import NewTokenHandler
 from cat.agents import BaseAgent, AgentOutput
 from cat import utils
 
@@ -36,12 +36,17 @@ class MemoryAgent(BaseAgent):
             | StrOutputParser()
         )
 
+        callbacks = [
+            NewTokenHandler(cat)
+        ]
+        cat.mad_hatter.execute_hook(
+            "llm_callbacks", callbacks, cat=cat
+        )
+
         output = chain.invoke(
             # convert to dict before passing to langchain
             prompt_variables,
-            config=RunnableConfig(callbacks=[
-                NewTokenHandler(cat), ModelInteractionHandler(cat, utils.get_caller_info(skip=1))
-            ])
+            config=RunnableConfig(callbacks=callbacks)
         )
 
         return AgentOutput(output=output)

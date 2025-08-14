@@ -14,9 +14,9 @@ from langchain_core.output_parsers.string import StrOutputParser
 
 from cat.auth.permissions import AuthUserInfo
 from cat.looking_glass.cheshire_cat import CheshireCat
-from cat.looking_glass.callbacks import NewTokenHandler, ModelInteractionHandler
+from cat.looking_glass.callbacks import NewTokenHandler
 from cat.memory.working_memory import WorkingMemory
-from cat.convo.messages import CatMessage, UserMessage, MessageWhy, EmbedderModelInteraction
+from cat.convo.messages import CatMessage, UserMessage, MessageWhy
 from cat.agents import AgentOutput
 from cat.cache.cache_item import CacheItem
 from cat import utils

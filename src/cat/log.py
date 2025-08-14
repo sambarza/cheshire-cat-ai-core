@@ -130,11 +130,11 @@ class CatLogEngine:
         # prettify
         if isinstance(msg, str):
             pass
-        elif type(msg) in [dict, list]:  # TODO: should be recursive
+        elif type(msg) in [dict, list, tuple]:  # TODO: should be recursive
             try:
                 msg = json.dumps(msg, indent=4)
             except Exception:
-                pass
+                msg = str(msg)
         else:
             msg = pformat(msg)
 

@@ -2,7 +2,6 @@ from typing import List, Optional
 from langchain_core.messages import BaseMessage
 
 from cat.convo.messages import Role, ConversationMessage, UserMessage, CatMessage
-from cat.convo.model_interactions import ModelInteraction
 from cat.experimental.form import CatForm
 from cat.utils import BaseModelDict, deprecation_warning
 
@@ -28,8 +27,6 @@ class WorkingMemory(BaseModelDict):
         A list for storing declarative memories.
     procedural_memories : List
         A list for storing procedural memories.
-    model_interactions : List[ModelInteraction]
-        A list of interactions with models.
     """
 
     history: List[ConversationMessage] = []
@@ -43,9 +40,7 @@ class WorkingMemory(BaseModelDict):
     declarative_memories: List = []
     procedural_memories: List = []
     
-    model_interactions: List[ModelInteraction] = []
     
-
     def update_history(self, message: ConversationMessage):
         """
         Adds a message to the history.

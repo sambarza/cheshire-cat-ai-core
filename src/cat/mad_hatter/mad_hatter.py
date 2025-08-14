@@ -68,6 +68,9 @@ class MadHatter:
         self.toggle_plugin(plugin_id)
 
     def uninstall_plugin(self, plugin_id):
+
+        # TODOV2: core_plugins can be deactivated but not uninstalled
+
         if self.plugin_exists(plugin_id) and (plugin_id != "core_plugin"):
             # deactivate plugin if it is active (will sync cache)
             if plugin_id in self.active_plugins:
@@ -172,10 +175,6 @@ class MadHatter:
         else:
             active_plugins = active_plugins["value"]
 
-        # core_plugin is always active
-        if "core_plugin" not in active_plugins:
-            active_plugins += ["core_plugin"]
-
         return active_plugins
 
     def save_active_plugins_to_db(self, active_plugins):
@@ -222,7 +221,11 @@ class MadHatter:
     def execute_hook(self, hook_name, *args, cat):
         # check if hook is supported
         if hook_name not in self.hooks.keys():
-            raise Exception(f"Hook {hook_name} not present in any plugin")
+            log.warning(f"Hook {hook_name} not present in any plugin")
+            if len(args)==0:
+                return
+            else:
+                return args[0]
 
         # Hook has no arguments (aside cat)
         #  no need to pipe

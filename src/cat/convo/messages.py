@@ -9,7 +9,6 @@ from PIL import Image
 from pydantic import Field, computed_field
 from langchain_core.messages import AIMessage, HumanMessage
 
-from cat.convo.model_interactions import LLMModelInteraction, EmbedderModelInteraction
 from cat.utils import BaseModelDict, deprecation_warning
 from cat.log import log
 
@@ -43,15 +42,11 @@ class MessageWhy(BaseModelDict):
         A list capturing intermediate steps or actions taken as part of processing the message.
     memory : dict
         A dictionary containing relevant memory information used during the processing of the message.
-    model_interactions : List[Union[LLMModelInteraction, EmbedderModelInteraction]]
-        A list of interactions with language or embedding models, detailing how models were used in generating 
-        or understanding the message context.
     """
 
     input: str
     intermediate_steps: List
     memory: dict
-    model_interactions: List[LLMModelInteraction | EmbedderModelInteraction]
 
 
 class Message(BaseModelDict):

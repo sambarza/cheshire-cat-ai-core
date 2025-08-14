@@ -14,7 +14,6 @@ from cat.mad_hatter.decorators.tool import CatTool
 from cat.mad_hatter.mad_hatter import MadHatter
 from cat.mad_hatter.plugin import Plugin
 from cat.log import log
-from cat.looking_glass.callbacks import ModelInteractionHandler
 from cat import utils
 
 
@@ -126,11 +125,14 @@ class ProceduresAgent(BaseAgent):
             | ChooseProcedureOutputParser() # ensures output is a LLMAction
         )
 
+        callbacks = []
+        cat.mad_hatter.execute_hook(
+            "llm_callbacks", callbacks, cat=cat
+        )
+
         llm_action: LLMAction = chain.invoke(
             prompt_variables,
-            config=RunnableConfig(callbacks=[
-                ModelInteractionHandler(cat, utils.get_caller_info(skip=1))
-            ])
+            config=RunnableConfig(callbacks=callbacks)
         )
 
         return llm_action
