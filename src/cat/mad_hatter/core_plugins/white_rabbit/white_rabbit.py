@@ -9,8 +9,14 @@ from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
 
 from cat.log import log
-
 from cat.utils import singleton
+from cat.mad_hatter.decorators import hook
+
+
+@hook
+def before_cat_bootstrap(cat):
+    # Start scheduling system and attach it to the CheshireCat core class
+    cat.white_rabbit = WhiteRabbit()
 
 
 # I'm late, I'm late, for a very important date!
@@ -248,9 +254,9 @@ class WhiteRabbit:
     def schedule_interval_job(
         self,
         job,
-        job_id: str = None,
-        start_date: datetime = None,
-        end_date: datetime = None,
+        job_id: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         days=0,
         hours=0,
         minutes=0,
@@ -315,9 +321,9 @@ class WhiteRabbit:
     def schedule_cron_job(
         self,
         job,
-        job_id: str = None,
-        start_date: datetime = None,
-        end_date: datetime = None,
+        job_id: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         year=None,
         month=None,
         day=None,

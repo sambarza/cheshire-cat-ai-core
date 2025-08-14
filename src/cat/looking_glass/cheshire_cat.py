@@ -20,10 +20,8 @@ import cat.factory.embedder as embedders
 from cat.factory.llm import LLMDefaultConfig
 from cat.factory.llm import get_llm_from_name
 from cat.agents.main_agent import MainAgent
-from cat.looking_glass.white_rabbit import WhiteRabbit
 from cat.log import log
 from cat.mad_hatter.mad_hatter import MadHatter
-from cat.memory.long_term_memory import LongTermMemory
 from cat.rabbit_hole import RabbitHole
 from cat.utils import singleton
 from cat import utils
@@ -71,10 +69,7 @@ class CheshireCat:
 
         # load AuthHandler
         self.load_auth()
-
-        # Start scheduling system
-        self.white_rabbit = WhiteRabbit()
-
+        
         # instantiate MadHatter (loads all plugins' hooks and tools)
         self.mad_hatter = MadHatter()
 
@@ -134,8 +129,7 @@ class CheshireCat:
 
         Notes
         -----
-        Bootstrapping is the process of loading the plugins, the natural language objects (e.g. the LLM), the memories,
-        the *Main Agent*, the *Rabbit Hole* and the *White Rabbit*.
+        Bootstrapping is the process of loading the main Cat components and plugins.
         """
         
         selected_llm = crud.get_setting_by_name(name="llm_selected")
@@ -161,9 +155,6 @@ class CheshireCat:
         """Hook into the  embedder selection.
 
         Allows to modify how the Cat selects the embedder at bootstrap time.
-
-        Bootstrapping is the process of loading the plugins, the natural language objects (e.g. the LLM), the memories,
-        the *Main Agent*, the *Rabbit Hole* and the *White Rabbit*.
 
         Parameters
         ----------
@@ -283,9 +274,8 @@ class CheshireCat:
         self.core_auth_handler = CoreAuthHandler()
 
     def load_memory(self):
-        """Load LongTerMemory and WorkingMemory."""
-        # Memory
-
+        """Load memory"""
+        
         # Get embedder size (langchain classes do not store it)
         embedder_size = len(self.embedder.embed_query("hello world"))
 
@@ -298,11 +288,11 @@ class CheshireCat:
             embedder_name = "default_embedder"
 
         # instantiate long term memory
-        vector_memory_config = {
-            "embedder_name": embedder_name,
-            "embedder_size": embedder_size,
-        }
-        self.memory = LongTermMemory(vector_memory_config=vector_memory_config)
+        #vector_memory_config = {
+        #    "embedder_name": embedder_name,
+        #    "embedder_size": embedder_size,
+        #}
+        #self.memory = LongTermMemory(vector_memory_config=vector_memory_config)
 
     def build_embedded_procedures_hashes(self, embedded_procedures):
         hashes = {}

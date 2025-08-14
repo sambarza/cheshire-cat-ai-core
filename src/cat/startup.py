@@ -22,7 +22,6 @@ from cat.routes import (
     upload,
 )
 from cat.routes.websocket import websocket
-from cat.routes.memory.memory_router import memory_router
 from cat.routes.static import admin, static
 from cat.routes.openapi import get_openapi_configuration_function
 from cat.routes.websocket.websocket_manager import WebsocketManager
@@ -93,7 +92,6 @@ cheshire_cat_api.include_router(
 )
 cheshire_cat_api.include_router(embedder.router, tags=["Embedder"], prefix="/embedder")
 cheshire_cat_api.include_router(plugins.router, tags=["Plugins"], prefix="/plugins")
-cheshire_cat_api.include_router(memory_router, prefix="/memory")
 cheshire_cat_api.include_router(
     upload.router, tags=["Rabbit Hole"], prefix="/rabbithole"
 )
