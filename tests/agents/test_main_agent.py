@@ -1,3 +1,4 @@
+import pytest
 
 from cat.mad_hatter.mad_hatter import MadHatter
 from cat.agents.main_agent import MainAgent
@@ -11,9 +12,10 @@ def test_main_agent_instantiation(main_agent):
     )  # damn singletons
 
 
-def test_execute_main_agent(main_agent, stray):
+@pytest.mark.asyncio
+async def test_execute_main_agent(main_agent, stray):
     # empty agent execution
-    out = main_agent.execute(stray)
+    out = await main_agent.execute(stray)
     assert isinstance(out, AgentOutput)
     assert not out.return_direct
     assert out.intermediate_steps == []

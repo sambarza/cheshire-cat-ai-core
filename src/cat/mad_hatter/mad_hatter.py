@@ -43,7 +43,7 @@ class MadHatter:
         self.tools: List[CatTool] = []  # list of active plugins tools
         self.forms: List[CatForm] = []  # list of active plugins forms
         self.endpoints: List[CustomEndpoint] = []  # list of active plugins endpoints
-
+        
         self.active_plugins: List[str] = []
 
         self.plugins_folder = utils.get_plugins_path()
@@ -73,8 +73,9 @@ class MadHatter:
     def uninstall_plugin(self, plugin_id):
 
         # TODOV2: core_plugins can be deactivated but not uninstalled
+        # (endpoint already fixed, should also be forced here)
 
-        if self.plugin_exists(plugin_id) and (plugin_id != "core_plugin"):
+        if self.plugin_exists(plugin_id):
             # deactivate plugin if it is active (will sync cache)
             if plugin_id in self.active_plugins:
                 self.toggle_plugin(plugin_id)

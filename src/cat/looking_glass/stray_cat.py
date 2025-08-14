@@ -337,8 +337,6 @@ class StrayCat:
             CatMessage object, the Cat's answer to be sent back to the client.
         """
 
-        log.critical(self.mad_hatter.plugins["vector_memory"].endpoints)
-
         # Impose user_id as the one authenticated
         # (ws message may contain a fake id)
         message_dict["user_id"] = self.user_id

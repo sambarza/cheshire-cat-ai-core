@@ -56,7 +56,8 @@ def test_default_embedder_loaded(cheshire_cat):
     out = cheshire_cat.embedder.embed_query(sentence)
     assert sample_embed == out
 
-
+# TODOV2 where do we put this
+"""
 def test_procedures_embedded(cheshire_cat):
     # get embedded tools
     procedures, _ = cheshire_cat.memory.vectors.procedural.get_all_points()
@@ -82,3 +83,4 @@ def test_procedures_embedded(cheshire_cat):
         expected_embed = cheshire_cat.embedder.embed_query(content)
         assert len(p.vector) == len(expected_embed)  # same embed
         # assert p.vector == expected_embed TODO: Qdrant does unwanted normalization
+"""

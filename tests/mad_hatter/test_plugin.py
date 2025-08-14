@@ -191,7 +191,7 @@ def test_install_plugin_dependencies():
     p.activate()
 
     # pip-install-test should have been installed
-    result = subprocess.run(["pip", "list"], stdout=subprocess.PIPE)
+    result = subprocess.run(["uv", "pip", "list"], stdout=subprocess.PIPE)
     result = result.stdout.decode()
     assert fnmatch.fnmatch(result, "*pip-install-test*")
 

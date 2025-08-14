@@ -65,7 +65,7 @@ def clean_up_mocks():
         "tests/mocks/mock_plugin/settings.json",
         "tests/mocks/mock_plugin_folder/mock_plugin",
         "tests/mocks/empty_folder",
-        "/tmp_test",
+        "tmp_test",
     ]
     for tbr in to_be_removed:
         if os.path.exists(tbr):
@@ -88,7 +88,7 @@ def client(monkeypatch) -> Generator[TestClient, Any, None]:
     # env variables
     os.environ["CCAT_DEBUG"] = "false" # do not autoreload
     # in case tests setup a file system cache, use a different file system cache dir
-    os.environ["CCAT_CACHE_DIR"] = "/tmp_test"
+    os.environ["CCAT_CACHE_DIR"] = "tmp_test"
 
     # monkeypatch classes
     mock_classes(monkeypatch)
