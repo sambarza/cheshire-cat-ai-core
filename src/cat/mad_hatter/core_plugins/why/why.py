@@ -59,7 +59,7 @@ def before_cat_sends_message(msg, cat):
 
 
 
-# TODOV2 TESTS
+# TODOV2 TESTS (note: they are mixes with model interactions)
 """
 # why
 why = reply["why"]

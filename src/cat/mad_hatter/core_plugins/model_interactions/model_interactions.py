@@ -5,7 +5,6 @@ from cat.mad_hatter.decorators import hook
 # StrayCat.working_memory.model_interactions = []
 
 
-
 # TODOV2 types
 # catmesg.why.model_interactions: List[LLMModelInteraction | EmbedderModelInteraction]
 # NOTE: check if why exists

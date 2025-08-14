@@ -30,12 +30,6 @@ class LongTermMemory:
             doc.metadata,
         )
 
-
-
-
-
-    
-
     async def recall(self, cat, query=None):
         """Recall something from long term memory"""
         return [] # TODOV2 cat.mad_hatter.execute_hook([])
@@ -150,4 +144,4 @@ class LongTermMemory:
 
         # hook to modify/enrich retrieved memories
         cat.mad_hatter.execute_hook("after_cat_recalls_memories", cat=self)
-    
+
