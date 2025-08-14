@@ -3,7 +3,7 @@ import pytest
 from cat.auth.permissions import AuthUserInfo
 from cat.looking_glass.stray_cat import StrayCat
 from cat.memory.working_memory import WorkingMemory
-from cat.convo.messages CatMessage
+from cat.convo.messages import CatMessage
 from cat.mad_hatter.decorators.hook import CatHook
 
 @pytest.fixture(scope="function")

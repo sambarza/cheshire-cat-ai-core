@@ -9,7 +9,6 @@ def test_main_agent_instantiation(main_agent):
     assert isinstance(
         main_agent.mad_hatter, MadHatter().__class__
     )  # damn singletons
-    assert main_agent.verbose in [True, False]
 
 
 def test_execute_main_agent(main_agent, stray):

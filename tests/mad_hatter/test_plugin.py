@@ -182,7 +182,7 @@ def test_install_plugin_dependencies():
     # manual cleanup
     clean_up_mocks()
     # Uninstall mock plugin requirements
-    os.system("pip uninstall -y pip-install-test")
+    os.system("uv pip uninstall -y pip-install-test")
 
     # Install mock plugin
     p = Plugin(mock_plugin_path)
@@ -198,4 +198,4 @@ def test_install_plugin_dependencies():
     # manual cleanup
     clean_up_mocks()
     # Uninstall mock plugin requirements
-    os.system("pip uninstall -y pip-install-test")
+    os.system("uv pip uninstall -y pip-install-test")

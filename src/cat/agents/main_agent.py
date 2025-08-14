@@ -1,11 +1,7 @@
-import time
 from typing import List, Tuple
-from datetime import timedelta
-
 from langchain.docstore.document import Document
 
 from cat.mad_hatter.mad_hatter import MadHatter
-from cat.utils import verbal_timedelta, BaseModelDict
 from cat.env import get_env
 from cat.agents import BaseAgent, AgentOutput
 from cat.agents.memory_agent import MemoryAgent
@@ -20,11 +16,6 @@ class MainAgent(BaseAgent):
 
     def __init__(self):
         self.mad_hatter = MadHatter()
-
-        if get_env("CCAT_LOG_LEVEL") in ["DEBUG", "INFO"]:
-            self.verbose = True
-        else:
-            self.verbose = False
 
     async def execute(self, cat) -> AgentOutput:
         """Execute the agents.

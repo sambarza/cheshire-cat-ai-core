@@ -4,36 +4,12 @@ from cat.utils import extract_domain_from_url, is_https
 
 from qdrant_client import QdrantClient
 
-from .vector_memory_collection import VectorMemoryCollection
 from cat.log import log
 from cat.env import get_env
 from cat.utils import get_base_path
 from cat.mad_hatter.decorators import hook
 
-
-@hook
-def before_cat_bootstrap(cat):
-    # Load Memory and add it to CheshireCat core
-
-    # Get embedder size (langchain classes do not store it)
-    embedder_size = len(cat.embedder.embed_query("hello world"))
-
-    # Get embedder name (useful for for vectorstore aliases)
-    if hasattr(cat.embedder, "model"):
-        embedder_name = cat.embedder.model
-    elif hasattr(cat.embedder, "repo_id"):
-        embedder_name = cat.embedder.repo_id
-    else:
-        embedder_name = "default_embedder"
-
-    # instantiate long term memory
-    vector_memory_config = {
-        "embedder_name": embedder_name,
-        "embedder_size": embedder_size,
-    }
-
-    # TODOV2: still not attached to core
-
+from .vector_memory_collection import VectorMemoryCollection
 
 @hook
 def after_cat_bootstrap(cat):
@@ -56,8 +32,38 @@ def after_cat_bootstrap(cat):
         "embedder_size": embedder_size,
     }
 
-    # TODOV2: still not attached to core
+    cat.memory.vectors = VectorMemory(
+        embedder_name=embedder_name,
+        embedder_size=embedder_size
+    )
 
+
+@hook
+def before_cat_sends_message(msg, cat):
+    
+    # Store conversation turns with session id
+
+    #human_message = {}
+    #cat.store()
+
+    #cat_message = {}
+    #cat.store()
+
+    user_message_text = cat.working_memory.user_message_json.text
+    #doc = Document(
+    #    page_content=user_message_text,
+    #    metadata={"source": self.user_id, "when": time.time()},
+    #)
+    #doc = self.mad_hatter.execute_hook(
+    #    "before_cat_stores_episodic_memory", doc, cat=self
+    #)
+    # store user message in episodic memory
+    #user_message_embedding = self.embedder.embed_documents([user_message_text])
+    #_ = self.memory.vectors.episodic.add_point(
+    #    doc.page_content,
+    #    user_message_embedding[0],
+    #    doc.metadata,
+    #)
 
 # TODOV2: still not attached to core
 def embed_procedures(self):

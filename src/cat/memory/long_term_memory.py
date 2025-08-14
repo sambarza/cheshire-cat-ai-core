@@ -12,24 +12,6 @@ class LongTermMemory:
         """Store something in long term memory"""
         return # TODOV2
 
-        user_message_text = cat.working_memory.user_message_json.text
-        doc = Document(
-            page_content=user_message_text,
-            metadata={"source": self.user_id, "when": time.time()},
-        )
-        doc = self.mad_hatter.execute_hook(
-            "before_cat_stores_episodic_memory", doc, cat=self
-        )
-        # store user message in episodic memory
-        # TODO: vectorize and store also conversation chunks
-        #   (not raw dialog, but summarization)
-        user_message_embedding = self.embedder.embed_documents([user_message_text])
-        _ = self.memory.vectors.episodic.add_point(
-            doc.page_content,
-            user_message_embedding[0],
-            doc.metadata,
-        )
-
     async def recall(self, cat, query=None):
         """Recall something from long term memory"""
         return [] # TODOV2 cat.mad_hatter.execute_hook([])

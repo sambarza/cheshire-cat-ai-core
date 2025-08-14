@@ -3,10 +3,12 @@ from pydantic import BaseModel
 from fastapi import Query, Body, Request, APIRouter, HTTPException
 import time
 
+from cat.mad_hatter.decorators import endpoint
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
-from cat.memory.vector_memory import VectorMemory
 from cat.looking_glass.stray_cat import StrayCat
 from cat.log import log
+
+from ..vector_memory import VectorMemory
 
 class MemoryPointBase(BaseModel):
     content: str
@@ -19,66 +21,13 @@ class MemoryPoint(MemoryPointBase):
     vector: List[float]
 
 
-router = APIRouter()
-
-
-# GET memories from recall
-@router.get("/recall", deprecated=True)
-async def recall_memory_points_from_text(
-    request: Request,
-    text: str = Query(description="Find memories similar to this text."),
-    k: int = Query(default=100, description="How many memories to return."),
-    cat: StrayCat = check_permissions(AuthResource.MEMORY, AuthPermission.READ),
-) -> Dict:
-    """Search k memories similar to given text."""
-    log.warning("Deprecated: This endpoint will be removed in the next major version.")
-
-    # Embed the query to plot it in the Memory page
-    query_embedding = cat.embedder.embed_query(text)
-    query = {
-        "text": text,
-        "vector": query_embedding,
-    }
-
-    # Loop over collections and retrieve nearby memories
-    collections = list(
-        cat.memory.vectors.collections.keys()
-    )
-    recalled = {}
-    for c in collections:
-        # only episodic collection has users
-        user_id = cat.user_id
-        if c == "episodic":
-            user_filter = {"source": user_id}
-        else:
-            user_filter = None
-
-        memories = cat.memory.vectors.collections[c].recall_memories_from_embedding(
-            query_embedding, k=k, metadata=user_filter
-        )
-
-        recalled[c] = []
-        for metadata, score, vector, id in memories:
-            memory_dict = dict(metadata)
-            memory_dict.pop("lc_kwargs", None)  # langchain stuff, not needed
-            memory_dict["id"] = id
-            memory_dict["score"] = float(score)
-            memory_dict["vector"] = vector
-            recalled[c].append(memory_dict)
-
-    return {
-        "query": query,
-        "vectors": {
-            "embedder": str(
-                cat.embedder.__class__.__name__
-            ),  # TODO: should be the config class name
-            "collections": recalled,
-        },
-    }
-
 # POST memories from recall
-@router.post("/recall")
-async def recall_memory_points(
+@endpoint.post(
+    "/recall",
+    prefix="/memory",
+    tags=["Vector Memory"]
+)
+async def search_memory_points(
     request: Request,
     text: str = Body(description="Find memories similar to this text."),
     k: int = Body(default=100, description="How many memories to return."),
@@ -152,6 +101,7 @@ async def recall_memory_points(
             memory_dict["vector"] = vector
             recalled[c].append(memory_dict)
 
+    # TODOV2: add type for this return
     return {
         "query": query,
         "vectors": {
@@ -162,8 +112,13 @@ async def recall_memory_points(
         },
     }
 
+
 # CREATE a point in memory
-@router.post("/collections/{collection_id}/points", response_model=MemoryPoint)
+@endpoint.post(
+    "/collections/{collection_id}/points",
+    prefix="/memory", tags=["Vector Memory"],
+    response_model=MemoryPoint
+)
 async def create_memory_point(
     request: Request,
     collection_id: str,
@@ -211,8 +166,12 @@ async def create_memory_point(
     )
 
 
-@router.delete("/collections/{collection_id}/points/{point_id}")
-async def delete_memory_point(
+@endpoint.delete(
+    "/collections/{collection_id}/points/{point_id}",
+    prefix="/memory",
+    tags=["Vector Memory"]
+)
+async def delete_memory_point_by_id(
     request: Request,
     collection_id: str,
     point_id: str,
@@ -242,7 +201,11 @@ async def delete_memory_point(
     return {"deleted": point_id}
 
 
-@router.delete("/collections/{collection_id}/points")
+@endpoint.delete(
+    "/collections/{collection_id}/points",
+    prefix="/memory",
+    tags=["Vector Memory"]
+)
 async def delete_memory_points_by_metadata(
     request: Request,
     collection_id: str,
@@ -262,7 +225,11 @@ async def delete_memory_points_by_metadata(
 
 
 # GET all the points from a single collection
-@router.get("/collections/{collection_id}/points")
+@endpoint.get(
+    "/collections/{collection_id}/points",
+    prefix="/memory",
+    tags=["Vector Memory"]
+)
 async def get_points_in_collection(
     request: Request,
     collection_id: str,
@@ -357,7 +324,12 @@ async def get_points_in_collection(
 
 
 # EDIT a point in memory
-@router.put("/collections/{collection_id}/points/{point_id}", response_model=MemoryPoint)
+@endpoint.put(
+    "/collections/{collection_id}/points/{point_id}",
+    prefix="/memory",
+    tags=["Vector Memory"],
+    response_model=MemoryPoint
+)
 async def edit_memory_point(
     request: Request,
     collection_id: str,

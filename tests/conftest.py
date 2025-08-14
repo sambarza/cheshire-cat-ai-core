@@ -16,7 +16,7 @@ from cat.looking_glass.stray_cat import StrayCat
 from cat.auth.permissions import AuthUserInfo
 from cat.db.database import Database
 import cat.utils as utils
-from cat.memory.vector_memory import VectorMemory
+#from cat.memory.vector_memory import VectorMemory
 from cat.mad_hatter.plugin import Plugin
 from cat.startup import cheshire_cat_api
 from tests.utils import create_mock_plugin_zip
@@ -33,9 +33,9 @@ def mock_classes(monkeypatch):
     def mock_connect_to_vector_memory(self, *args, **kwargs):
         self.vector_db = QdrantClient(":memory:")
 
-    monkeypatch.setattr(
-        VectorMemory, "connect_to_vector_memory", mock_connect_to_vector_memory
-    )
+    #monkeypatch.setattr(
+    #    VectorMemory, "connect_to_vector_memory", mock_connect_to_vector_memory
+    #)
 
     # Use a different json settings db
     def mock_get_file_name(self, *args, **kwargs):
@@ -52,7 +52,6 @@ def mock_classes(monkeypatch):
     # do not check plugin dependencies at every restart
     def mock_install_requirements(self, *args, **kwargs):
         pass
-
     monkeypatch.setattr(Plugin, "_install_requirements", mock_install_requirements)
 
 

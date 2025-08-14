@@ -75,6 +75,9 @@ class CheshireCat:
         
         # instantiate MadHatter (loads all plugins' hooks and tools)
         self.mad_hatter = MadHatter()
+        # TODOV2: get rid of this on_finish callback somehow
+        self.mad_hatter.on_finish_plugins_sync_callback = self.on_finish_plugins_sync_callback
+        self.on_finish_plugins_sync_callback()
 
         # allows plugins to do something before cat components are loaded
         self.mad_hatter.execute_hook("before_cat_bootstrap", cat=self)
@@ -190,18 +193,6 @@ class CheshireCat:
                 }
             )
 
-        # For Azure avoid automatic embedder selection
-
-        # Cohere
-        elif type(self._llm) in [ChatCohere]:
-            embedder = embedders.EmbedderCohereConfig.get_embedder_from_config(
-                {
-                    "cohere_api_key": self._llm.cohere_api_key,
-                    "model": "embed-multilingual-v2.0",
-                    # Now the best model for embeddings is embed-multilingual-v2.0
-                }
-            )
-
         elif type(self._llm) in [ChatGoogleGenerativeAI]:
             embedder = embedders.EmbedderGeminiChatConfig.get_embedder_from_config(
                 {
@@ -297,12 +288,14 @@ class CheshireCat:
                     }
         return hashes
 
+    def on_finish_plugins_sync_callback(self):
+        self.activate_endpoints()
+        #self.embed_procedures() # TODOV2: the whole on_finish function should not exist
 
     def activate_endpoints(self):
         for endpoint in self.mad_hatter.endpoints:
             if endpoint.plugin_id in self.mad_hatter.active_plugins:
                 endpoint.activate(self.fastapi_app)
-
 
 
     def send_ws_message(self, content: str, msg_type="notification"):

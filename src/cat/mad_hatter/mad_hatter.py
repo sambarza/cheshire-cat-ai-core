@@ -48,6 +48,9 @@ class MadHatter:
 
         self.plugins_folder = utils.get_plugins_path()
 
+        # this callback is set from outside to be notified when plugin sync is finished
+        self.on_finish_plugins_sync_callback = lambda: None
+
         self.find_plugins()
 
     def install_plugin(self, package_plugin):
@@ -161,7 +164,7 @@ class MadHatter:
             self.hooks[hook_name].sort(key=lambda x: x.priority, reverse=True)
 
         # notify sync has finished (the Cat will ensure all tools are embedded in vector memory)
-        # TODOV2 mad_hatter sync callback not active self.on_finish_plugins_sync_callback()
+        self.on_finish_plugins_sync_callback()
 
     # check if plugin exists
     def plugin_exists(self, plugin_id):

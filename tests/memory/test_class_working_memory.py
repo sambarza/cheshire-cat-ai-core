@@ -3,6 +3,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from cat.convo.messages import Role, UserMessage, CatMessage
 from cat.memory.working_memory import WorkingMemory
 
+
 def create_working_memory_with_convo_history(turns=1):
     """Utility to create a working memory and populate its convo history."""
 
@@ -16,6 +17,7 @@ def create_working_memory_with_convo_history(turns=1):
     
     return working_memory
 
+
 def test_create_working_memory():
 
     wm = WorkingMemory()
@@ -26,7 +28,6 @@ def test_create_working_memory():
     assert wm.episodic_memories == []
     assert wm.declarative_memories == []
     assert wm.procedural_memories == []
-    assert wm.model_interactions == []
 
 
 def test_update_history():
