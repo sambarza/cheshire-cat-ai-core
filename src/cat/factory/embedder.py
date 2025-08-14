@@ -8,7 +8,6 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from fastembed import TextEmbedding
 from cat.factory.custom_embedder import DumbEmbedder, CustomOpenAIEmbeddings, CustomOllamaEmbeddings
 from cat.mad_hatter.mad_hatter import MadHatter
-from langchain_cohere import CohereEmbeddings
 
 
 # Base class to manage LLM configuration.
@@ -116,20 +115,6 @@ class EmbedderAzureOpenAIConfig(EmbedderSettings):
     )
 
 
-class EmbedderCohereConfig(EmbedderSettings):
-    cohere_api_key: str
-    model: str = "embed-multilingual-v2.0"
-    _pyclass: Type = CohereEmbeddings
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "humanReadableName": "Cohere Embedder",
-            "description": "Configuration for Cohere embeddings",
-            "link": "https://docs.cohere.com/docs/models",
-        }
-    )
-
-
 # Enum for menu selection in the admin!
 FastEmbedModels = Enum(
     "FastEmbedModels",
@@ -187,7 +172,6 @@ def get_allowed_embedder_models():
         EmbedderAzureOpenAIConfig,
         EmbedderGeminiChatConfig,
         EmbedderOpenAICompatibleConfig,
-        EmbedderCohereConfig,
         EmbedderDumbConfig,
         EmbedderFakeConfig,
         EmbedderOllamaConfig,

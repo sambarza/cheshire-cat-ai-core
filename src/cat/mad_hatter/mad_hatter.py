@@ -221,7 +221,7 @@ class MadHatter:
     def execute_hook(self, hook_name, *args, cat):
         # check if hook is supported
         if hook_name not in self.hooks.keys():
-            log.warning(f"Hook {hook_name} not present in any plugin")
+            log.info(f"Hook {hook_name} not present in any plugin")
             if len(args)==0:
                 return
             else:
