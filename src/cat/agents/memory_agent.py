@@ -17,20 +17,8 @@ class MemoryAgent(BaseAgent):
             "agent_prompt_suffix", prompts.MAIN_PROMPT_SUFFIX, cat=cat
         )
 
-        context = cat.mad_hatter.execute_hook(
-            "agent_context", {}, cat=cat
-        )
-
-        # ensure prompt variables and placeholders match
-        sys_prompt = prompt_prefix + prompt_suffix
-        context, sys_prompt = utils.match_prompt_variables(context, sys_prompt)
-
-        # TODOV2: hydrate prompt
-
-
         res = await cat.llm(
-            sys_prompt,
-            prompt_variables=context,
+            prompt_prefix + prompt_suffix,
             use_chat_history=True,
             stream=True,
             execution_name="MAIN PROMPT"

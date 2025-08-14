@@ -262,6 +262,8 @@ class StrayCat:
             If None, uses default LLM as in the settings.
         stream : bool
             Whether to stream the tokens via websocket or not.
+        execution_name : str
+            Name of this LLM run, for logging purposes.
 
         Returns
         -------
@@ -289,6 +291,9 @@ class StrayCat:
         self.mad_hatter.execute_hook(
             "llm_callbacks", callbacks, cat=self
         )
+
+        # ensure prompt variables and placeholders in system_prompt match
+        prompt_variables, system_prompt = utils.match_prompt_variables(prompt_variables, system_prompt)
         
         # here we deal with motherfucking langchain
         prompt = ChatPromptTemplate(
