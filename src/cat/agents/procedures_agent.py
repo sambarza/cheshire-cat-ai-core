@@ -22,7 +22,7 @@ class ProceduresAgent(BaseAgent):
     form_agent = FormAgent()
     allowed_procedures: Dict[str, CatTool | CatForm] = {}
 
-    def execute(self, cat) -> AgentOutput:
+    async def execute(self, cat) -> AgentOutput:
         
         # Run active form if present
         form_output: AgentOutput = self.form_agent.execute(cat)

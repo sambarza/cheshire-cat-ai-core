@@ -6,17 +6,18 @@ from typing import Literal, get_args, List, Dict, Union, Any
 
 from websockets.exceptions import ConnectionClosedOK
 
-from langchain.docstore.document import Document
-from langchain_core.messages import BaseMessage, HumanMessage
+from langchain_core.messages import BaseMessage
 from langchain_core.runnables import RunnableConfig, RunnableLambda
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts.chat import SystemMessagePromptTemplate
 from langchain_core.output_parsers.string import StrOutputParser
 
 from cat.auth.permissions import AuthUserInfo
 from cat.looking_glass.cheshire_cat import CheshireCat
 from cat.looking_glass.callbacks import NewTokenHandler
 from cat.memory.working_memory import WorkingMemory
-from cat.convo.messages import CatMessage, UserMessage
+from cat.convo.messages import Message, CatMessage, UserMessage
+from cat.mad_hatter.decorators import CatTool
 from cat.agents import AgentOutput
 from cat.cache.cache_item import CacheItem
 from cat import utils
@@ -85,6 +86,7 @@ class StrayCat:
             return
 
         await ws_connection.send_json(data)
+
 
     async def recall(self, query=None):
         """Recall long term memories."""
@@ -232,13 +234,32 @@ class StrayCat:
         await self.__send_ws_json(error_message)
 
 
-    def llm(self, prompt: str, stream: bool = False) -> str:
+    async def llm(
+            self,
+            system_prompt: str,
+            prompt_variables: dict = {},
+            use_chat_history: bool = False,
+            messages: list[Message] = [],
+            tools: list[CatTool] = [], # TODOV2
+            model: str | None = None,  # TODOV2
+            stream: bool = False,
+            execution_name: str = "prompt"
+        ) -> str:
         """Generate a response using the Large Language Model.
 
         Parameters
         ----------
-        prompt : str
-            The prompt for generating the response.
+        system_prompt : str
+            The system prompt (context, personality, or a simple instruction/request).
+        prompt_variables : dict
+            Structured info to hydrate the system_prompt.
+        use_chat_history : bool
+            When `True`, will load messages from working memory. Default is `False`
+        messages : list[Message]
+            Chat messages so far, as a list of `HumanMessage` and `CatMessage`. Will override `use_chat_history` when used.
+        model : str | None
+            LLM to use, in the format `vendor:model`, e.g. `openai:gpt-5`.
+            If None, uses default LLM as in the settings.
         stream : bool
             Whether to stream the tokens via websocket or not.
 
@@ -264,29 +285,31 @@ class StrayCat:
         if stream:
             callbacks.append(NewTokenHandler(self))
 
-        # Add a token counter to the callbacks
-        caller = utils.get_caller_info(return_short=False)
-        callbacks.append(ModelInteractionHandler(self, caller or "StrayCat"))
-
+        # Add callbacks from plugins
+        self.mad_hatter.execute_hook(
+            "llm_callbacks", callbacks, cat=self
+        )
+        
         # here we deal with motherfucking langchain
         prompt = ChatPromptTemplate(
             messages=[
-                HumanMessage(content=prompt) # We decided to use HumanMessage for wide-range compatibility even if it could bring some problem with tokenizers
-                # TODO: add here optional convo history passed to the method,
-                #  or taken from working memory
+                SystemMessagePromptTemplate.from_template(
+                    template=system_prompt
+                ),
+                *(self.working_memory.langchainfy_chat_history()), # TODOV2: use `messages`
             ]
         )
 
         chain = (
             prompt
-            | RunnableLambda(lambda x: utils.langchain_log_prompt(x, f"{caller} prompt"))
-            | self._llm
-            | RunnableLambda(lambda x: utils.langchain_log_output(x, f"{caller} prompt output"))
+            | RunnableLambda(lambda x: utils.langchain_log_prompt(x, execution_name))
+            | self._llm # TODOV2: make configurable via init_chat_model
+            | RunnableLambda(lambda x: utils.langchain_log_output(x, execution_name))
             | StrOutputParser()
         )
 
         output = chain.invoke(
-            {}, # in case we need to pass info to the template
+            prompt_variables,
             config=RunnableConfig(callbacks=callbacks)
         )
 
@@ -338,6 +361,7 @@ class StrayCat:
         )
 
         # update conversation history (Human turn)
+        # TODOV2: what if history is passed from outside
         self.working_memory.update_history(
             self.working_memory.user_message_json
         )
@@ -348,9 +372,7 @@ class StrayCat:
             await self.recall()
         except Exception:
             log.error("Error during recall.")
-
             err_message = "An error occurred while recalling relevant memories."
-
             return {
                 "type": "error",
                 "name": "VectorMemoryError",
@@ -359,7 +381,7 @@ class StrayCat:
         
         # reply with agent
         try:
-            agent_output: AgentOutput = self.main_agent.execute(self)
+            agent_output: AgentOutput = await self.main_agent.execute(self)
         except Exception as e:
             # This error happens when the LLM
             #   does not respect prompt instructions.
@@ -424,7 +446,7 @@ class StrayCat:
                 except ConnectionClosedOK as ex:
                     log.warning(ex)
 
-    def classify(
+    async def classify(
         self, sentence: str, labels: List[str] | Dict[str, List[str]], score_threshold: float = 0.5
     ) -> str | None:
         """Classify a sentence.
@@ -477,7 +499,7 @@ Allowed classes are:
 
 "{sentence}" -> """
 
-        response = self.llm(prompt)
+        response = await self.llm(prompt)
 
         # find the closest match and its score with levenshtein distance
         best_label, score = min(
@@ -486,14 +508,7 @@ Allowed classes are:
         )
 
         return best_label if score < score_threshold else None
-
-    def langchainfy_chat_history(self, latest_n: int = 20) -> List[BaseMessage]:
-        """Redirects to WorkingMemory.langchainfy_chat_history. Will be removed from this class in v2."""
-        return self.working_memory.langchainfy_chat_history(latest_n)
     
-    def stringify_chat_history(self, latest_n: int = 20) -> str:
-        """Redirects to WorkingMemory.stringify_chat_history. Will be removed from this class in v2."""
-        return self.working_memory.stringify_chat_history(latest_n)
 
     @property
     def user_id(self) -> str:

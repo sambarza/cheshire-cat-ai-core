@@ -26,7 +26,7 @@ class MainAgent(BaseAgent):
         else:
             self.verbose = False
 
-    def execute(self, cat) -> AgentOutput:
+    async def execute(self, cat) -> AgentOutput:
         """Execute the agents.
 
         Returns
@@ -54,7 +54,7 @@ class MainAgent(BaseAgent):
 
         # run tools and forms
         procedures_agent = ProceduresAgent()
-        procedures_agent_out : AgentOutput = procedures_agent.execute(cat)
+        procedures_agent_out : AgentOutput = await procedures_agent.execute(cat)
         if procedures_agent_out.return_direct:
             return procedures_agent_out
 
@@ -62,7 +62,7 @@ class MainAgent(BaseAgent):
         # - no procedures were recalled or selected or
         # - procedures have all return_direct=False
         memory_agent = MemoryAgent()
-        memory_agent_out : AgentOutput = memory_agent.execute(cat)
+        memory_agent_out : AgentOutput = await memory_agent.execute(cat)
 
         # TODOV2: this should go in the why plugin
         memory_agent_out.intermediate_steps += procedures_agent_out.intermediate_steps

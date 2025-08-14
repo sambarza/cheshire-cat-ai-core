@@ -9,3 +9,4 @@
         await send_ws_message(msg)
     ```
 - `before_agent_starts` hook now has no argument aside `cat`, as all context/agent_input is directly stored and inserted into prompt based on the content of working memory
+- `cat.llm` got a deep refactoring and has many options XXXXXX

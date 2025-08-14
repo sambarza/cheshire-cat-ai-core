@@ -5,7 +5,6 @@ from langchain_community.llms import (
     HuggingFaceEndpoint,
 )
 from langchain_openai import ChatOpenAI, OpenAI
-from langchain_cohere import ChatCohere
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_anthropic import ChatAnthropic
 
@@ -173,23 +172,6 @@ class LLMAzureOpenAIConfig(LLMSettings):
     )
 
 
-class LLMCohereConfig(LLMSettings):
-    cohere_api_key: str
-    model: str = "command"
-    temperature: float = 0.7
-    streaming: bool = True
-
-    _pyclass: Type = ChatCohere
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "humanReadableName": "Cohere",
-            "description": "Configuration for Cohere language model",
-            "link": "https://docs.cohere.com/docs/models",
-        }
-    )
-
-
 # https://python.langchain.com/en/latest/modules/models/llms/integrations/huggingface_textgen_inference.html
 class LLMHuggingFaceTextGenInferenceConfig(LLMSettings):
     inference_server_url: str
@@ -307,7 +289,6 @@ def get_allowed_language_models():
         LLMOpenAICompatibleConfig,
         LLMOllamaConfig,
         LLMGeminiChatConfig,
-        LLMCohereConfig,
         LLMAzureOpenAIConfig,
         LLMAzureChatOpenAIConfig,
         LLMHuggingFaceEndpointConfig,

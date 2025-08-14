@@ -7,7 +7,6 @@ from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableLambda
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers.string import StrOutputParser
-from langchain_cohere import ChatCohere
 from langchain_openai import ChatOpenAI, OpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 
