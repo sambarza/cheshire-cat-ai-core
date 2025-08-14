@@ -93,12 +93,11 @@ class MadHatter:
 
         # plugins are found in the plugins folder,
         # plus the default core plugin s(where default hooks and tools are defined)
-        core_plugin_folder = get_base_path() + "mad_hatter/core_plugin/"
+        core_plugins_folder = get_base_path() + "mad_hatter/core_plugins/"
 
         # plugin folder is "cat/plugins/" in production, "tests/mocks/mock_plugin_folder/" during tests
-        all_plugin_folders = [core_plugin_folder] + glob.glob(
-            f"{self.plugins_folder}*/"
-        )
+        all_plugin_folders = \
+            glob.glob(f"{core_plugins_folder}*/") + glob.glob(f"{self.plugins_folder}*/")
 
         log.info("Active Plugins:")
         log.info(self.active_plugins)

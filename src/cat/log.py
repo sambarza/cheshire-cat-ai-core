@@ -159,7 +159,6 @@ class CatLogEngine:
         left_margin = " " * 15
         print(f"\n\n{left_margin} Cat REST API:   {cat_address}/docs")
         print(f"{left_margin} Cat ADMIN:      {cat_address}/admin\n\n")
-
         # self.log_examples()
 
 

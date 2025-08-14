@@ -15,10 +15,6 @@ def mount(cheshire_cat_api):
 
     # note html=False because index.html needs to be injected with runtime information
     admin_dir = utils.get_base_path() + "routes/static/core_static_folder/admin"
-    
-    import os
-    print("\n\n\n99999999999999 ", os.path.dirname(__file__))
-    
     cheshire_cat_api.mount("/admin", StaticFiles(directory=admin_dir), name="admin")
 
 
