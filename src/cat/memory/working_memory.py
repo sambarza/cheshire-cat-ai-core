@@ -44,47 +44,7 @@ class WorkingMemory(BaseModelDict):
     procedural_memories: List = []
     
     model_interactions: List[ModelInteraction] = []
-
-    def update_conversation_history(self, message: str, who: str, why = {}):
-        """
-        This method is deprecated. Use `update_history` instead.
-        
-        Updates the conversation history with the most recent message.
-
-        Parameters
-        ----------
-        message :str
-            The text content of the message.
-        who : str
-            The name of the message author.
-        why : Optional[Dict[str, Any]], default=None
-            Optional explanation for the message.
-
-        Notes
-        -----
-        This method is deprecated and will be removed in future versions. Use `update_history` instead.
-        """
-
-        deprecation_warning(
-            "update_conversation_history is deprecated and will be removed in a future release. Use update_history instead."
-        )
-        role = Role.AI if who == "AI" else Role.Human
-
-        if role == Role.AI:
-            content = CatMessage(
-                user_id=self.user_message_json.user_id,
-                who=who,
-                text=message,
-                why=why,
-            )
-        else:
-            content = UserMessage(
-                user_id=self.user_message_json.user_id,
-                who=who,
-                text=message
-            )
-
-        self.history.append(content)
+    
 
     def update_history(self, message: ConversationMessage):
         """
