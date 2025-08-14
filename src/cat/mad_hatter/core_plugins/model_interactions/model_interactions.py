@@ -1,8 +1,14 @@
 from cat.mad_hatter.decorators import hook
 
+# TODOV2 clean up latest interactions in working memory as soon as message arrive
+# keeping track of model interactions
+# StrayCat.working_memory.model_interactions = []
+
+
+
 # TODOV2 types
 # catmesg.why.model_interactions: List[LLMModelInteraction | EmbedderModelInteraction]
-
+# NOTE: check if why exists
 
 # TODOV2 done doing recall
 # keep track of embedder model usage
@@ -24,5 +30,6 @@ def llm_callbacks(callbacks, cat):
     return callbacks # TODOV2 append the handlers
 
 
-# TODOV2 was attached to working memory
+# TODOV2 was attached both to working memory and why
 # working_memory.model_interactions: List[ModelInteraction] = []
+# CatMessage.why.model_interactions: List[ModelInteraction] = [] # check if why exists

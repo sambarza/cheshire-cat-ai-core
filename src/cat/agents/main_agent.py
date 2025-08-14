@@ -39,13 +39,9 @@ class MainAgent(BaseAgent):
         # prepare input to be passed to the agent.
         #   Info will be extracted from working memory
         # Note: agent_input works both as a dict and as an object
-        agent_input : BaseModelDict = self.format_agent_input(cat)
-        agent_input = self.mad_hatter.execute_hook(
-            "before_agent_starts", agent_input, cat=cat
+        self.mad_hatter.execute_hook(
+            "before_agent_starts", cat=cat
         )
-
-        # store the agent input inside the working memory
-        cat.working_memory.agent_input = agent_input
 
         # should we run the default agents?
         agent_fast_reply = self.mad_hatter.execute_hook(

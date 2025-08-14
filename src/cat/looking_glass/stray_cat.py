@@ -16,7 +16,7 @@ from cat.auth.permissions import AuthUserInfo
 from cat.looking_glass.cheshire_cat import CheshireCat
 from cat.looking_glass.callbacks import NewTokenHandler
 from cat.memory.working_memory import WorkingMemory
-from cat.convo.messages import CatMessage, UserMessage, MessageWhy
+from cat.convo.messages import CatMessage, UserMessage
 from cat.agents import AgentOutput
 from cat.cache.cache_item import CacheItem
 from cat import utils
@@ -86,37 +86,6 @@ class StrayCat:
 
         await ws_connection.send_json(data)
 
-
-    def __build_why(self) -> MessageWhy:
-        # build data structure for output (response and why with memories)
-        # TODO: these 3 lines are a mess, simplify
-        episodic_report = [
-            dict(d[0]) | {"score": float(d[1]), "id": d[3]}
-            for d in self.working_memory.episodic_memories
-        ]
-        declarative_report = [
-            dict(d[0]) | {"score": float(d[1]), "id": d[3]}
-            for d in self.working_memory.declarative_memories
-        ]
-        procedural_report = [
-            dict(d[0]) | {"score": float(d[1]), "id": d[3]}
-            for d in self.working_memory.procedural_memories
-        ]
-
-        # why this response?
-        why = MessageWhy(
-            input=self.working_memory.user_message_json.text,
-            intermediate_steps=[],
-            memory={
-                "episodic": episodic_report,
-                "declarative": declarative_report,
-                "procedural": procedural_report,
-            },
-            model_interactions=self.working_memory.model_interactions,
-        )
-
-        return why
-    
     async def recall(self, query=None):
         """Recall long term memories."""
         await self.memory.recall(cat=self, query=query)
@@ -203,8 +172,7 @@ class StrayCat:
         """
 
         if isinstance(message, str):
-            why = self.__build_why()
-            message = CatMessage(text=message, user_id=self.user_id, why=why)
+            message = CatMessage(text=message, user_id=self.user_id)
 
         if save:
             self.working_memory.update_history(
@@ -350,8 +318,6 @@ class StrayCat:
         log.info(user_message)
 
         ### setup working memory for this convo turn
-        # keeping track of model interactions
-        self.working_memory.model_interactions = []
         # latest user message
         self.working_memory.user_message_json = user_message
 
@@ -414,17 +380,12 @@ class StrayCat:
 
         log.info(agent_output)
 
+        # Store something in long term memory (e.g. last convo turn)
         await self.store()
         
-        # why this response?
-        why = self.__build_why()
-        # TODO: should these assignations be included in self.__build_why ?
-        why.intermediate_steps = agent_output.intermediate_steps
-        why.agent_output = agent_output.model_dump()
-
         # prepare final cat message
         final_output = CatMessage(
-            user_id=self.user_id, text=str(agent_output.output), why=why
+            user_id=self.user_id, text=str(agent_output.output)
         )
 
         # run message through plugins

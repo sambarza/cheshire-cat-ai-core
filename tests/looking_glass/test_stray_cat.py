@@ -3,7 +3,7 @@ import pytest
 from cat.auth.permissions import AuthUserInfo
 from cat.looking_glass.stray_cat import StrayCat
 from cat.memory.working_memory import WorkingMemory
-from cat.convo.messages import MessageWhy, CatMessage
+from cat.convo.messages CatMessage
 from cat.mad_hatter.decorators.hook import CatHook
 
 @pytest.fixture(scope="function")
@@ -39,7 +39,6 @@ def test_stray_call_with_text(stray_cat):
     assert "You did not configure" in reply.text
     assert reply.user_id == "Alice"
     assert reply.type == "chat"
-    assert isinstance(reply.why, MessageWhy)
 
 
 def test_stray_call_with_text_and_image(stray_cat):
@@ -55,7 +54,7 @@ def test_stray_call_with_text_and_image(stray_cat):
     assert "You did not configure" in reply.text
     assert reply.user_id == "Alice"
     assert reply.type == "chat"
-    assert isinstance(reply.why, MessageWhy)
+
 
 # TODO: update these tests once we have a real LLM in tests
 def test_stray_classify(stray_cat):

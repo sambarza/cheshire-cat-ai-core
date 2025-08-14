@@ -13,7 +13,9 @@ class MemoryAgent(BaseAgent):
 
     def execute(self, cat, prompt_prefix, prompt_suffix) -> AgentOutput:
 
-        prompt_variables = cat.working_memory.agent_input.model_dump()
+        prompt_variables = cat.mad_hatter.execute_hook(
+            "agent_context", {}, cat=cat
+        )
         sys_prompt = prompt_prefix + prompt_suffix
 
         # ensure prompt variables and placeholders match

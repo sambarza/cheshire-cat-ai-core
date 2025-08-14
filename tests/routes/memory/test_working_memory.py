@@ -33,7 +33,6 @@ def test_convo_history_update(client):
     assert json["history"][1]["who"] == "AI"
     assert "You did not configure" in json["history"][1]["text"] 
     assert "You did not configure" in json["history"][1]["content"] # TODOV2: remove "content"
-    assert "You did not configure" in json["history"][1]["why"]["agent_output"]["output"]
     assert isinstance(json["history"][1]["when"], float)  # timestamp
 
 

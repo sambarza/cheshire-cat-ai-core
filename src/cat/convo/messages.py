@@ -29,26 +29,6 @@ class Role(Enum):
     Human = "Human"
 
 
-class MessageWhy(BaseModelDict):
-    """
-    A class for encapsulating the context and reasoning behind a message, providing details on 
-    input, intermediate steps, memory, and interactions with models.
-
-    Attributes
-    ----------
-    input : str
-        The initial input message that triggered the response.
-    intermediate_steps : List
-        A list capturing intermediate steps or actions taken as part of processing the message.
-    memory : dict
-        A dictionary containing relevant memory information used during the processing of the message.
-    """
-
-    input: str
-    intermediate_steps: List
-    memory: dict
-
-
 class Message(BaseModelDict):
     """
     Base class for working memory history entries.
@@ -148,8 +128,6 @@ class CatMessage(ConversationMessage):
         Image file URLs or base64 data URIs that represent image associated with the message.
     audio : Optional[str], default=None
         Audio file URLs or base64 data URIs that represent audio associated with the message.
-    why : Optional[MessageWhy]
-        Additional contextual information related to the message.
 
     Notes
     -----
@@ -158,7 +136,6 @@ class CatMessage(ConversationMessage):
 
     who: str = "AI"
     type: str = "chat" # For now is always "chat" and is not used
-    why: Optional[MessageWhy] = None
 
     def __init__(
         self,
@@ -167,14 +144,13 @@ class CatMessage(ConversationMessage):
         text: Optional[str] = None,
         image: Optional[str] = None,
         audio: Optional[str] = None,
-        why: Optional[MessageWhy] = None,
         **kwargs,
     ):
         if "content" in kwargs:
             deprecation_warning("The `content` parameter is deprecated. Use `text` instead.")    
             text = kwargs.pop("content")  # Map 'content' to 'text'
 
-        super().__init__(user_id=user_id, text=text, image=image, audio=audio, why=why, who=who, **kwargs)
+        super().__init__(user_id=user_id, text=text, image=image, audio=audio , who=who, **kwargs)
 
     @computed_field
     @property
