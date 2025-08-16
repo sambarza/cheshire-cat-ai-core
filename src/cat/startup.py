@@ -18,8 +18,7 @@ from cat.routes import (
     llm,
     embedder,
     auth_handler,
-    plugins,
-    upload,
+    plugins
 )
 from cat.routes.websocket import websocket
 from cat.routes.static import admin, static
@@ -92,9 +91,6 @@ cheshire_cat_api.include_router(
 )
 cheshire_cat_api.include_router(embedder.router, tags=["Embedder"], prefix="/embedder")
 cheshire_cat_api.include_router(plugins.router, tags=["Plugins"], prefix="/plugins")
-cheshire_cat_api.include_router(
-    upload.router, tags=["Rabbit Hole"], prefix="/rabbithole"
-)
 cheshire_cat_api.include_router(
     auth_handler.router, tags=["AuthHandler"], prefix="/auth_handler"
 )

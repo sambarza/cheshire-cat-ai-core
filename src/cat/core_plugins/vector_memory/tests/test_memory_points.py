@@ -457,3 +457,20 @@ def test_edit_memory_point(client, patch_time_now, collection):
     assert len(tool_start_examples) == 2
     assert len(form_start_examples) == 0
 """
+
+"""TODOV2 TOOLS HAVE BEEN UNEMBEDDED AFTER EMBEDDER CHANGE
+def test_upsert_embedder_settings_updates_collections(client):
+    procedures = get_procedural_memory_contents(client)
+    assert len(procedures) == 3
+    assert len(procedures[0]["vector"]) == 2367  # default embedder
+
+    # set a different embedder from default one (same class different size)
+    embedder_config = {"size": 64}
+    response = client.put("/embedder/settings/EmbedderFakeConfig", json=embedder_config)
+    assert response.status_code == 200
+
+    procedures = get_procedural_memory_contents(client)
+    assert len(procedures) == 3
+    for vec in procedures:
+        assert len(vec["vector"]) == embedder_config["size"]
+"""

@@ -26,6 +26,12 @@ from cat.log import log
 # - rabbit_hole methods should receive UploadConfig directly
 
 
+# TODOV2: was attached in startup:
+#cheshire_cat_api.include_router(
+#    upload.router, tags=["Rabbit Hole"], prefix="/rabbithole"
+#)
+
+
 router = APIRouter()
 
 

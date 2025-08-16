@@ -11,7 +11,7 @@ def create_cache(cache_type):
     if cache_type == "in_memory":
         return InMemoryCache()
     elif cache_type == "file_system":
-        return FileSystemCache("/tmp_cache")
+        return FileSystemCache("tmp_cache")
     else:
         assert False
 
@@ -26,13 +26,13 @@ def test_cache_creation(cache_type):
             assert cache.items == {}
             assert cache.max_items == 100
         else:
-            assert cache.cache_dir == "/tmp_cache"
-            assert os.path.exists("/tmp_cache")
-            assert os.listdir("/tmp_cache") == []
+            assert cache.cache_dir == "tmp_cache"
+            assert os.path.exists("tmp_cache")
+            assert os.listdir("tmp_cache") == []
     finally:
         import shutil
-        if os.path.exists("/tmp_cache"):
-            shutil.rmtree("/tmp_cache")
+        if os.path.exists("tmp_cache"):
+            shutil.rmtree("tmp_cache")
 
 
 @pytest.mark.parametrize("cache_type", ["in_memory", "file_system"])

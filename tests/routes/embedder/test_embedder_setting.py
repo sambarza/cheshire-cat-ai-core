@@ -1,7 +1,6 @@
 from json import dumps
 from fastapi.encoders import jsonable_encoder
 from cat.factory.embedder import get_embedders_schemas
-from tests.utils import get_procedural_memory_contents
 
 
 def test_get_all_embedder_settings(client):
@@ -73,17 +72,4 @@ def test_upsert_embedder_settings(client):
     assert json["schema"]["languageEmbedderName"] == new_embedder
 
 
-def test_upsert_embedder_settings_updates_collections(client):
-    procedures = get_procedural_memory_contents(client)
-    assert len(procedures) == 3
-    assert len(procedures[0]["vector"]) == 2367  # default embedder
 
-    # set a different embedder from default one (same class different size)
-    embedder_config = {"size": 64}
-    response = client.put("/embedder/settings/EmbedderFakeConfig", json=embedder_config)
-    assert response.status_code == 200
-
-    procedures = get_procedural_memory_contents(client)
-    assert len(procedures) == 3
-    for vec in procedures:
-        assert len(vec["vector"]) == embedder_config["size"]
