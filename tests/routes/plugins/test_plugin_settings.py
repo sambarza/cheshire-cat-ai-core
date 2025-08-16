@@ -1,5 +1,6 @@
 
 from tests.mocks.mock_plugin.mock_plugin_overrides import MockPluginSettings
+from tests.utils import get_core_plugins_ids
 
 def test_get_plugin_settings_non_existent(client, just_installed_plugin):
     non_existent_plugin = "ghost_plugin"
@@ -15,7 +16,7 @@ def test_get_all_plugin_settings(client, just_installed_plugin):
     response = client.get("/plugins/settings")
     json = response.json()
 
-    installed_plugins = ["core_plugin", "mock_plugin"]
+    installed_plugins = get_core_plugins_ids().union({"mock_plugin"})
 
     assert response.status_code == 200
     assert isinstance(json["settings"], list)
@@ -93,25 +94,3 @@ def test_save_plugin_settings(client, just_installed_plugin):
     saved_config = [c for c in json["settings"] if c["name"] == "mock_plugin"]
     assert saved_config[0]["value"] == fake_settings
 
-
-# core_plugin has no settings and ignores them when saved (for the moment)
-def test_core_plugin_settings(client):
-    # write a new setting, and then ovewrite it (core_plugin should ignore this)
-    for fake_value in ["a", "b"]:
-        # save settings
-        fake_settings = {"fake_setting": fake_value}
-        response = client.put("/plugins/settings/core_plugin", json=fake_settings)
-
-        # check immediate response
-        json = response.json()
-        assert response.status_code == 200
-        assert json["name"] == "core_plugin"
-        assert json["value"] == {}
-
-        # get settings back (should be empty as core_plugin does not (yet) accept settings
-        response = client.get("/plugins/settings/core_plugin")
-        json = response.json()
-        assert response.status_code == 200
-        assert json["name"] == "core_plugin"
-        assert json["value"] == {}
-        assert json["schema"] == {}

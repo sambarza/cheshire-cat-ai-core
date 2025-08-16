@@ -2,6 +2,27 @@ import shutil
 from urllib.parse import urlencode
 
 
+def get_core_plugins_ids():
+    return get_core_plugins_info()["ids"]
+
+
+def get_core_plugins_info():
+    return {
+        "ids": {
+            "base_tools",
+            "model_interactions",
+            "rabbit_hole",
+            "vector_memory",
+            "white_rabbit",
+            "why"
+        },
+        "hooks": 5,
+        "tools": 1,
+        "endpoints": 9,
+        "forms": 0
+    }
+
+
 # utility function to communicate with the cat via websocket
 def send_websocket_message(msg, client, user_id="user", query_params=None):
     url = f"/ws/{user_id}"
@@ -55,33 +76,6 @@ def create_mock_plugin_zip(flat: bool):
         root_dir=root_dir,
         base_dir=base_dir,
     )
-
-
-# utility to retrieve embedded tools from endpoint
-def get_procedural_memory_contents(client):
-    params = {"text": "random"}
-    response = client.get("/memory/recall/", params=params)
-    json = response.json()
-    return json["vectors"]["collections"]["procedural"]
-
-
-# utility to retrieve declarative memory contents
-def get_declarative_memory_contents(client):
-    params = {"text": "Something"}
-    response = client.get("/memory/recall/", params=params)
-    assert response.status_code == 200
-    json = response.json()
-    declarative_memories = json["vectors"]["collections"]["declarative"]
-    return declarative_memories
-
-
-# utility to get collections and point count from `GET /memory/collections` in a simpler format
-def get_collections_names_and_point_count(client):
-    response = client.get("/memory/collections")
-    json = response.json()
-    assert response.status_code == 200
-    collections_n_points = {c["name"]: c["vectors_count"] for c in json["collections"]}
-    return collections_n_points
 
 
 def create_new_user(client):

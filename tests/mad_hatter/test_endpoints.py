@@ -1,12 +1,12 @@
 import pytest
 from cat.mad_hatter.decorators import CustomEndpoint
 
+
 def test_endpoints_discovery(mad_hatter_with_mock_plugin):
 
     # discovered endpoints are cached
     mock_plugin_endpoints = mad_hatter_with_mock_plugin.plugins["mock_plugin"].endpoints
-    assert mock_plugin_endpoints == mad_hatter_with_mock_plugin.endpoints
-
+    
     # discovered endpoints
     assert len(mock_plugin_endpoints) == 6
 
@@ -14,6 +14,7 @@ def test_endpoints_discovery(mad_hatter_with_mock_plugin):
     for h in mock_plugin_endpoints:
         assert isinstance(h, CustomEndpoint)
         assert h.plugin_id == "mock_plugin"
+        assert h in mad_hatter_with_mock_plugin.endpoints
 
 
 def test_endpoint_decorator(client, mad_hatter_with_mock_plugin):
@@ -94,16 +95,20 @@ def test_delete_endpoint(client, mad_hatter_with_mock_plugin):
 def test_endpoints_deactivation_or_uninstall(switch_type, mad_hatter_with_mock_plugin): 
 
     # custom endpoints are registered in mad_hatter
-    for h in mad_hatter_with_mock_plugin.endpoints:
+    for h in mad_hatter_with_mock_plugin.plugins["mock_plugin"].endpoints:
         assert isinstance(h, CustomEndpoint)
         assert h.plugin_id == "mock_plugin"
+        assert h in mad_hatter_with_mock_plugin.endpoints
 
     if switch_type == "deactivation":
         # deactivate plugin
         mad_hatter_with_mock_plugin.toggle_plugin("mock_plugin")
+        assert mad_hatter_with_mock_plugin.plugins["mock_plugin"].endpoints == []
     else:
         # uninstall plugin
         mad_hatter_with_mock_plugin.uninstall_plugin("mock_plugin")
+        assert "mock_plugin" not in mad_hatter_with_mock_plugin.plugins.keys()
 
     # no more custom endpoints
-    assert mad_hatter_with_mock_plugin.endpoints == []
+    for e in mad_hatter_with_mock_plugin.endpoints:
+        assert e.plugin_id != "mock_plugin"

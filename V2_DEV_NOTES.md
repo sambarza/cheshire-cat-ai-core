@@ -1,8 +1,7 @@
 
 # Version 2 dev notes
 
-- Most core functionality has been moved to plugins so it can be easily extended, deactivated or totally replaced. See `cat/mad_hatter/core_plugins` to find them.
-
+- Most core functionality has been moved to plugins so it can be easily extended or deactivated. Find them in `cat/core_plugins`.
 - All websocket methods (`send_ws_message`, `send_chat_message`, `send_notification`, `send_error`) must be awaited as they are now async:
 
     ```python
@@ -13,3 +12,9 @@
 - The cat vector memory can be completely deactivated, or some of it, and can be replaced/extended for example with a graph memory. See plugin `vector_memory`
 - `StrayCat.working_memory.history` is not kept in RAM; history construction is delegated to plugins (so you can decide whether to keep it stored client side, cat side or another service side). Plugin `vector_memory` gives a good exapmle on how to do it.
 - conversation history endpoints (GET and POST) have been deleted and there is a new CRUD for chat sessions in core plugin `XXXXXXX`. Convo history can also be passed via ws or http message.
+- plugion can contain tests inside a folder names `tests`. This folder will be ignored by the cat at runtime but tests will be run by `pytest`
+
+
+### Questions
+
+- should core plugins hooks have priority 0 so they go first?

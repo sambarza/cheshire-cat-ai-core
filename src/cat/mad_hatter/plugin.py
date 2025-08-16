@@ -40,6 +40,8 @@ class Plugin:
         # search for .py files in folder
         py_files_path = os.path.join(self._path, "**/*.py")
         self.py_files = glob.glob(py_files_path, recursive=True)
+        # Filter out eventual `tests` folder
+        self.py_files = [f for f in self.py_files if "/tests/" not in f]
 
         if len(self.py_files) == 0:
             raise Exception(

@@ -186,4 +186,6 @@ def mad_hatter_with_mock_plugin(client):  # client here injects the monkeypatche
 
     yield mad_hatter
 
-    mad_hatter.uninstall_plugin("mock_plugin")
+    # remove plugin (unless the test already removed it)
+    if mad_hatter.plugin_exists("mock_plugin"):
+        mad_hatter.uninstall_plugin("mock_plugin")

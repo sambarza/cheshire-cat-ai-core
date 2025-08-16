@@ -22,7 +22,6 @@ from cat.memory.long_term_memory import LongTermMemory
 from cat.agents.main_agent import MainAgent
 from cat.log import log
 from cat.mad_hatter.mad_hatter import MadHatter
-from cat.rabbit_hole import RabbitHole
 from cat.utils import singleton
 from cat import utils
 from cat.cache.cache_manager import CacheManager
@@ -87,9 +86,6 @@ class CheshireCat:
 
         # Main agent instance (for reasoning)
         self.main_agent = MainAgent()
-
-        # Rabbit Hole Instance
-        self.rabbit_hole = RabbitHole(self)  # :(
 
         # Cache for sessions / working memories et al.
         self.cache = CacheManager().cache
@@ -294,7 +290,7 @@ class CheshireCat:
 
     def activate_endpoints(self):
         for endpoint in self.mad_hatter.endpoints:
-            if endpoint.plugin_id in self.mad_hatter.active_plugins:
+            if endpoint.plugin_id in self.mad_hatter.get_active_plugins():
                 endpoint.activate(self.fastapi_app)
 
 

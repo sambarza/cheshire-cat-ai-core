@@ -6,6 +6,7 @@ from fastapi import Body, APIRouter, HTTPException, UploadFile
 from cat.log import log
 from cat.mad_hatter.registry import registry_search_plugins, registry_download_plugin
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
+from cat import utils
 
 from pydantic import ValidationError
 
@@ -42,7 +43,7 @@ async def get_available_plugins(
         registry_plugins_index[plugin_url] = p
 
     # get active plugins
-    active_plugins = cat.mad_hatter.load_active_plugins_from_db()
+    active_plugins = cat.mad_hatter.get_active_plugins()
 
     # list installed plugins' manifest
     installed_plugins = []
@@ -246,7 +247,7 @@ async def get_plugin_details(
     if not cat.mad_hatter.plugin_exists(plugin_id):
         raise HTTPException(status_code=404, detail={"error": "Plugin not found"})
 
-    active_plugins = cat.mad_hatter.load_active_plugins_from_db()
+    active_plugins = cat.mad_hatter.get_active_plugins()
 
     plugin = cat.mad_hatter.plugins[plugin_id]
 
@@ -270,13 +271,9 @@ async def delete_plugin(
 ) -> Dict:
     """Physically remove plugin."""
 
-    if not cat.mad_hatter.plugin_exists(plugin_id):
-        raise HTTPException(status_code=404, detail={"error": "Item not found"})
-    
-    if "mad_hatter/core_plugins" in cat.mad_hatter.plugins[plugin_id].path:
-        raise HTTPException(status_code=400, detail={"error": "Cannot remove a core plugin. Just deactivate it."})
-
-    # remove folder, hooks and tools
-    cat.mad_hatter.uninstall_plugin(plugin_id)
-
-    return {"deleted": plugin_id}
+    try:
+        # remove folder, hooks and tools
+        cat.mad_hatter.uninstall_plugin(plugin_id)
+        return {"deleted": plugin_id}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail={"error": str(e)})

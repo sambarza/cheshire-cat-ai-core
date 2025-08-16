@@ -7,9 +7,10 @@ class CatHook:
         self.function = func
         self.name = name
         self.priority = priority
+        self.plugin_id = None
 
     def __repr__(self) -> str:
-        return f"CatHook(name={self.name}, priority={self.priority})"
+        return f"CatHook(plugin={self.plugin_id}, name={self.name}, priority={self.priority})"
 
 
 # @hook decorator. Any function in a plugin decorated by @hook and named properly (among list of available hooks) is used by the Cat

@@ -1,4 +1,4 @@
-
+from tests.utils import get_core_plugins_ids
 
 def test_list_plugins(client):
     response = client.get("/plugins")
@@ -12,10 +12,11 @@ def test_list_plugins(client):
     for key in ["query"]:  # ["query", "author", "tag"]:
         assert key in json["filters"].keys()
 
-    # installed
-    assert json["installed"][0]["id"] == "core_plugin"
-    assert isinstance(json["installed"][0]["active"], bool)
-    assert json["installed"][0]["active"]
+    # installed plugins
+    for p in json["installed"]:
+        assert p["id"] in get_core_plugins_ids()
+        assert isinstance(p["active"], bool)
+        assert p["active"]
 
     # registry (see more registry tests in `./test_plugins_registry.py`)
     assert isinstance(json["registry"], list)
@@ -23,13 +24,13 @@ def test_list_plugins(client):
 
 
 def test_get_plugin_id(client):
-    response = client.get("/plugins/core_plugin")
+    response = client.get("/plugins/vector_memory") # one of the core plugins
 
     json = response.json()
 
     assert "data" in json.keys()
     assert json["data"] is not None
-    assert json["data"]["id"] == "core_plugin"
+    assert json["data"]["id"] == "vector_memory"
     assert isinstance(json["data"]["active"], bool)
     assert json["data"]["active"]
 

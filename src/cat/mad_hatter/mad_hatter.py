@@ -4,15 +4,13 @@ import shutil
 import inspect
 from copy import deepcopy
 from typing import List, Dict
+from pathlib import Path
 
 from cat.log import log
-
 import cat.utils as utils
-from cat.utils import singleton, get_base_path
-
+from cat.utils import singleton
 from cat.db import crud
 from cat.db.models import Setting
-
 from cat.mad_hatter.plugin_extractor import PluginExtractor
 from cat.mad_hatter.plugin import Plugin
 from cat.mad_hatter.decorators.hook import CatHook
@@ -35,7 +33,11 @@ class MadHatter:
     # - exposes functionality to the cat
 
     def __init__(self):
-        self.plugins: Dict[str, Plugin] = {}  # plugins dictionary
+
+        # plugins dictionary, contains all of them (active and inactive)
+        # it is kept in sync with the contents of plugin folders
+        # for a list of active plugins (stored in db), see MadHatter.get_active_plugins
+        self.plugins: Dict[str, Plugin] = {}
 
         self.hooks: Dict[
             str, List[CatHook]
@@ -43,13 +45,16 @@ class MadHatter:
         self.tools: List[CatTool] = []  # list of active plugins tools
         self.forms: List[CatForm] = []  # list of active plugins forms
         self.endpoints: List[CustomEndpoint] = []  # list of active plugins endpoints
-        
-        self.active_plugins: List[str] = []
 
+        # plugins are found in the `cat/core_plugins` and `cat/plugins` folder
         self.plugins_folder = utils.get_plugins_path()
+        self.core_plugins_folder = utils.get_core_plugins_path()
 
         # this callback is set from outside to be notified when plugin sync is finished
         self.on_finish_plugins_sync_callback = lambda: None
+
+        # at first run, core plugins must be active by default
+        self.set_default_active_plugins()
 
         self.find_plugins()
 
@@ -72,20 +77,22 @@ class MadHatter:
 
     def uninstall_plugin(self, plugin_id):
 
-        # TODOV2: core_plugins can be deactivated but not uninstalled
-        # (endpoint already fixed, should also be forced here)
+        # plugin exists and it is not a core plugin
+        if not self.plugin_exists(plugin_id):
+            raise Exception(f"Plugin {plugin_id} is not installed")
+        if utils.get_core_plugins_path() in self.plugins[plugin_id].path:
+            raise Exception("Cannot remove a core plugin. Just deactivate it.")
 
-        if self.plugin_exists(plugin_id):
-            # deactivate plugin if it is active (will sync cache)
-            if plugin_id in self.active_plugins:
-                self.toggle_plugin(plugin_id)
+        # deactivate plugin if it is active (will sync cache)
+        if plugin_id in self.get_active_plugins():
+            self.toggle_plugin(plugin_id)
 
-            # remove plugin from cache
-            plugin_path = self.plugins[plugin_id].path
-            del self.plugins[plugin_id]
+        # remove plugin from cache
+        plugin_path = self.plugins[plugin_id].path
+        del self.plugins[plugin_id]
 
-            # remove plugin folder
-            shutil.rmtree(plugin_path)
+        # remove plugin folder
+        shutil.rmtree(plugin_path)
 
     # discover all plugins
     def find_plugins(self):
@@ -93,18 +100,14 @@ class MadHatter:
         # and stored in a dictionary plugin_id -> plugin_obj
         self.plugins = {}
 
-        self.active_plugins = self.load_active_plugins_from_db()
+        # active plugins ids (stored in db)
+        active_plugins = self.get_active_plugins()
 
-        # plugins are found in the plugins folder,
-        # plus the default core plugin s(where default hooks and tools are defined)
-        core_plugins_folder = get_base_path() + "mad_hatter/core_plugins/"
-
-        # plugin folder is "cat/plugins/" in production, "tests/mocks/mock_plugin_folder/" during tests
         all_plugin_folders = \
-            glob.glob(f"{core_plugins_folder}*/") + glob.glob(f"{self.plugins_folder}*/")
+            glob.glob(f"{self.core_plugins_folder}*/") + glob.glob(f"{self.plugins_folder}*/")
 
         log.info("Active Plugins:")
-        log.info(self.active_plugins)
+        log.info(active_plugins)
 
         # discover plugins, folder by folder
         for folder in all_plugin_folders:
@@ -112,12 +115,12 @@ class MadHatter:
 
             plugin_id = os.path.basename(os.path.normpath(folder))
 
-            if plugin_id in self.active_plugins:
+            if plugin_id in active_plugins:
                 try:
                     self.plugins[plugin_id].activate()
                 except Exception as e:
                     # Couldn't activate the plugin -> Deactivate it
-                    if plugin_id in self.active_plugins:
+                    if plugin_id in active_plugins:
                         self.toggle_plugin(plugin_id)
                     raise e
 
@@ -144,9 +147,11 @@ class MadHatter:
         self.forms = []
         self.endpoints = []
 
+        active_plugins = self.get_active_plugins()
+
         for _, plugin in self.plugins.items():
             # load hooks, tools, forms and endpoints from active plugins
-            if plugin.id in self.active_plugins:
+            if plugin.id in active_plugins:
                 # cache tools
                 self.tools += plugin.tools
 
@@ -168,18 +173,25 @@ class MadHatter:
         self.on_finish_plugins_sync_callback()
 
     # check if plugin exists
-    def plugin_exists(self, plugin_id):
+    def plugin_exists(self, plugin_id) -> bool:
         return plugin_id in self.plugins.keys()
+    
+    def get_core_plugins_ids(self) -> list[str]:
+        path = Path( utils.get_core_plugins_path() )
+        core_plugins = [p.name for p in path.iterdir() if p.is_dir()]
+        return core_plugins
 
-    def load_active_plugins_from_db(self):
+    def set_default_active_plugins(self):
+        # if active plugins are not registerd in db, we set the default ones (cat/core_plugins)
         active_plugins = crud.get_setting_by_name("active_plugins")
-
         if active_plugins is None:
-            active_plugins = []
-        else:
-            active_plugins = active_plugins["value"]
+            self.save_active_plugins_to_db(
+                self.get_core_plugins_ids()
+            )
 
-        return active_plugins
+    def get_active_plugins(self):
+        active_plugins = crud.get_setting_by_name("active_plugins")
+        return active_plugins["value"]
 
     def save_active_plugins_to_db(self, active_plugins):
         new_setting = {"name": "active_plugins", "value": active_plugins}
@@ -188,8 +200,11 @@ class MadHatter:
 
     # activate / deactivate plugin
     def toggle_plugin(self, plugin_id):
+
+        active_plugins = self.get_active_plugins()
+
         if self.plugin_exists(plugin_id):
-            plugin_is_active = plugin_id in self.active_plugins
+            plugin_is_active = plugin_id in active_plugins
 
             # update list of active plugins
             if plugin_is_active:
@@ -198,7 +213,7 @@ class MadHatter:
                 # Deactivate the plugin
                 self.plugins[plugin_id].deactivate()
                 # Remove the plugin from the list of active plugins
-                self.active_plugins.remove(plugin_id)
+                active_plugins.remove(plugin_id)
             else:
                 log.warning(f"Toggle plugin {plugin_id}: Activate")
 
@@ -210,16 +225,16 @@ class MadHatter:
                     raise e
 
                 # Add the plugin in the list of active plugins
-                self.active_plugins.append(plugin_id)
+                active_plugins.append(plugin_id)
 
             # update DB with list of active plugins, delete duplicate plugins
-            self.save_active_plugins_to_db(list(set(self.active_plugins)))
+            self.save_active_plugins_to_db(list(set(active_plugins)))
 
             # update cache and embeddings
             self.sync_hooks_tools_and_forms()
 
         else:
-            raise Exception("Plugin {plugin_id} not present in plugins folder")
+            raise Exception(f"Plugin {plugin_id} not present in plugins folder")
 
     # execute requested hook
     def execute_hook(self, hook_name, *args, cat):
