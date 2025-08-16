@@ -66,6 +66,7 @@ def clean_up_mocks():
         "tests/mocks/mock_plugin_folder/mock_plugin",
         "tests/mocks/empty_folder",
         "tmp_test",
+        "tmp_cache"
     ]
     for tbr in to_be_removed:
         if os.path.exists(tbr):
