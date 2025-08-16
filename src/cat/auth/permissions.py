@@ -5,6 +5,7 @@ from fastapi import Depends
 
 from cat.utils import BaseModelDict
 
+
 class AuthResource(str, Enum):
     STATUS = "STATUS"
     MEMORY = "MEMORY"
@@ -17,6 +18,7 @@ class AuthResource(str, Enum):
     UPLOAD = "UPLOAD"
     PLUGINS = "PLUGINS"
     STATIC = "STATIC"
+
 
 class AuthPermission(str, Enum):
     WRITE = "WRITE"
@@ -41,10 +43,23 @@ def get_base_permissions() -> Dict[AuthResource, List[AuthPermission]]:
     Returns the default permissions for new users (chat only!).
     """
     return {
-        "STATUS": ["READ"],
-        "MEMORY": ["READ", "LIST"],
-        "CONVERSATION": ["WRITE", "EDIT", "LIST", "READ", "DELETE"],
-        "STATIC": ["READ"],
+        AuthResource.STATUS: [
+            AuthPermission.READ
+        ],
+        AuthResource.MEMORY: [
+            AuthPermission.READ,
+            AuthPermission.LIST
+        ],
+        AuthResource.CONVERSATION: [
+            AuthPermission.WRITE,
+            AuthPermission.EDIT,
+            AuthPermission.LIST,
+            AuthPermission.READ,
+            AuthPermission.DELETE
+        ],
+        AuthResource.STATIC: [
+            AuthPermission.READ
+        ],
     }
 
 
@@ -70,7 +85,7 @@ class AuthUserInfo(BaseModelDict):
     extra: BaseModelDict = {}
 
 
-def check_permissions(resource: AuthResource, permission: AuthPermission):
+def check_permissions(resource: AuthResource | str, permission: AuthPermission | str):
     """
     Helper function to inject a StrayCat into endpoints after checking for required permissions.
 
@@ -87,6 +102,7 @@ def check_permissions(resource: AuthResource, permission: AuthPermission):
         User session object if auth is successfull, None otherwise.
     """
 
+    # TODOV2: allow custom permissions for custom endpoints??
 
     # import here to avoid circular imports
     from cat.auth.connection import HTTPAuth
