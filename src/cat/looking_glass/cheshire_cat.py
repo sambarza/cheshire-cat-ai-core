@@ -67,7 +67,7 @@ class CheshireCat:
         self.fastapi_app = fastapi_app
 
         # long term memory
-        self.memory = LongTermMemory()
+        self.load_memory()
 
         # load AuthHandler
         self.load_auth()
@@ -92,6 +92,10 @@ class CheshireCat:
 
         # allows plugins to do something after the cat bootstrap is complete
         self.mad_hatter.execute_hook("after_cat_bootstrap", cat=self)
+
+    def load_memory(self):
+            # TODOV2: LTM should run hooks and should subscribe to embedder and mad_hatter hooks
+            self.memory = LongTermMemory()
 
     def load_natural_language(self):
         """Load Natural Language related objects.

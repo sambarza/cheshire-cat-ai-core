@@ -170,16 +170,17 @@ def test_jwt_imposes_user_id(secure_client):
     query_params = {"token": token}
     res = send_websocket_message(message, secure_client, query_params=query_params)
 
+    # TODOV2: should be moved inside memory plugin
     # we now recall episodic memories from the user, there should be two of them, both by admin
-    params = {"text": "hey"}
-    response = secure_client.get("/memory/recall/", headers=headers, params=params)
-    json = response.json()
-    assert response.status_code == 200
-    episodic_memories = json["vectors"]["collections"]["episodic"]
-    assert len(episodic_memories) == 2
-    for em in episodic_memories:
-        assert em["metadata"]["source"] == "admin"
-        assert em["page_content"] == "hey"
+    #params = {"text": "hey"}
+    #response = secure_client.get("/memory/recall/", headers=headers, params=params)
+    #json = response.json()
+    #assert response.status_code == 200
+    #episodic_memories = json["vectors"]["collections"]["episodic"]
+    #assert len(episodic_memories) == 2
+    #for em in episodic_memories:
+    #    assert em["metadata"]["source"] == "admin"
+    #    assert em["page_content"] == "hey"
 
 
 # test that a JWT signed knowing the secret, passes

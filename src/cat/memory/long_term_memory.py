@@ -8,6 +8,8 @@ class LongTermMemory:
 
     """
 
+    # TODOV2: subscribe to embedder changes via a new hook
+
     async def store(self, cat, item=None):
         """Store something in long term memory"""
         return # TODOV2
