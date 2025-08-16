@@ -15,6 +15,12 @@
 - plugion can contain tests inside a folder names `tests`. This folder will be ignored by the cat at runtime but tests will be run by `pytest`
 
 
-### Questions
+## TODO
+
+- MCP support
+- update plugins so they attach to hooks exposed by core and provide their own hooks for other plugins
+
+
+## Questions
 
 - should core plugins hooks have priority 0 so they go first?
