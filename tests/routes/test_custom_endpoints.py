@@ -9,8 +9,8 @@ custom_endpoints = [
     ("POST", "/tests/crud", {"name": "the cat", "description": "it's magic"}),
     ("PUT", "/tests/crud/123", {"name": "the cat", "description": "it's magic"}),
     ("DELETE", "/tests/crud/123", None),
+    ("GET", "/tests/permission", None),
 ]
-
 
 def test_custom_endpoint_base(client, just_installed_plugin):
 
@@ -87,8 +87,26 @@ def test_custom_endpoints_on_plugin_deactivation_or_uninstall(
         assert response.status_code == 404
 
 
-@pytest.mark.parametrize("resource", ["PLUGINS", "LLM"])
-@pytest.mark.parametrize("permission", ["LIST", "DELETE"])
+def test_custom_endpoint_security(just_installed_plugin, secure_client):
+
+    n_open = 0
+    n_protected = 0
+    for verb, endpoint, payload in custom_endpoints:
+        response = secure_client.request(verb, endpoint, json=payload)
+        if "/endpoint" in endpoint:
+            # open endpoints (no StrayCat dependency)
+            assert response.status_code == 200
+            n_open += 1
+        else:
+            # closed endpoints (require StrayCat)
+            assert response.status_code == 403
+            n_protected += 1
+
+    assert n_open == 2
+    assert n_protected == 5 
+
+@pytest.mark.parametrize("resource", ["PLUGINS", "LLM", "CUSTOMRESOURCE"])
+@pytest.mark.parametrize("permission", ["LIST", "DELETE", "CUSTOMPERMISSION"])
 def test_custom_endpoint_permissions(resource, permission, client, just_installed_plugin):
 
     # create user with permissions
@@ -106,23 +124,21 @@ def test_custom_endpoint_permissions(resource, permission, client, just_installe
     response = client.post("/auth/token", json={"username": "Alice", "password": "Alice"})
     assert response.status_code == 200
     token = response.json()["access_token"]
+
+    # use custom endpoint with no permissions checks
+    response = client.get("/custom/endpoint", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
     
-    # use endpoint (requires PLUGINS LIST)
+    # use custom endpoint requiring PLUGINS LIST)
     response = client.get("/tests/crud", headers={"Authorization": f"Bearer {token}"})
     if resource == "PLUGINS" and permission == "LIST":
         assert response.status_code == 200
     else:
         assert response.status_code == 403
 
-
-def test_custom_endpoint_security(just_installed_plugin, secure_client):
-
-    for verb, endpoint, payload in custom_endpoints:
-        response = secure_client.request(verb, endpoint, json=payload)
-        if "/endpoint" in endpoint:
-            # open endpoints (no StrayCat dependency)
-            assert response.status_code == 200
-        else:
-            # closed endpoints (require StrayCat)
-            assert response.status_code == 403
-
+    # use endpoint requiring CUSTOMRESOURCE CUSTOMPERMISSION)
+    response = client.get("/tests/permission", headers={"Authorization": f"Bearer {token}"})
+    if resource == "CUSTOMRESOURCE" and permission == "CUSTOMPERMISSION":
+        assert response.status_code == 200
+    else:
+        assert response.status_code == 403

@@ -7,7 +7,8 @@ import cat.utils as utils
 from cat.mad_hatter.mad_hatter import MadHatter, Plugin
 from cat.mad_hatter.decorators import CatHook, CatTool
 
-from tests.utils import create_mock_plugin_zip, get_core_plugins_info, get_core_plugins_ids
+from tests.utils import create_mock_plugin_zip, get_core_plugins_info, \
+    get_core_plugins_ids, get_mock_plugin_info
 
 
 # this function will be run before each test function
@@ -34,7 +35,7 @@ def test_instantiation_discovery(mad_hatter):
         assert cp in mad_hatter.get_active_plugins()
 
     # finds hooks
-    assert len(mad_hatter.hooks.keys()) == 4
+    assert len(mad_hatter.hooks.keys()) == get_core_plugins_info()["unique_hooks"]
     for hook_name, hooks_list in mad_hatter.hooks.items():
         assert len(hooks_list) > 0
         h = hooks_list[0]
@@ -85,10 +86,10 @@ def test_plugin_install(mad_hatter: MadHatter, plugin_is_flat):
     assert mad_hatter.plugins["mock_plugin"].active
 
     # plugin contains cat decorators
-    assert len(mad_hatter.plugins["mock_plugin"].hooks) == 3
-    assert len(mad_hatter.plugins["mock_plugin"].tools) == 1
-    assert len(mad_hatter.plugins["mock_plugin"].forms) == 1
-    assert len(mad_hatter.plugins["mock_plugin"].endpoints) == 6
+    assert len(mad_hatter.plugins["mock_plugin"].hooks) == get_mock_plugin_info()["hooks"]
+    assert len(mad_hatter.plugins["mock_plugin"].tools) == get_mock_plugin_info()["tools"]
+    assert len(mad_hatter.plugins["mock_plugin"].forms) == get_mock_plugin_info()["forms"]
+    assert len(mad_hatter.plugins["mock_plugin"].endpoints) == get_mock_plugin_info()["endpoints"]
 
     # tool found
     new_tool = mad_hatter.plugins["mock_plugin"].tools[0]

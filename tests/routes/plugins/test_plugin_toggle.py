@@ -1,18 +1,14 @@
-from tests.utils import get_core_plugins_ids
+from tests.utils import get_core_plugins_ids, get_mock_plugin_info
 
 def check_active_plugin_properties(plugin):
     assert plugin["id"] == "mock_plugin"
-    assert len(plugin["hooks"]) == 3
-    assert len(plugin["tools"]) == 1
-    assert len(plugin["forms"]) == 1
-    assert len(plugin["endpoints"]) == 6
-
+    for k in ["hooks", "tools", "forms", "endpoints"]:
+        assert len(plugin[k]) == get_mock_plugin_info()[k]
+    
 def check_unactive_plugin_properties(plugin):
     assert plugin["id"] == "mock_plugin"
-    assert len(plugin["hooks"]) == 0
-    assert len(plugin["tools"]) == 0
-    assert len(plugin["forms"]) == 0
-    assert len(plugin["endpoints"]) == 0
+    for k in ["hooks", "tools", "forms", "endpoints"]:
+        assert len(plugin[k]) == 0
 
 
 def test_toggle_non_existent_plugin(client, just_installed_plugin):

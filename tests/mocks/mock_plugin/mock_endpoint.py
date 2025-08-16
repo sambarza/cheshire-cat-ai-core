@@ -31,13 +31,19 @@ def test_post(
 def test_put(
     item_id: int,
     item: Item,
-    cat=check_permissions("PLUGINS", "WRITE")
+    cat=check_permissions("PLUGINS", "WRITE") # string notation
 ):
     return {"id": item_id, "name": item.name, "description": item.description}
 
 @endpoint.delete(path="/crud/{item_id}", prefix="/tests", tags=["Tests"]) 
 def test_delete(
     item_id: int,
-    cat=check_permissions("PLUGINS", "DELETE")
+    cat=check_permissions("PLUGINS", "DELETE") # string notation
 ):
     return {"result": "ok", "deleted_id": item_id}
+
+@endpoint.get(path="/permission", prefix="/tests", tags=["Tests"]) 
+def test_custom_permissions(
+    cat=check_permissions("CUSTOMRESOURCE", "CUSTOMPERMISSION") # totally new permissions
+):
+    return {"result": "ok"}

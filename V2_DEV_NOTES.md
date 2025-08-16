@@ -13,6 +13,7 @@
 - `StrayCat.working_memory.history` is not kept in RAM; history construction is delegated to plugins (so you can decide whether to keep it stored client side, cat side or another service side). Plugin `vector_memory` gives a good exapmle on how to do it.
 - conversation history endpoints (GET and POST) have been deleted and there is a new CRUD for chat sessions in core plugin `XXXXXXX`. Convo history can also be passed via ws or http message.
 - plugion can contain tests inside a folder names `tests`. This folder will be ignored by the cat at runtime but tests will be run by `pytest`
+- it is now possible to have `@endpoint` with custom resource and permissions. They can be defined on the endpoint and must be matched by user permissions (which can be set via AuthHandler or users REST API)
 
 
 ## TODO

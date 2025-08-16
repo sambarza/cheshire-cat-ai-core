@@ -76,7 +76,7 @@ class AuthUserInfo(BaseModelDict):
     name: str
 
     # permissions
-    permissions: Dict[AuthResource, List[AuthPermission]] = get_base_permissions()
+    permissions: Dict[AuthResource, List[AuthPermission]] | Dict[str, List[str]] = get_base_permissions()
 
     # only put in here what you are comfortable to pass plugins:
     # - profile data
@@ -102,12 +102,11 @@ def check_permissions(resource: AuthResource | str, permission: AuthPermission |
         User session object if auth is successfull, None otherwise.
     """
 
-    # TODOV2: allow custom permissions for custom endpoints??
-
     # import here to avoid circular imports
     from cat.auth.connection import HTTPAuth
     return Depends(HTTPAuth(
-        # explicit convert to Enum
-        resource = AuthResource(resource),
-        permission = AuthPermission(permission),
+        # in case strings are passed, we do not force to the enum, to allow custom permissions
+        # (which in any case are to be matched in the endpoint)
+        resource = resource, 
+        permission = permission,
     ))

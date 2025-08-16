@@ -6,6 +6,7 @@ import subprocess
 from inspect import isfunction
 
 from tests.conftest import clean_up_mocks
+from tests.utils import get_mock_plugin_info
 from tests.mocks.mock_plugin.mock_form import PizzaOrder, PizzaForm
 
 from cat.mad_hatter.mad_hatter import Plugin
@@ -69,7 +70,7 @@ def test_activate_plugin(plugin):
     assert plugin.active is True
 
     # hooks
-    assert len(plugin.hooks) == 3
+    assert len(plugin.hooks) == get_mock_plugin_info()["hooks"]
     for hook in plugin.hooks:
         assert isinstance(hook, CatHook)
         assert hook.plugin_id == "mock_plugin"
@@ -85,7 +86,7 @@ def test_activate_plugin(plugin):
             assert hook.priority == 1  # default priority
 
     # tools
-    assert len(plugin.tools) == 1
+    assert len(plugin.tools) == get_mock_plugin_info()["tools"]
     tool = plugin.tools[0]
     assert isinstance(tool, CatTool)
     assert tool.plugin_id == "mock_plugin"
@@ -99,13 +100,13 @@ def test_activate_plugin(plugin):
     assert "mock tool example 2" in tool.start_examples
 
     # endpoints
-    assert len(plugin.endpoints) == 6
+    assert len(plugin.endpoints) == get_mock_plugin_info()["endpoints"]
     for endpoint in plugin.endpoints:
         assert isinstance(endpoint, CustomEndpoint)
         assert endpoint.plugin_id == "mock_plugin"
 
     # forms
-    assert len(plugin.forms) == 1
+    assert len(plugin.forms) == get_mock_plugin_info()["forms"]
     form = plugin.forms[0]
     assert form == PizzaForm
     assert form.model_class == PizzaOrder

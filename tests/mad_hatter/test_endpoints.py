@@ -1,4 +1,5 @@
 import pytest
+from tests.utils import get_mock_plugin_info
 from cat.mad_hatter.decorators import CustomEndpoint
 
 
@@ -8,7 +9,7 @@ def test_endpoints_discovery(mad_hatter_with_mock_plugin):
     mock_plugin_endpoints = mad_hatter_with_mock_plugin.plugins["mock_plugin"].endpoints
     
     # discovered endpoints
-    assert len(mock_plugin_endpoints) == 6
+    assert len(mock_plugin_endpoints) == get_mock_plugin_info()["endpoints"]
 
     # basic properties
     for h in mock_plugin_endpoints:
@@ -30,6 +31,7 @@ def test_endpoint_decorator(client, mad_hatter_with_mock_plugin):
     assert endpoint.tags == ["Custom Endpoints"]
     assert endpoint.function() == {"result":"endpoint default prefix"}
 
+
 def test_endpoint_decorator_prefix(client, mad_hatter_with_mock_plugin):
     
     for e in mad_hatter_with_mock_plugin.endpoints:
@@ -41,6 +43,7 @@ def test_endpoint_decorator_prefix(client, mad_hatter_with_mock_plugin):
     assert endpoint.path == "/endpoint"
     assert endpoint.methods == {"GET"}
     assert endpoint.tags == ["Tests"]
+
 
 def test_get_endpoint(client, mad_hatter_with_mock_plugin):
     
@@ -54,6 +57,7 @@ def test_get_endpoint(client, mad_hatter_with_mock_plugin):
     assert endpoint.methods == {"GET"}
     assert endpoint.tags == ["Tests"]
 
+
 def test_post_endpoint(client, mad_hatter_with_mock_plugin):
 
     for e in mad_hatter_with_mock_plugin.endpoints:
@@ -65,6 +69,7 @@ def test_post_endpoint(client, mad_hatter_with_mock_plugin):
     assert endpoint.prefix == "/tests"  
     assert endpoint.methods == {"POST"}
     assert endpoint.tags == ["Tests"]
+
 
 def test_put_endpoint(client, mad_hatter_with_mock_plugin):
 
@@ -78,6 +83,7 @@ def test_put_endpoint(client, mad_hatter_with_mock_plugin):
     assert endpoint.methods == {"PUT"}
     assert endpoint.tags == ["Tests"]
 
+
 def test_delete_endpoint(client, mad_hatter_with_mock_plugin):
 
     for e in mad_hatter_with_mock_plugin.endpoints:
@@ -88,6 +94,19 @@ def test_delete_endpoint(client, mad_hatter_with_mock_plugin):
     assert endpoint.name == "/tests/crud/{item_id}"
     assert endpoint.prefix == "/tests"  
     assert endpoint.methods == {"DELETE"}
+    assert endpoint.tags == ["Tests"]
+
+
+def test_custom_permissions_endpoint(client, mad_hatter_with_mock_plugin):
+
+    for e in mad_hatter_with_mock_plugin.endpoints:
+        if e.path == "/permission" and "GET" in e.methods:
+            endpoint = e
+            break
+    
+    assert endpoint.name == "/tests/permission"
+    assert endpoint.prefix == "/tests"  
+    assert endpoint.methods == {"GET"}
     assert endpoint.tags == ["Tests"]
 
 

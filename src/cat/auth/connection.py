@@ -27,8 +27,8 @@ class ConnectionAuth(ABC):
 
     def __init__(
             self,
-            resource: AuthResource,
-            permission: AuthPermission):
+            resource: AuthResource | str,
+            permission: AuthPermission | str):
         
         self.resource = resource
         self.permission = permission

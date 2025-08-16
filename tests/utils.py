@@ -17,9 +17,20 @@ def get_core_plugins_info():
             "why"
         },
         "hooks": 5,
+        "unique_hooks": 4,
         "tools": 1,
         "endpoints": 9,
         "forms": 0
+    }
+
+
+def get_mock_plugin_info():
+    return {
+        "id": "mock_plugin",
+        "hooks": 3,
+        "tools": 1,
+        "forms": 1,
+        "endpoints": 7
     }
 
 
