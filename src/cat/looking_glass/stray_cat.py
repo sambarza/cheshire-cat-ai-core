@@ -16,7 +16,7 @@ from cat.auth.permissions import AuthUserInfo
 from cat.looking_glass.cheshire_cat import CheshireCat
 from cat.looking_glass.callbacks import NewTokenHandler
 from cat.memory.working_memory import WorkingMemory
-from cat.convo.messages import Message, CatMessage, UserMessage
+from cat.convo.messages import ChatRequest, ChatResponse, ChatMessage
 from cat.mad_hatter.decorators import CatTool
 from cat.agents import AgentOutput
 from cat.cache.cache_item import CacheItem
@@ -40,6 +40,9 @@ class StrayCat:
     user_data : AuthUserInfo
         User data object containing user information.
     """
+
+    chat_request: ChatRequest | None = None
+    chat_response: ChatResponse | None = None
 
     working_memory: WorkingMemory
     """State machine containing the conversation state, acting as a simple dictionary / object.
@@ -152,7 +155,7 @@ class StrayCat:
         else:
             await self.__send_ws_json({"type": msg_type, "content": content})
 
-    async def send_chat_message(self, message: str | CatMessage, save=False):
+    async def send_chat_message(self, message: str | ChatResponse, save=False):
         """Sends a chat message to the user using the active WebSocket connection.  
         In case there is no connection the message is skipped and a warning is logged
 
@@ -174,12 +177,12 @@ class StrayCat:
         """
 
         if isinstance(message, str):
-            message = CatMessage(text=message, user_id=self.user_id)
+            message = ChatResponse(text=message, user_id=self.user_id)
 
-        if save:
-            self.working_memory.update_history(
-                message
-            )
+        #if save:
+        #    self.working_memory.update_history(
+        #        message
+        #    )
 
         await self.__send_ws_json(message.model_dump())
 
@@ -239,7 +242,7 @@ class StrayCat:
             system_prompt: str,
             prompt_variables: dict = {},
             use_chat_history: bool = False,
-            messages: list[Message] = [],
+            messages: list[ChatMessage] = [],
             tools: list[CatTool] = [], # TODOV2
             model: str | None = None,  # TODOV2
             stream: bool = False,
@@ -300,9 +303,8 @@ class StrayCat:
             messages=[
                 SystemMessagePromptTemplate.from_template(
                     template=system_prompt
-                ),
-                *(self.working_memory.langchainfy_chat_history()), # TODOV2: use `messages`
-            ]
+                )
+            ] + [m.langchainfy() for m in messages]
         )
 
         chain = (
@@ -313,14 +315,15 @@ class StrayCat:
             | StrOutputParser()
         )
 
-        output = chain.invoke(
+        output = await chain.ainvoke(
             prompt_variables,
             config=RunnableConfig(callbacks=callbacks)
         )
 
         return output
+    
 
-    async def __call__(self, message_dict):
+    async def __call__(self, message_request: ChatRequest) -> ChatResponse:
         """Run the conversation turn.
 
         This method is called on the user's message received from the client.  
@@ -328,48 +331,39 @@ class StrayCat:
 
         Parameters
         ----------
-        message_dict : dict
+        message_request : ChatRequest
             Dictionary received from the client via http or websocket.
 
         Returns
         -------
-        final_output : CatMessage
-            CatMessage object, the Cat's answer to be sent back to the client.
+        final_output : ChatResponse
+            ChatResponse object, the Cat's answer to be sent back to the client.
         """
 
-        # Impose user_id as the one authenticated
-        # (ws message may contain a fake id)
-        message_dict["user_id"] = self.user_id
 
-        # Parse websocket message into UserMessage obj
-        user_message = UserMessage.model_validate(message_dict)
-        log.info(user_message)
+        # Both request and response are available during the whole flow
+        self.chat_request = message_request
+        self.chat_response = ChatResponse(
+            user_id=self.user_id,
+            text="meow"
+        )
 
-        ### setup working memory for this convo turn
-        # latest user message
-        self.working_memory.user_message_json = user_message
+        log.info(self.chat_request)
 
         # Run a totally custom reply (skips all the side effects of the framework)
         fast_reply = self.mad_hatter.execute_hook(
             "fast_reply", {}, cat=self
         )
-        if isinstance(fast_reply, CatMessage):
+        if fast_reply != {}: # TODOV2: dunno if this breaks pydantic validation on the output
             return fast_reply
-        if isinstance(fast_reply, dict) and "output" in fast_reply:
-            return CatMessage(
-                user_id=self.user_id, text=str(fast_reply["output"])
-            )
 
         # hook to modify/enrich user input
-        self.working_memory.user_message_json = self.mad_hatter.execute_hook(
-            "before_cat_reads_message", self.working_memory.user_message_json, cat=self
+        # TODOV2: shuold be compatible with the old `user_message_json`
+        self.chat_request = self.mad_hatter.execute_hook(
+            "before_cat_reads_message", self.chat_request, cat=self
         )
 
-        # update conversation history (Human turn)
-        # TODOV2: what if history is passed from outside
-        self.working_memory.update_history(
-            self.working_memory.user_message_json
-        )
+        log.info(self.chat_request)
 
         # recall episodic and declarative memories from vector collections
         #   and store them in working_memory
@@ -408,7 +402,8 @@ class StrayCat:
         log.info(agent_output)
         
         # prepare final cat message
-        final_output = CatMessage(
+        # TODOV2: makes no sense, the agent itself can edit cat.working_memory.chat_response
+        final_output = ChatResponse(
             user_id=self.user_id, text=str(agent_output.output)
         )
 
@@ -417,18 +412,12 @@ class StrayCat:
             "before_cat_sends_message", final_output, cat=self
         )
 
-        # update conversation history (AI turn)
-        self.working_memory.update_history(
-            final_output
-        )
-
-
         return final_output
 
-    async def run(self, user_message_json, return_message=False):
+    async def run(self, message, return_message=False):
         try:
             # run main flow
-            cat_message = await self.__call__(user_message_json)
+            cat_message = await self.__call__(message)
             # save working memory to cache
             self.update_working_memory_cache()
 

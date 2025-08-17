@@ -1,31 +1,37 @@
 from fastapi import APIRouter, Body
-from fastapi.concurrency import run_in_threadpool
 from typing import Dict
 import tomli
-from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
 
-from cat.convo.messages import CatMessage
+from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
+from cat.convo.messages import ChatRequest, ChatResponse
+from cat.utils import BaseModelDict
+from cat.log import log
 
 router = APIRouter()
 
+class StatusResponse(BaseModelDict):
+    status: str
+    version: str
 
 # server status
 @router.get("/status")
 async def status(
     cat=check_permissions(AuthResource.STATUS, AuthPermission.READ),
-) -> Dict:
+) -> StatusResponse:
     """Server status"""
     with open("pyproject.toml", "rb") as f:
         project_toml = tomli.load(f)["project"]
 
-    return {"status": "We're all mad here, dear!", "version": project_toml["version"]}
+    return StatusResponse(
+        status = "We're all mad here, dear!",
+        version =  project_toml["version"]
+    )
 
 
-@router.post("/message", response_model=CatMessage)
-async def message_with_cat(
-    payload: Dict = Body({"text": "hello!"}),
+@router.post("/chat")
+async def chat(
+    chat_request: ChatRequest,
     cat=check_permissions(AuthResource.CONVERSATION, AuthPermission.WRITE),
-) -> Dict:
-    """Get a response from the Cat"""
-    user_message_json = {"user_id": cat.user_id, **payload}
-    return await cat.run(user_message_json, True)
+) -> ChatResponse:
+    
+    return await cat.run(chat_request, True)

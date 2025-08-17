@@ -3,6 +3,9 @@ from cat.utils import BaseModelDict
 from cat.mad_hatter.decorators import hook
 
 
+# TODOV2: this was at the end of the MainAgent
+# memory_agent_out.intermediate_steps += procedures_agent_out.intermediate_steps
+
 class MessageWhy(BaseModelDict):
     """
     A class for encapsulating the context and reasoning behind a message, providing details on 
@@ -22,30 +25,36 @@ class MessageWhy(BaseModelDict):
     intermediate_steps: List
     memory: dict
 
+
 @hook
 def before_cat_sends_message(msg, cat):
 
     # build data structure for output (response and why with memories)
-    # TODO: these 3 lines are a mess, simplify
-    episodic_report = [
-        dict(d[0]) | {"score": float(d[1]), "id": d[3]}
-        for d in cat.working_memory.episodic_memories
-    ]
-    declarative_report = [
-        dict(d[0]) | {"score": float(d[1]), "id": d[3]}
-        for d in cat.working_memory.declarative_memories
-    ]
-    procedural_report = [
-        dict(d[0]) | {"score": float(d[1]), "id": d[3]}
-        for d in cat.working_memory.procedural_memories
-    ]
+    
+    episodic_report = []
+    declarative_report = []
+    procedural_report = []
+
+    if hasattr(cat.working_memory, "episodic_memories"): # vector memory may not be enabled
+        episodic_report = [
+            dict(d[0]) | {"score": float(d[1]), "id": d[3]}
+            for d in cat.working_memory.episodic_memories
+        ]
+        declarative_report = [
+            dict(d[0]) | {"score": float(d[1]), "id": d[3]}
+            for d in cat.working_memory.declarative_memories
+        ]
+        procedural_report = [
+            dict(d[0]) | {"score": float(d[1]), "id": d[3]}
+            for d in cat.working_memory.procedural_memories
+        ]
 
     intermediate_steps = [] # agent_output.intermediate_steps
     # agent_output = {} # agent_output.model_dump()
 
     # why this response?
     msg.why = MessageWhy(
-        input=cat.working_memory.user_message_json.text,
+        input=cat.chat_request.messages[-1].content.text,
         intermediate_steps=intermediate_steps,
         # agent_output=agent_output,
         memory={

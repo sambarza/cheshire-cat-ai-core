@@ -42,20 +42,17 @@ class MainAgent(BaseAgent):
         if isinstance(agent_fast_reply, dict) and "output" in agent_fast_reply:
             return AgentOutput(**agent_fast_reply)
 
-
+        # TODOV2: tools and forms are curtrently deactivated
         # run tools and forms
-        procedures_agent = ProceduresAgent()
-        procedures_agent_out : AgentOutput = await procedures_agent.execute(cat)
-        if procedures_agent_out.return_direct:
-            return procedures_agent_out
+        #procedures_agent = ProceduresAgent()
+        #procedures_agent_out : AgentOutput = await procedures_agent.execute(cat)
+        #if procedures_agent_out.return_direct:
+        #    return procedures_agent_out
 
         # we run memory agent if:
         # - no procedures were recalled or selected or
         # - procedures have all return_direct=False
         memory_agent = MemoryAgent()
         memory_agent_out : AgentOutput = await memory_agent.execute(cat)
-
-        # TODOV2: this should go in the why plugin
-        memory_agent_out.intermediate_steps += procedures_agent_out.intermediate_steps
 
         return memory_agent_out

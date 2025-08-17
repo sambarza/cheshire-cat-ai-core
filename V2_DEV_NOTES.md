@@ -14,14 +14,20 @@
 - conversation history endpoints (GET and POST) have been deleted and there is a new CRUD for chat sessions in core plugin `XXXXXXX`. Convo history can also be passed via ws or http message.
 - plugion can contain tests inside a folder names `tests`. This folder will be ignored by the cat at runtime but tests will be run by `pytest`
 - it is now possible to have `@endpoint` with custom resource and permissions. They can be defined on the endpoint and must be matched by user permissions (which can be set via AuthHandler or users REST API)
+- input and output data structure have changed, but by keeping active the core_plugin `legacy_v1` old clients should still work (make a PR if you find bugs)
+- you have now in `cat.chat_request` an object of type `ChatRequest`, containing user input and convo history, and in `cat.chat_response` an object of type `ChatResponse`.  
+`cat.chat_response` is available since the beginning of the message flow. This is to avoid patterns in which devs stored in working memory stuff to be added later on in the final response via `before_cat_send_message`. Now you can store output data directly in `cat.chat_response` and the client will receive that data.  
+Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use `cat.working_memory` to store arbitrary information across the whole conversation.
 
 
 ## TODO
 
 - MCP support
 - update plugins so they attach to hooks exposed by core and provide their own hooks for other plugins
+- statelessness is paramount to avoid side effects and scalability. Just working_memory should be saved, as a simple JSON or in a DB. Plugins will deal with long term memories
 
 
 ## Questions
 
 - should core plugins hooks have priority 0 so they go first?
+- should all hooks be able to return a ChatResponse and interrupt the flow with the direct final response?

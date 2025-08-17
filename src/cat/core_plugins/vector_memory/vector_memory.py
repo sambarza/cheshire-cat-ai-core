@@ -43,13 +43,13 @@ def before_cat_sends_message(msg, cat):
     
     # Store conversation turns with session id
 
-    #human_message = {}
+    human_message = {}
     #cat.store()
 
     #cat_message = {}
     #cat.store()
 
-    user_message_text = cat.working_memory.user_message_json.text
+    # user_message_text = cat.working_memory.user_message_json.text
     #doc = Document(
     #    page_content=user_message_text,
     #    metadata={"source": self.user_id, "when": time.time()},

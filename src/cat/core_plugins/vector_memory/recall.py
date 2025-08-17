@@ -5,6 +5,13 @@ from langchain.docstore.document import Document
 
 from cat.utils import BaseModelDict, verbal_timedelta
 
+#########################################################
+# TODOV2: recall outputs where stored in working memory #
+#########################################################
+    #episodic_memories: List = []
+    #declarative_memories: List = []
+    #procedural_memories: List = []
+
 def format_agent_input(self, cat):
     """Format the input for the Agent.
 

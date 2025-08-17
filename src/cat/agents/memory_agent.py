@@ -19,7 +19,7 @@ class MemoryAgent(BaseAgent):
 
         res = await cat.llm(
             prompt_prefix + prompt_suffix,
-            use_chat_history=True,
+            messages=cat.chat_request.messages,
             stream=True,
             execution_name="MAIN PROMPT"
         )
