@@ -1,7 +1,7 @@
 import pytest
 
 from cat.auth.permissions import AuthUserInfo
-from cat.convo.messages import ChatResponse
+from cat.convo.messages import ChatResponse, ChatRequest
 from cat.looking_glass.stray_cat import StrayCat
 from cat.memory.working_memory import WorkingMemory
 from cat.mad_hatter.decorators.hook import CatHook
@@ -98,15 +98,25 @@ async def test_stray_fast_reply_hook(stray_cat):
     fast_reply_msg = "This is a fast reply"
 
     def fast_reply_hook(fast_reply: dict, cat):
-        if user_msg in stray_cat.working_memory.user_message_json.text:
-            fast_reply["output"] = fast_reply_msg
-            return fast_reply
+        if user_msg in stray_cat.chat_request.messages[-1].content.text:
+            return ChatResponse(user_id=cat.user_id, text=fast_reply_msg)
 
     fast_reply_hook = CatHook(name="fast_reply", func=fast_reply_hook, priority=0)
     fast_reply_hook.plugin_id = "fast_reply_hook"
     stray_cat.mad_hatter.hooks["fast_reply"] = [fast_reply_hook]
 
-    msg = {"text": user_msg, "user_id": "Alice"}
+    msg = ChatRequest.model_validate({
+            "messages": [
+                {
+                    "role": "user",
+                    "content": {
+                        "type": "input_text",
+                        "text": user_msg
+                    }
+                }
+            ]
+        }
+    )
 
     # send message
     res = await stray_cat.__call__(msg)
@@ -115,5 +125,4 @@ async def test_stray_fast_reply_hook(stray_cat):
     assert res.text == fast_reply_msg
 
     # there should be NO side effects
-    assert stray_cat.working_memory.user_message_json.text == user_msg
-    assert len(stray_cat.working_memory.history) == 0
+    assert stray_cat.chat_request.messages[-1].content.text == user_msg

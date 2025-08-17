@@ -4,7 +4,7 @@ import pytest
 from cat import utils
 
 
-def test_get_base_url():
+def test_get_base_url(client):
     assert utils.get_base_url() == "http://localhost:1865/"
      # test when CCAT_CORE_USE_SECURE_PROTOCOLS is set
     os.environ["CCAT_CORE_USE_SECURE_PROTOCOLS"] = "1"
@@ -15,21 +15,20 @@ def test_get_base_url():
     assert utils.get_base_url() == "http://localhost:1865/"
 
 
-def test_get_base_path():
+def test_get_base_path(client):
     assert utils.get_base_path().endswith("cat/")
 
 
-def test_get_plugin_path():
+def test_mocked_get_plugin_path(client):
     # plugin folder is "cat/plugins/" in production, "tests/mocks/mock_plugin_folder/" during tests
-    # assert utils.get_plugins_path() == 'cat/plugins/'
     assert utils.get_plugins_path() == "tests/mocks/mock_plugin_folder/"
 
 
-def test_get_static_path():
+def test_get_static_path(client):
     assert utils.get_static_path().endswith("cat/static/")
 
 
-def test_get_static_url():
+def test_get_static_url(client):
     assert utils.get_static_url() == "http://localhost:1865/static/"
 
 
