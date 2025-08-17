@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 # server status
-@router.get("/")
+@router.get("/status")
 async def status(
     cat=check_permissions(AuthResource.STATUS, AuthPermission.READ),
 ) -> Dict:
