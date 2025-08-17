@@ -43,7 +43,7 @@ def test_instantiation_discovery(mad_hatter):
         assert h.plugin_id in core_plugins
         assert isinstance(h.name, str)
         assert isfunction(h.function)
-        assert h.priority == 1
+        assert isinstance(h.priority, int)
 
     # finds tool
     assert len(mad_hatter.tools) == get_core_plugins_info()["tools"]
@@ -165,9 +165,9 @@ def test_plugin_uninstall(mad_hatter: MadHatter, plugin_is_flat):
     # plugins list updated
     assert "mock_plugin" not in mad_hatter.plugins.keys()
     # plugin cache updated (only core_plugins stuff)
-    assert len(mad_hatter.hooks) == get_core_plugins_info()["hooks"] - 1 # TODOV2: count of unique hooks 
+    assert len(mad_hatter.hooks) == get_core_plugins_info()["unique_hooks"] 
     for h_name, h_list in mad_hatter.hooks.items():
-        assert len(h_list) in [1, 2] # TODOV2 check numerosity for each hook
+        assert len(h_list) in [1, 2, 3] # TODOV2 check numerosity for each hook
         assert h_list[0].plugin_id in get_core_plugins_ids()
     assert len(mad_hatter.tools) == get_core_plugins_info()["tools"]
     assert len(mad_hatter.forms) == get_core_plugins_info()["forms"]

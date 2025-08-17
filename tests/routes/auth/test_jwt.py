@@ -105,7 +105,7 @@ def test_jwt_expiration(secure_client):
     os.environ["CCAT_JWT_EXPIRE_MINUTES"] = "0.05"  # 3 seconds
 
     # not allowed
-    response = secure_client.get("/")
+    response = secure_client.get("/status")
     assert response.status_code == 403
     assert response.json()["detail"]["error"] == "Invalid Credentials"
 
@@ -120,7 +120,7 @@ def test_jwt_expiration(secure_client):
 
     # allowed via JWT
     headers = {"Authorization": f"Bearer {token}"}
-    response = secure_client.get("/", headers=headers)
+    response = secure_client.get("/status", headers=headers)
     assert response.status_code == 200
 
     # wait for expiration time
@@ -128,7 +128,7 @@ def test_jwt_expiration(secure_client):
 
     # not allowed because JWT expired
     headers = {"Authorization": f"Bearer {token}"}
-    response = secure_client.get("/", headers=headers)
+    response = secure_client.get("/status", headers=headers)
     assert response.status_code == 403
     assert response.json()["detail"]["error"] == "Invalid Credentials"
 
@@ -141,7 +141,7 @@ def test_jwt_expiration(secure_client):
 def test_jwt_imposes_user_id(secure_client):
 
     # not allowed
-    response = secure_client.get("/")
+    response = secure_client.get("/status")
     assert response.status_code == 403
     assert response.json()["detail"]["error"] == "Invalid Credentials"
 
@@ -163,7 +163,7 @@ def test_jwt_imposes_user_id(secure_client):
     headers = {
         "Authorization": f"Bearer {token}"
     }
-    response = secure_client.post("/message", headers=headers, json=message)
+    response = secure_client.post("/chat", headers=headers, json=message)
     assert response.status_code == 200
 
     # send user specific request via ws
@@ -204,7 +204,7 @@ def test_jwt_self_signature_passes_on_unsecure_client(client):
         headers = {
             "Authorization": f"Bearer {token}"
         }
-        response = client.post("/message", headers=headers, json=message)
+        response = client.post("/chat", headers=headers, json=message)
         assert response.status_code == 200
         assert "You did not configure" in response.json()["content"]
 
@@ -239,7 +239,7 @@ def test_jwt_self_signature_fails_on_secure_client(secure_client):
         headers = {
             "Authorization": f"Bearer {token}"
         }
-        response = secure_client.post("/message", headers=headers, json=message)
+        response = secure_client.post("/chat", headers=headers, json=message)
         assert response.status_code == 403
 
         # not allowed because CCAT_JWT_SECRET for secure_client is `meow_jwt`
@@ -247,6 +247,9 @@ def test_jwt_self_signature_fails_on_secure_client(secure_client):
         with pytest.raises(Exception) as e_info:
             send_websocket_message(message, secure_client, query_params=params)
             assert str(e_info.type.__name__) == "WebSocketDisconnect"
+
+
+# TODOV2: all tests messaging the cat with the old `user_message_json` object must be updated to ChatRequest
 
 
 

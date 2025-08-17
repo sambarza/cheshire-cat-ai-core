@@ -2,7 +2,7 @@ import pytest
 
 from cat.mad_hatter.mad_hatter import MadHatter
 from cat.mad_hatter.decorators import CatHook
-from cat.convo.messages import CatMessage
+from cat.convo.messages import ChatResponse
 
 from tests.utils import create_mock_plugin_zip
 
@@ -30,7 +30,7 @@ def test_hook_discovery(mad_hatter):
 
 
 def test_hook_priority_execution(mad_hatter):
-    fake_message = CatMessage(text="Priorities:", user_id="Alice")
+    fake_message = ChatResponse(text="Priorities:", user_id="Alice")
 
     out = mad_hatter.execute_hook("before_cat_sends_message", fake_message, cat=None)
     assert out.text == "Priorities: priority 3 priority 2"

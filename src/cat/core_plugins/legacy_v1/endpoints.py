@@ -11,7 +11,7 @@ class LegacyHTTPUserMessage(BaseModelDict):
     # image: str
 
 # TODOV2: provide legacy support using CatMessage and history stored somewhere??? Or just drop it
-@endpoint.post("/message", prefix="/ciao", tags=["Legacy"], response_model=CatMessage)
+@endpoint.post("/message", prefix="", tags=["Legacy"], response_model=CatMessage)
 async def message_with_cat(
     payload: LegacyHTTPUserMessage,
     cat=check_permissions(AuthResource.CONVERSATION, AuthPermission.WRITE),

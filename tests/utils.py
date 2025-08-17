@@ -10,16 +10,17 @@ def get_core_plugins_info():
     return {
         "ids": {
             "base_tools",
+            "legacy_v1",
             "model_interactions",
             "rabbit_hole",
             "vector_memory",
             "white_rabbit",
             "why"
         },
-        "hooks": 5,
-        "unique_hooks": 4,
+        "hooks": 6,
+        "unique_hooks": 5,
         "tools": 1,
-        "endpoints": 9,
+        "endpoints": 10,
         "forms": 0
     }
 

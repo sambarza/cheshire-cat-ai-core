@@ -1,16 +1,16 @@
 import pytest
 
 from cat.auth.permissions import AuthUserInfo
+from cat.convo.messages import ChatResponse
 from cat.looking_glass.stray_cat import StrayCat
 from cat.memory.working_memory import WorkingMemory
-from cat.convo.messages import CatMessage
 from cat.mad_hatter.decorators.hook import CatHook
 
 @pytest.fixture(scope="function")
 def stray_cat(client):
     user_data = AuthUserInfo(
         id="Alice",
-        name="Alice"
+        name="Alice" # TODOV2: user_id should be unique, user name anything
     )
     yield StrayCat(user_data)
 
@@ -37,7 +37,7 @@ async def test_stray_call_with_text(stray_cat):
 
     reply = await stray_cat.__call__(msg)
 
-    assert isinstance(reply, CatMessage)
+    assert isinstance(reply, ChatResponse)
     assert "You did not configure" in reply.text
     assert reply.user_id == "Alice"
     assert reply.type == "chat"
@@ -53,7 +53,7 @@ async def test_stray_call_with_text_and_image(stray_cat):
 
     reply = await stray_cat.__call__(msg)
 
-    assert isinstance(reply, CatMessage)
+    assert isinstance(reply, ChatResponse)
     assert "You did not configure" in reply.text
     assert reply.user_id == "Alice"
     assert reply.type == "chat"
@@ -90,8 +90,8 @@ def test_recall_to_working_memory(stray_cat):
     assert len(stray_cat.working_memory.episodic_memories) == 1
     assert stray_cat.working_memory.episodic_memories[0][0].page_content == msg_text
 """
-
-# TODO: should we gather all tests regarding hooks in a folder?
+    
+# TODOV2: update
 @pytest.mark.asyncio
 async def test_stray_fast_reply_hook(stray_cat):
     user_msg = "hello"
@@ -111,7 +111,7 @@ async def test_stray_fast_reply_hook(stray_cat):
     # send message
     res = await stray_cat.__call__(msg)
 
-    assert isinstance(res, CatMessage)
+    assert isinstance(res, ChatResponse)
     assert res.text == fast_reply_msg
 
     # there should be NO side effects

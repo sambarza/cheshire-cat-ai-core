@@ -70,6 +70,9 @@ class StrayCat:
         # user data
         self.__user_id = user_data.name # TODOV2: use id
         self.__user_data = user_data
+
+        self.chat_request = ChatRequest() # empty, will be set upon message requests
+        self.chat_response = ChatResponse(user_id=self.user_id, text="") # empty, will be set upon message requests
         
         # get working memory from cache or create a new one
         self.load_working_memory_from_cache()

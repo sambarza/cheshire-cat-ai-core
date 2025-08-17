@@ -5,7 +5,7 @@ from tests.utils import send_websocket_message
 
 # utility to make http requests with some headers
 def http_request(client, headers={}):
-    response = client.get("/", headers=headers)
+    response = client.get("/status", headers=headers)
     return response.status_code, response.json()
 
 
