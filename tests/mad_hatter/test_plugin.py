@@ -1,6 +1,5 @@
 import os
 import pytest
-import fnmatch
 import subprocess
 import shutil
 
@@ -183,21 +182,24 @@ def test_save_settings(plugin):
     assert settings["a"] == fake_settings["a"]
 
 
+# utility ot obtain installed python packages
+def list_packages():
+    result = subprocess.run(["uv", "pip", "list"], stdout=subprocess.PIPE)
+    return str(result.stdout.decode()) 
+
+
 def test_plugin_dependencies_not_installed_if_plugin_not_present(client):
 
-    # pip-install-test should NOT be installed by default
-    result = subprocess.run(["uv", "pip", "list"], stdout=subprocess.PIPE)
-    result = result.stdout.decode()
-    assert not fnmatch.fnmatch(result, "*pip-install-test*")
+    # pip-install-test should NOT be installed by default (note we are using the client fixture, not plugin)
+    result = list_packages()
+    assert "pip-install-test" not in result
 
 
 # Check if plugin requirements have been installed
 def test_install_plugin_dependencies(plugin):
 
-    # pip-install-test should have been installed
-    result = subprocess.run(["uv", "pip", "list"], stdout=subprocess.PIPE)
-    result = result.stdout.decode()
-    assert fnmatch.fnmatch(result, "*pip-install-test*")
+    result = list_packages()
+    assert "pip-install-test" in result
 
 
 # Check if plugin requirements have been uninstalled
@@ -206,8 +208,5 @@ def test_uninstall_plugin_dependencies(plugin):
     plugin.deactivate()
 
     # pip-install-test should have been uninstalled
-    result = subprocess.run(["uv", "pip", "list"], stdout=subprocess.PIPE)
-    from cat.log import log
-    log.critical(result)
-    result = result.stdout.decode()
-    assert not fnmatch.fnmatch(result, "*pip-install-test*")
+    result = list_packages()
+    assert "pip-install-test" not in result
