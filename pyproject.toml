@@ -47,6 +47,7 @@ dependencies = [
     "ruff>=0.4.7",
     "aiofiles>=24.1.0",
     "scikit-learn>=1.7.0",
+    "fastmcp>=2.11.3",
 ]
 
 [tool.uv]
@@ -55,4 +56,6 @@ package = true
 [project.scripts]
 # CLI
 cat-up = "cat.main:main"
+
+# TODOV2 choose a proper build system
 
