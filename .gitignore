@@ -8,6 +8,7 @@ venv
 .venv
 .DS_Store
 .idea
+/dist
 
 # DBs
 *dormouse/*
@@ -20,7 +21,7 @@ test_db.db
 
 # data folder (settings and models)
 src/cat/data/*
-!core/cat/data/.gitkeep
+!src/cat/data/.gitkeep
 
 # plugins are not tracked by git
 src/cat/plugins/*
