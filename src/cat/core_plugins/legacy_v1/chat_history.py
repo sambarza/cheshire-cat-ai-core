@@ -34,7 +34,7 @@ def fast_reply(_, cat):
         cat.working_memory.user_message_json = user_message_json
 
 
-@hook
+@hook(priority=-1000)
 def before_cat_sends_message(mex, cat):
     mex.type = "chat"
     mex.content = mex.text

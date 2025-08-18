@@ -20,12 +20,17 @@ def test_get_base_path(client):
 
 
 def test_mocked_get_plugin_path(client):
-    # plugin folder is "cat/plugins/" in production, "tests/mocks/mock_plugin_folder/" during tests
-    assert utils.get_plugins_path() == "tests/mocks/mock_plugin_folder/"
+    # plugin folder is "./plugins" in production, "./mock_plugins" during tests
+    assert utils.get_plugins_path() == os.getcwd() + "/mock_plugins"
+
+
+def test_core_plugin_path(client):
+    # core plugins are in "cat/core_plugins/"
+    assert utils.get_core_plugins_path().endswith("/cat/core_plugins")
 
 
 def test_get_static_path(client):
-    assert utils.get_static_path().endswith("cat/static/")
+    assert utils.get_static_path().endswith("/cat/static/")
 
 
 def test_get_static_url(client):

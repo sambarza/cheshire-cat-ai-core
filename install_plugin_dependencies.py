@@ -1,6 +1,6 @@
 import os
 
-for root, dirs, files in os.walk("./cat/plugins"):
+for root, dirs, files in os.walk("./plugins"):
     for file in files:
         if file == "requirements.txt":
             req_file = os.path.join(root, file)

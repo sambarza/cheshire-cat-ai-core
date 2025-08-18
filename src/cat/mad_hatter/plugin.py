@@ -12,7 +12,7 @@ from packaging.requirements import Requirement
 
 from cat.mad_hatter.decorators import CatTool, CatHook, CatPluginDecorator, CustomEndpoint
 from cat.experimental.form import CatForm
-from cat.utils import to_camel_case, get_base_path
+from cat import utils
 from cat.log import log
 
 
@@ -62,7 +62,7 @@ class Plugin:
         self._forms: List[CatForm] = []  # list of plugin forms
         self._endpoints: List[CustomEndpoint] = [] # list of plugin endpoints
 
-       # list of @plugin decorated functions overriding default plugin behaviour
+        # list of @plugin decorated functions overriding default plugin behaviour
         self._plugin_overrides = {}
 
         # plugin starts deactivated
@@ -103,6 +103,7 @@ class Plugin:
             py_filename = py_file.replace("/", ".").replace(".py", "")
 
             # If the module is imported it is removed
+            # TODOV2: should be aligned with imports, because they changed
             if py_filename in sys.modules:
                 log.debug(f"Remove module {py_filename}")
                 sys.modules.pop(py_filename)
@@ -233,7 +234,7 @@ class Plugin:
                     f"Loading plugin {self._path} metadata, defaulting to generated values"
                 )
 
-        meta["name"] = json_file_data.get("name", to_camel_case(self._id))
+        meta["name"] = json_file_data.get("name", utils.to_camel_case(self._id))
         meta["description"] = json_file_data.get(
             "description",
             (
@@ -300,6 +301,7 @@ class Plugin:
 
                     raise Exception(f"Error during plugin {self.id} requirements installation")
 
+
     # lists of hooks and tools
     def _load_decorated_functions(self):
         hooks = []
@@ -308,30 +310,35 @@ class Plugin:
         endpoints = []
         plugin_overrides = []
 
+        # TODOV2: this for should probably go in mad_hatter
+        for base_path in [utils.get_plugins_path(), utils.get_core_plugins_path()]:
+            if base_path not in sys.path:
+                sys.path.insert(0, base_path)
+        
         for py_file in self.py_files:
-            base_path_dotted_notation = get_base_path().replace("/", ".")
-            py_filename = py_file.replace(".py", "")\
-                                .replace("/", ".")\
-                                .replace(base_path_dotted_notation, "cat.")
 
-            log.debug(f"Import module {py_filename}")
+            # Turn file path in module notation and realtive to plugins folders
+            for base_path in [utils.get_plugins_path(), utils.get_core_plugins_path()]:
+                if py_file.startswith(base_path):
+                    module_rel_path = os.path.relpath(py_file, base_path)
+                    module_name = module_rel_path.replace(".py", "").replace("/", ".")
 
-            # save a reference to decorated functions
+            log.debug(f"Import module {module_name}")
+
             try:
-                plugin_module = importlib.import_module(py_filename)
+                plugin_module = importlib.import_module(module_name)
 
+                # Collect references from the plugin module as before
                 hooks += getmembers(plugin_module, self._is_cat_hook)
                 tools += getmembers(plugin_module, self._is_cat_tool)
                 forms += getmembers(plugin_module, self._is_cat_form)
                 endpoints += getmembers(plugin_module, self._is_custom_endpoint)
-                plugin_overrides += getmembers(
-                    plugin_module, self._is_cat_plugin_override
-                )
+                plugin_overrides += getmembers(plugin_module, self._is_cat_plugin_override)
+
             except Exception:
-                log.error(
-                    f"Error in {py_filename}. Unable to load plugin {self._id}"
-                )
+                log.error(f"Error in {module_name}. Unable to load plugin {self._id}")
                 log.warning(self.plugin_specific_error_message())
+
 
         # clean and enrich instances
         self._hooks = list(map(self._clean_hook, hooks))

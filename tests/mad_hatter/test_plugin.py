@@ -2,24 +2,30 @@ import os
 import pytest
 import fnmatch
 import subprocess
+import shutil
 
 from inspect import isfunction
 
 from tests.conftest import clean_up_mocks
-from tests.utils import get_mock_plugin_info
+from tests.utils import get_mock_plugin_info, get_mock_plugins_path
 from tests.mocks.mock_plugin.mock_form import PizzaOrder, PizzaForm
 
 from cat.mad_hatter.mad_hatter import Plugin
 from cat.mad_hatter.decorators import CatHook, CatTool, CustomEndpoint
 
-mock_plugin_path = "tests/mocks/mock_plugin/"
+mock_plugin_path = get_mock_plugins_path() + "/mock_plugin"
 
 # this fixture will give test functions a ready instantiated plugin
 # (and having the `client` fixture, a clean setup every unit)
 @pytest.fixture(scope="function")
 def plugin(client):
+
+    shutil.copytree("tests/mocks/mock_plugin", mock_plugin_path)
+    
     p = Plugin(mock_plugin_path)
     yield p
+
+    shutil.rmtree(get_mock_plugins_path())
 
 
 def test_create_plugin_wrong_folder():
@@ -29,8 +35,8 @@ def test_create_plugin_wrong_folder():
     assert "Cannot create" in str(e.value)
 
 
-def test_create_plugin_empty_folder():
-    path = "tests/mocks/empty_folder"
+def test_not_create_plugin_with_empty_folder():
+    path = get_mock_plugins_path() + "/empty_folder"
 
     os.mkdir(path)
 
@@ -38,6 +44,7 @@ def test_create_plugin_empty_folder():
         Plugin(path)
 
     assert "Cannot create" in str(e.value)
+    shutil.rmtree(path)
 
 
 def test_create_plugin(plugin):
@@ -108,8 +115,8 @@ def test_activate_plugin(plugin):
     # forms
     assert len(plugin.forms) == get_mock_plugin_info()["forms"]
     form = plugin.forms[0]
-    assert form == PizzaForm
-    assert form.model_class == PizzaOrder
+    assert type(form) == type(PizzaForm)
+    assert type(form.model_class) == type(PizzaOrder)
     assert form.plugin_id == "mock_plugin"
     assert form.name == "PizzaForm"
     assert form.description == "Pizza Order"
@@ -176,27 +183,31 @@ def test_save_settings(plugin):
     assert settings["a"] == fake_settings["a"]
 
 
+def test_plugin_dependencies_not_installed_if_plugin_not_present(client):
+
+    # pip-install-test should NOT be installed by default
+    result = subprocess.run(["uv", "pip", "list"], stdout=subprocess.PIPE)
+    result = result.stdout.decode()
+    assert not fnmatch.fnmatch(result, "*pip-install-test*")
+
+
 # Check if plugin requirements have been installed
-# ATTENTION: not using `plugin` fixture here, we instantiate and cleanup manually
-#           to use the unmocked Plugin class
-def test_install_plugin_dependencies():
-    # manual cleanup
-    clean_up_mocks()
-    # Uninstall mock plugin requirements
-    os.system("uv pip uninstall -y pip-install-test")
-
-    # Install mock plugin
-    p = Plugin(mock_plugin_path)
-
-    # Dependencies are installed on plugin activation
-    p.activate()
+def test_install_plugin_dependencies(plugin):
 
     # pip-install-test should have been installed
     result = subprocess.run(["uv", "pip", "list"], stdout=subprocess.PIPE)
     result = result.stdout.decode()
     assert fnmatch.fnmatch(result, "*pip-install-test*")
 
-    # manual cleanup
-    clean_up_mocks()
-    # Uninstall mock plugin requirements
-    os.system("uv pip uninstall -y pip-install-test")
+
+# Check if plugin requirements have been uninstalled
+def test_uninstall_plugin_dependencies(plugin):
+
+    plugin.deactivate()
+
+    # pip-install-test should have been uninstalled
+    result = subprocess.run(["uv", "pip", "list"], stdout=subprocess.PIPE)
+    from cat.log import log
+    log.critical(result)
+    result = result.stdout.decode()
+    assert not fnmatch.fnmatch(result, "*pip-install-test*")

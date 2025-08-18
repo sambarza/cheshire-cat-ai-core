@@ -2,7 +2,7 @@ import os
 import shutil
 import pytest
 
-from tests.utils import create_mock_plugin_zip
+from tests.utils import create_mock_plugin_zip, get_mock_plugins_path
 from cat.mad_hatter.plugin_extractor import PluginExtractor
 
 
@@ -10,7 +10,7 @@ from cat.mad_hatter.plugin_extractor import PluginExtractor
 # plugin_is_flat is True: zip file does not contain a folder, but the plugin files directly
 @pytest.mark.parametrize("plugin_is_flat", [True, False])
 def test_unpackage_zip(client, plugin_is_flat):
-    plugins_folder = "tests/mocks/mock_plugin_folder"
+    plugins_folder = get_mock_plugins_path()
 
     zip_path = create_mock_plugin_zip(flat=plugin_is_flat)
     extractor = PluginExtractor(zip_path)

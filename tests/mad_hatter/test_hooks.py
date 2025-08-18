@@ -1,5 +1,7 @@
 import pytest
 
+
+
 from cat.mad_hatter.mad_hatter import MadHatter
 from cat.mad_hatter.decorators import CatHook
 from cat.convo.messages import ChatResponse

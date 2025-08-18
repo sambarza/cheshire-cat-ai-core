@@ -24,7 +24,8 @@ src/cat/data/*
 !src/cat/data/.gitkeep
 
 # plugins are not tracked by git
-src/cat/plugins/*
+/plugins/*
+!/plugins/how-to-write-a-plugin.md
 # plugins readme can stay
 !src/cat/plugins/how-to-write-a-plugin.md
 

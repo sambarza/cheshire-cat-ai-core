@@ -18,7 +18,7 @@
 - you have now in `cat.chat_request` an object of type `ChatRequest`, containing user input and convo history, and in `cat.chat_response` an object of type `ChatResponse`.  
 `cat.chat_response` is available since the beginning of the message flow. This is to avoid patterns in which devs stored in working memory stuff to be added later on in the final response via `before_cat_send_message`. Now you can store output data directly in `cat.chat_response` and the client will receive that data.  
 Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use `cat.working_memory` to store arbitrary information across the whole conversation.
-
+- `plugins`, `static` and `data` folders live now in the root folder of a project, and are automatically created at first launch. In this way the cat can be used as a simple python package. Docker compose installation is also simplified by opening a single volume. Core plugins stay inside the package, in `cat/core_plugins` and can be deactivated but not uninstalled (not sure about this).
 
 ## TODO
 
@@ -31,3 +31,4 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
 
 - should core plugins hooks have priority 0 so they go first?
 - should all hooks be able to return a ChatResponse and interrupt the flow with the direct final response?
+- should core_plugins be present in `./plugins`

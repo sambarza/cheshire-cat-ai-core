@@ -1,59 +1,31 @@
 
+import time
 import pytest
 import os
 import shutil
+import importlib
 from typing import Any, Generator
 
 import warnings
 from pydantic import PydanticDeprecatedSince20
 
-from qdrant_client import QdrantClient
 from fastapi.testclient import TestClient
-
 
 from cat.looking_glass.cheshire_cat import CheshireCat
 from cat.looking_glass.stray_cat import StrayCat
 from cat.auth.permissions import AuthUserInfo
 from cat.db.database import Database
-import cat.utils as utils
-#from cat.memory.vector_memory import VectorMemory
+import cat.utils
 from cat.mad_hatter.plugin import Plugin
 from cat.startup import cheshire_cat_api
 from tests.utils import create_mock_plugin_zip
 
 from cat.mad_hatter.mad_hatter import MadHatter
 
-import time
+from tests.utils import create_mock_plugin_zip, get_mock_plugins_path
+
 
 FAKE_TIMESTAMP = 1705855981
-
-# substitute classes' methods where necessary for testing purposes
-def mock_classes(monkeypatch):
-    # Use in memory vector db
-    def mock_connect_to_vector_memory(self, *args, **kwargs):
-        self.vector_db = QdrantClient(":memory:")
-
-    #monkeypatch.setattr(
-    #    VectorMemory, "connect_to_vector_memory", mock_connect_to_vector_memory
-    #)
-
-    # Use a different json settings db
-    def mock_get_file_name(self, *args, **kwargs):
-        return "tests/mocks/metadata-test.json"
-
-    monkeypatch.setattr(Database().__class__, "get_file_name", mock_get_file_name)
-
-    # Use mock utils plugin folder
-    def get_test_plugin_folder():
-        return "tests/mocks/mock_plugin_folder/"
-
-    utils.get_plugins_path = get_test_plugin_folder
-
-    # do not check plugin dependencies at every restart
-    def mock_install_requirements(self, *args, **kwargs):
-        pass
-    monkeypatch.setattr(Plugin, "_install_requirements", mock_install_requirements)
-
 
 # get rid of tmp files and folders used for testing
 def clean_up_mocks():
@@ -63,10 +35,9 @@ def clean_up_mocks():
         "tests/mocks/metadata-test.json",
         "tests/mocks/mock_plugin.zip",
         "tests/mocks/mock_plugin/settings.json",
-        "tests/mocks/mock_plugin_folder/mock_plugin",
-        "tests/mocks/empty_folder",
         "tmp_test",
-        "tmp_cache"
+        "tmp_cache",
+        get_mock_plugins_path(),
     ]
     for tbr in to_be_removed:
         if os.path.exists(tbr):
@@ -75,26 +46,61 @@ def clean_up_mocks():
             else:
                 os.remove(tbr)
 
+    # installed with mock_plugin, here we uninstall
+    os.system("uv pip uninstall -y pip-install-test")
 
-# Main fixture for the FastAPI app
-@pytest.fixture(scope="function")
-def client(monkeypatch) -> Generator[TestClient, Any, None]:
-    """
-    Create a new FastAPI TestClient.
-    """
-    
-    # clean up tmp files and folders
-    clean_up_mocks()
-    
+
+def clean_up_envs():
     # env variables
     os.environ["CCAT_DEBUG"] = "false" # do not autoreload
     # in case tests setup a file system cache, use a different file system cache dir
     os.environ["CCAT_CACHE_DIR"] = "tmp_test"
 
+
+def monkey_patches(mp):
+
     # monkeypatch classes
-    mock_classes(monkeypatch)
+    # (substitute classes' methods where necessary for testing purposes)
+
+    # Use mock utils plugin folder
+    mp.setattr(
+        cat.utils,
+        'get_plugins_path',
+        get_mock_plugins_path
+    )
+    
+    # Use a different json settings db
+    def mock_get_file_name(self, *args, **kwargs):
+        return "tests/mocks/metadata-test.json"
+    mp.setattr(Database().__class__, "get_file_name", mock_get_file_name)
+
+    # TODOV2: maybe with uv this is fast enough
+    # do not check plugin dependencies at every restart
+    #def mock_install_requirements(self, *args, **kwargs):
+    #    pass
+    #from cat.mad_hatter.plugin import Plugin
+    #mp.setattr(Plugin, "_install_requirements", mock_install_requirements)
+
     # delete all singletons!!!
-    utils.singleton.instances = {}
+    mp.setattr(
+        cat.utils.singleton,
+        "instances",
+        {}
+    )
+
+
+# Main fixture for the FastAPI app
+@pytest.fixture(scope="function")
+def client(monkeypatch, tmp_path) -> Generator[TestClient, Any, None]:
+    """
+    Create a new FastAPI TestClient.
+    """
+    
+    clean_up_mocks()
+    clean_up_envs()
+
+    # change methods for testing purposes
+    monkey_patches(monkeypatch)
     
     with TestClient(cheshire_cat_api) as client:
         yield client
@@ -146,7 +152,7 @@ def just_installed_plugin(client):
 # fixtures to test the main agent
 @pytest.fixture(scope="function")
 def main_agent(client):
-    yield CheshireCat().main_agent  # each test receives as argument the main agent instance
+    yield CheshireCat(client.app).main_agent  # each test receives as argument the main agent instance
 
 # fixture to have available an instance of StrayCat
 @pytest.fixture(scope="function")

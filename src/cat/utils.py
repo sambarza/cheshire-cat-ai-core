@@ -1,6 +1,7 @@
 """Various utiles used from the projects."""
 
 import os
+from pathlib import Path
 import inspect
 from datetime import timedelta
 from urllib.parse import urlparse
@@ -93,17 +94,17 @@ def get_base_url():
 
 def get_base_path():
     """Allows exposing the base path."""
-    return os.path.dirname(os.path.abspath(cat.__file__)) + "/"
+    return os.path.dirname(os.path.abspath(cat.__file__)) + "/" # TODV2 take away trailing slash
 
 
 def get_plugins_path():
     """Allows exposing the plugins' path."""
-    return os.path.join(get_base_path(), "plugins/")
+    return os.path.join(os.getcwd(), "plugins")
 
 
 def get_core_plugins_path():
     """Allows exposing the plugins' path."""
-    return os.path.join(get_base_path(), "core_plugins/")
+    return os.path.join(get_base_path(), "core_plugins")
 
 
 def get_static_url():
@@ -113,7 +114,7 @@ def get_static_url():
 
 def get_static_path():
     """Allows exposing the static files' path."""
-    return os.path.join(get_base_path(), "static/")
+    return os.path.join(get_base_path(), "static/")  # TODV2 take away trailing slash
 
 
 def is_https(url):

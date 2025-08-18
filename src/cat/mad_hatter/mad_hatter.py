@@ -1,4 +1,5 @@
 import os
+import sys
 import glob
 import shutil
 import inspect
@@ -46,10 +47,6 @@ class MadHatter:
         self.forms: List[CatForm] = []  # list of active plugins forms
         self.endpoints: List[CustomEndpoint] = []  # list of active plugins endpoints
 
-        # plugins are found in the `cat/core_plugins` and `cat/plugins` folder
-        self.plugins_folder = utils.get_plugins_path()
-        self.core_plugins_folder = utils.get_core_plugins_path()
-
         # this callback is set from outside to be notified when plugin sync is finished
         self.on_finish_plugins_sync_callback = lambda: None
 
@@ -61,7 +58,7 @@ class MadHatter:
     def install_plugin(self, package_plugin):
         # extract zip/tar file into plugin folder
         extractor = PluginExtractor(package_plugin)
-        plugin_path = extractor.extract(self.plugins_folder)
+        plugin_path = extractor.extract(utils.get_plugins_path())
 
         # remove zip after extraction
         os.remove(package_plugin)
@@ -103,8 +100,11 @@ class MadHatter:
         # active plugins ids (stored in db)
         active_plugins = self.get_active_plugins()
 
+        # plugins are found in the `cat/core_plugins` and `./plugins` folder
+        # TODOV2: these two attributes are not really necessary, they can maybe be properties
         all_plugin_folders = \
-            glob.glob(f"{self.core_plugins_folder}*/") + glob.glob(f"{self.plugins_folder}*/")
+            glob.glob( f"{utils.get_core_plugins_path()}/*/") + \
+            glob.glob( f"{utils.get_plugins_path()}/*/")
 
         log.info("Active Plugins:")
         log.info(active_plugins)
