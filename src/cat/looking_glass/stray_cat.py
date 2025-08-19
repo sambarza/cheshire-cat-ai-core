@@ -546,6 +546,8 @@ Allowed classes are:
         --------
         >>> cat.embedder.embed_query("Oh dear!")
         [0.2, 0.02, 0.4, ...]
+        >>> await cat.embedder.aembed_query("Oh dear!")
+        [0.2, 0.02, 0.4, ...]
         """
         return CheshireCat().embedder
 
@@ -561,8 +563,7 @@ Allowed classes are:
 
         Examples
         --------
-        >>> cat.memory.vectors.episodic
-        VectorMemoryCollection object for the episodic memory.
+        TODO examples
         """
         return CheshireCat().memory
 
