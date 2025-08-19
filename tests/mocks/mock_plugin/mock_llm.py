@@ -2,7 +2,7 @@
 from typing import List, Type
 from pydantic import ConfigDict
 
-from langchain_community.chat_models.fake import FakeListChatModel
+from langchain_core.language_models.fake_chat_models import FakeListChatModel
 
 from cat.mad_hatter.decorators import hook
 from cat.factory.llm import LLMSettings

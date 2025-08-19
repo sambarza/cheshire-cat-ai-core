@@ -1,5 +1,6 @@
 from typing import Union, Callable, List
 from inspect import signature
+from pydantic import ConfigDict
 
 # All @tool decorated functions in plugins become a CatTool.
 # The difference between base langchain Tool and CatTool is that CatTool has an instance of the cat as attribute (set by the MadHatter)
@@ -36,14 +37,12 @@ class CatTool:
     def run(self, input_by_llm: str, cat) -> str:
         return self.func(input_by_llm, cat=cat)
 
-    # override `extra = 'forbid'` for Tool pydantic model in langchain
-    class Config:
-        extra = "allow"
-
-    # TODO should be: (but langchain does not support yet pydantic 2)
-    # model_config = ConfigDict(
+    # TODOV2: test support for pydantic2 works in langchain
+    #class Config:
     #    extra = "allow"
-    # )
+    model_config = ConfigDict(
+        extra = "allow"
+    )
 
 
 # @tool decorator, a modified version of a langchain Tool that also takes a Cat instance as argument

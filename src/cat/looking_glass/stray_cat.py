@@ -6,7 +6,6 @@ from typing import Literal, get_args, List, Dict, Union, Any
 
 from websockets.exceptions import ConnectionClosedOK
 
-from langchain_core.messages import BaseMessage
 from langchain_core.runnables import RunnableConfig, RunnableLambda
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import SystemMessagePromptTemplate

@@ -1,7 +1,5 @@
 from typing import List, Optional
-from langchain_core.messages import BaseMessage
 
-from cat.convo.messages import ChatRequest, ChatResponse
 from cat.experimental.form import CatForm
 from cat.utils import BaseModelDict, deprecation_warning
 

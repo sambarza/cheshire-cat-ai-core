@@ -4,7 +4,7 @@ import glob
 import shutil
 import inspect
 from copy import deepcopy
-from typing import List, Dict
+from typing import List, Dict, Any
 from pathlib import Path
 
 from cat.log import log
@@ -237,7 +237,7 @@ class MadHatter:
             raise Exception(f"Plugin {plugin_id} not present in plugins folder")
 
     # execute requested hook
-    def execute_hook(self, hook_name, *args, cat):
+    def execute_hook(self, hook_name, *args, cat) -> Any:
         # check if hook is supported
         if hook_name not in self.hooks.keys():
             log.info(f"Hook {hook_name} not present in any plugin")

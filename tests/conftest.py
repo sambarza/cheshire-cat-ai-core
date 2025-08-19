@@ -183,11 +183,13 @@ def stray(async_client):
     stray_cat.working_memory.user_message_json = {"user_id": user_data.id, "text": "meow"}
     yield stray_cat
 
+# TODOV2 either langchain or qdrant are the root cause of this warning
+#   check if warnings disappeared with core_plugins enabled
 # autouse fixture will be applied to *all* the tests
-@pytest.fixture(autouse=True, scope="function")
-def apply_warning_filters():
+#@pytest.fixture(autouse=True, scope="function")
+#def apply_warning_filters():
     # ignore deprecation warnings due to langchain not updating to pydantic v2
-    warnings.filterwarnings("ignore", category=PydanticDeprecatedSince20)
+#    warnings.filterwarnings("ignore", category=PydanticDeprecatedSince20)
 
 #fixture for mock time.time function
 @pytest.fixture(scope="function")

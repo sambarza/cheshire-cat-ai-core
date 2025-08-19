@@ -1,7 +1,7 @@
 import random
 from typing import Dict
 
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain_core.prompts.chat import SystemMessagePromptTemplate
 from langchain_core.runnables import RunnableConfig, RunnableLambda
 

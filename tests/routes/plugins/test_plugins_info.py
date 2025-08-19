@@ -24,13 +24,13 @@ def test_list_plugins(client):
 
 
 def test_get_plugin_id(client):
-    response = client.get("/plugins/vector_memory") # one of the core plugins
+    response = client.get("/plugins/qdrant_vector_memory") # one of the core plugins
 
     json = response.json()
 
     assert "data" in json.keys()
     assert json["data"] is not None
-    assert json["data"]["id"] == "vector_memory"
+    assert json["data"]["id"] == "qdrant_vector_memory"
     assert isinstance(json["data"]["active"], bool)
     assert json["data"]["active"]
 

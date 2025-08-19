@@ -18,15 +18,16 @@ def get_core_plugins_info():
     return {
         "ids": {
             "base_tools",
+            "langchain_models_pack",
             "legacy_v1",
             "model_interactions",
             "rabbit_hole",
-            "vector_memory",
+            "qdrant_vector_memory",
             "white_rabbit",
             "why"
         },
-        "hooks": 6,
-        "unique_hooks": 5,
+        "hooks": 6, # + 2
+        "unique_hooks": 5, # + ?
         "tools": 1,
         "endpoints": 10,
         "forms": 0

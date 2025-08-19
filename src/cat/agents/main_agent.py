@@ -1,5 +1,4 @@
 from typing import List, Tuple
-from langchain.docstore.document import Document
 
 from cat.mad_hatter.mad_hatter import MadHatter
 from cat.env import get_env
