@@ -17,4 +17,6 @@ class LLMDefault(LLM):
 
 # removed dumb embedder to uninstall sklearn. Random embeddings is good
 class EmbedderDefault(FakeEmbeddings):
-    pass
+    def __init__(self, *args, **kwargs):
+        kwargs["size"] = 128
+        super().__init__(*args, **kwargs)

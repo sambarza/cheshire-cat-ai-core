@@ -21,6 +21,7 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
 - `plugins`, `static` and `data` folders live now in the root folder of a project, and are automatically created at first launch. In this way the cat can be used as a simple python package. Docker compose installation is also simplified by opening a single volume. Core plugins stay inside the package, in `cat/core_plugins` and can be deactivated but not uninstalled (not sure about this).
 - Due to difficulties in keeping up with langchain, core only depends on `langchain_core`. All LLM and embedder vendors are now packed in core_plugin `langchain_models_pack` so they are isolated and more easily maintained.
 - We only support chat models, text-only or multimodal. Pure completion models are not supported anymore. If you need to use one, create your own LLM adapter and hook it via `factory_allowed_llms`
+- Embedders are not automatically associated with the chosen LLM vendor. You will need to configure that yourself, The cat will notify you at every message if the embedder is not set.
 
 
 ## TODO
@@ -35,6 +36,7 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
 - should all hooks be able to return a ChatResponse and interrupt the flow with the direct final response?
 - should core_plugins be present in `./plugins`
 - new plugins with custom requirements may not work as expected (need a restart).
+- should we ship a small LLM and embedder via llama.cpp or other lightweight runner?
 
 ## Installation
 

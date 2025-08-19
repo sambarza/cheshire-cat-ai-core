@@ -25,7 +25,6 @@ class EmbedderSettings(BaseModel):
 
 
 class EmbedderDefaultConfig(EmbedderSettings):
-    size: int = 128
     _pyclass: Type = EmbedderDefault
 
     model_config = ConfigDict(

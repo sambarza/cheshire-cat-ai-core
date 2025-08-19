@@ -2,17 +2,13 @@ import time
 from typing import List, Dict
 from typing_extensions import Protocol
 
-from langchain_core.language_models.base import BaseLanguageModel
-
 from cat.factory.auth_handler import get_auth_handler_from_name
 from cat.factory.custom_auth_handler import CoreAuthHandler
 import cat.factory.auth_handler as auth_handlers
 from cat.db import crud, models
 from cat.protocols.model_context.client import MCPClient, mcp_servers_config
-from cat.factory.embedder import get_embedder_from_name
-import cat.factory.embedder as embedders
-from cat.factory.llm import LLMDefaultConfig
-from cat.factory.llm import get_llm_from_name
+from cat.factory.llm import LLMDefaultConfig, get_llm_from_name
+from cat.factory.embedder import EmbedderDefaultConfig, get_embedder_from_name
 from cat.memory.long_term_memory import LongTermMemory
 from cat.agents.main_agent import MainAgent
 from cat.log import log
@@ -118,7 +114,7 @@ class CheshireCat:
         self._llm = self.load_language_model()
         self.embedder = self.load_language_embedder()
 
-    def load_language_model(self) -> BaseLanguageModel:
+    def load_language_model(self):
         """Large Language Model (LLM) selection at bootstrap time.
 
         Returns
@@ -150,7 +146,7 @@ class CheshireCat:
             log.error("Error during LLM instantiation")
             return LLMDefaultConfig.get_llm_from_config({})
 
-    def load_language_embedder(self) -> embedders.EmbedderSettings:
+    def load_language_embedder(self):
         """Hook into the  embedder selection.
 
         Allows to modify how the Cat selects the embedder at bootstrap time.
@@ -169,47 +165,26 @@ class CheshireCat:
 
         selected_embedder = crud.get_setting_by_name(name="embedder_selected")
 
-        if selected_embedder is not None:
-            # get Embedder factory class
-            selected_embedder_class = selected_embedder["value"]["name"]
-            FactoryClass = get_embedder_from_name(selected_embedder_class)
+        if selected_embedder is None:
+            # return default embedder
+            return EmbedderDefaultConfig.get_embedder_from_config({})
 
-            # obtain configuration and instantiate Embedder
-            selected_embedder_config = crud.get_setting_by_name(
-                name=selected_embedder_class
+        # Get Embedder factory class
+        selected_embedder_class = selected_embedder["value"]["name"]
+        FactoryClass = get_embedder_from_name(selected_embedder_class)
+
+        # obtain configuration and instantiate Embedder
+        selected_embedder_config = crud.get_setting_by_name(
+            name=selected_embedder_class
+        )
+
+        try:
+            embedder = FactoryClass.get_embedder_from_config(
+                selected_embedder_config["value"]
             )
-            try:
-                embedder = FactoryClass.get_embedder_from_config(
-                    selected_embedder_config["value"]
-                )
-            except Exception:
-                log.error("Error during Embedder instantiation")
-                embedder = embedders.EmbedderDumbConfig.get_embedder_from_config({})
-            return embedder
-
-        # OpenAI embedder
-        if type(self._llm) in [OpenAI, ChatOpenAI]:
-            embedder = embedders.EmbedderOpenAIConfig.get_embedder_from_config(
-                {
-                    "openai_api_key": self._llm.openai_api_key,
-                }
-            )
-
-        elif type(self._llm) in [ChatGoogleGenerativeAI]:
-            embedder = embedders.EmbedderGeminiChatConfig.get_embedder_from_config(
-                {
-                    "model": "models/embedding-001",
-                    "google_api_key": self._llm.google_api_key,
-                }
-            )
-
-        else:
-            # If no embedder matches vendor, and no external embedder is configured, we use the DumbEmbedder.
-            #   `This embedder is not a model properly trained
-            #    and this makes it not suitable to effectively embed text,
-            #    "but it does not know this and embeds anyway".` - cit. Nicola Corbellini
-            embedder = embedders.EmbedderDumbConfig.get_embedder_from_config({})
-
+        except Exception:
+            log.error("Error during Embedder instantiation")
+            return EmbedderDefaultConfig.get_embedder_from_config({})
         return embedder
 
     def load_auth(self):
