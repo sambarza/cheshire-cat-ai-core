@@ -16,6 +16,9 @@ class LongTermMemory:
 
     async def recall(self, cat, query=None):
         """Recall something from long term memory"""
+
+        # log.critical(await cat.embedder.aembed_query("meow"))
+
         return [] # TODOV2 cat.mad_hatter.execute_hook([])
     
     async def recall_relevant_memories_to_working_memory(self, cat, query=None):
