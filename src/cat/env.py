@@ -12,9 +12,10 @@ def get_supported_env_variables():
         "CCAT_DEBUG": "true",
         "CCAT_LOG_LEVEL": "INFO",
         "CCAT_CORS_ALLOWED_ORIGINS": None,
-        "CCAT_QDRANT_HOST": None,
+        "CCAT_QDRANT_HOST": None, # TODOV2: move Qdrant specifics to qdrant_vector_memory plugin settigns
         "CCAT_QDRANT_PORT": "6333",
         "CCAT_QDRANT_API_KEY": None,
+        "CCAT_QDRANT_CLIENT_TIMEOUT": None,
         "CCAT_SAVE_MEMORY_SNAPSHOTS": "false",
         "CCAT_JWT_SECRET": "secret",
         "CCAT_JWT_ALGORITHM": "HS256",
@@ -24,7 +25,6 @@ def get_supported_env_variables():
         "CCAT_CORS_ENABLED": "true",
         "CCAT_CACHE_TYPE": "in_memory",
         "CCAT_CACHE_DIR": "/tmp",
-        "CCAT_QDRANT_CLIENT_TIMEOUT": None,
     }
 
 
@@ -46,14 +46,6 @@ def get_env(name):
     """
 
     cat_default_env_variables = get_supported_env_variables()
-
-    # TODO: take away in v2
-    # support cat envs without the "CCAT_" prefix
-    legacy_variables = {}
-    for k, v in cat_default_env_variables.items():
-        legacy_name = k.replace("CCAT_", "")
-        legacy_variables[legacy_name] = v
-    cat_default_env_variables = cat_default_env_variables | legacy_variables
 
     if name in cat_default_env_variables:
         default = cat_default_env_variables[name]

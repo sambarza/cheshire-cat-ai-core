@@ -3,8 +3,6 @@ from typing import List, Dict
 from typing_extensions import Protocol
 
 from langchain_core.language_models.base import BaseLanguageModel
-from langchain_openai import ChatOpenAI, OpenAI
-from langchain_google_genai import ChatGoogleGenerativeAI
 
 from cat.factory.auth_handler import get_auth_handler_from_name
 from cat.factory.custom_auth_handler import CoreAuthHandler
