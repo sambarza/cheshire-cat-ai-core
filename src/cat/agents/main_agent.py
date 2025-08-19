@@ -41,6 +41,11 @@ class MainAgent(BaseAgent):
             return agent_fast_reply
         if isinstance(agent_fast_reply, dict) and "output" in agent_fast_reply:
             return AgentOutput(**agent_fast_reply)
+        
+        # TODOV2: here is how you list MCP tools, prompts and resources
+        tools = await cat.mcp.list_tools() # ensure connections, otherwise lazy
+        log.warning(tools)
+
 
         # TODOV2: tools and forms are curtrently deactivated
         # run tools and forms

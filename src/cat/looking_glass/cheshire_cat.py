@@ -3,10 +3,6 @@ from typing import List, Dict
 from typing_extensions import Protocol
 
 from langchain.base_language import BaseLanguageModel
-from langchain_core.messages import HumanMessage
-from langchain_core.runnables import RunnableLambda
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers.string import StrOutputParser
 from langchain_openai import ChatOpenAI, OpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 
@@ -14,6 +10,7 @@ from cat.factory.auth_handler import get_auth_handler_from_name
 from cat.factory.custom_auth_handler import CoreAuthHandler
 import cat.factory.auth_handler as auth_handlers
 from cat.db import crud, models
+from cat.protocols.model_context.client import MCPClient, mcp_servers_config
 from cat.factory.embedder import get_embedder_from_name
 import cat.factory.embedder as embedders
 from cat.factory.llm import LLMDefaultConfig
@@ -55,7 +52,8 @@ class CheshireCat:
 
     """
 
-    def __init__(self, fastapi_app):
+    # will be called at first instantiation in fastapi lifespan
+    def bootstrap(self, fastapi_app):
         """Cat initialization.
 
         At init time the Cat executes the bootstrap, loading all main componetns and components added by plugins.
@@ -63,8 +61,11 @@ class CheshireCat:
 
         # bootstrap the Cat! ^._.^
 
-        # get reference to the FastAPI app
-        self.fastapi_app = fastapi_app
+        self.fastapi_app = fastapi_app # reference to the FastAPI object
+
+        # init MCP client
+        # not sure this is better here or as a wide availbel singleton (like the db)
+        self.mcp = MCPClient(mcp_servers_config)
 
         # long term memory
         self.load_memory()
@@ -73,10 +74,7 @@ class CheshireCat:
         self.load_auth()
         
         # instantiate MadHatter (loads all plugins' hooks and tools)
-        self.mad_hatter = MadHatter()
-        # TODOV2: get rid of this on_finish callback somehow
-        self.mad_hatter.on_finish_plugins_sync_callback = self.on_finish_plugins_sync_callback
-        self.on_finish_plugins_sync_callback()
+        self.load_mad_hatter()
 
         # allows plugins to do something before cat components are loaded
         self.mad_hatter.execute_hook("before_cat_bootstrap", cat=self)
@@ -92,6 +90,12 @@ class CheshireCat:
 
         # allows plugins to do something after the cat bootstrap is complete
         self.mad_hatter.execute_hook("after_cat_bootstrap", cat=self)
+
+    def load_mad_hatter(self):
+        self.mad_hatter = MadHatter()
+        # TODOV2: get rid of this on_finish callback somehow
+        self.mad_hatter.on_finish_plugins_sync_callback = self.on_finish_plugins_sync_callback
+        self.on_finish_plugins_sync_callback() # only for the first time called manually
 
     def load_memory(self):
             # TODOV2: LTM should run hooks and should subscribe to embedder and mad_hatter hooks
@@ -296,4 +300,5 @@ class CheshireCat:
         for endpoint in self.mad_hatter.endpoints:
             if endpoint.plugin_id in self.mad_hatter.get_active_plugins():
                 endpoint.activate(self.fastapi_app)
+
 

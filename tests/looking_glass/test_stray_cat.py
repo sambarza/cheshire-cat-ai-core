@@ -7,7 +7,7 @@ from cat.memory.working_memory import WorkingMemory
 from cat.mad_hatter.decorators.hook import CatHook
 
 @pytest.fixture(scope="function")
-def stray_cat(client):
+def stray_cat(async_client):
     user_data = AuthUserInfo(
         id="Alice",
         name="Alice" # TODOV2: user_id should be unique, user name anything

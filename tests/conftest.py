@@ -1,6 +1,6 @@
-
 import time
 import pytest
+import pytest_asyncio
 import os
 import shutil
 import importlib
@@ -9,15 +9,17 @@ from typing import Any, Generator
 import warnings
 from pydantic import PydanticDeprecatedSince20
 
+from asgi_lifespan import LifespanManager
+from httpx import ASGITransport, AsyncClient
 from fastapi.testclient import TestClient
 
+from cat.startup import cheshire_cat_api # will instantiate the cat
 from cat.looking_glass.cheshire_cat import CheshireCat
 from cat.looking_glass.stray_cat import StrayCat
 from cat.auth.permissions import AuthUserInfo
 from cat.db.database import Database
 import cat.utils
 from cat.mad_hatter.plugin import Plugin
-from cat.startup import cheshire_cat_api
 from tests.utils import create_mock_plugin_zip
 
 from cat.mad_hatter.mad_hatter import MadHatter
@@ -88,10 +90,11 @@ def monkey_patches(mp):
         {}
     )
 
-
-# Main fixture for the FastAPI app
+####################################
+# Main fixture for the FastAPI app #
+####################################
 @pytest.fixture(scope="function")
-def client(monkeypatch, tmp_path) -> Generator[TestClient, Any, None]:
+def client(monkeypatch) -> Generator[TestClient, Any, None]:
     """
     Create a new FastAPI TestClient.
     """
@@ -106,6 +109,21 @@ def client(monkeypatch, tmp_path) -> Generator[TestClient, Any, None]:
         yield client
 
     # clean up tmp files and folders (useful when tests fail)
+    clean_up_mocks()
+
+######################################
+# Async version of the main fixturep #
+######################################
+@pytest_asyncio.fixture(scope="function")
+async def async_client(monkeypatch):
+    clean_up_mocks()
+    clean_up_envs()
+    monkey_patches(monkeypatch)
+    async with LifespanManager(cheshire_cat_api):
+        async with AsyncClient(
+            transport=ASGITransport(app=cheshire_cat_api), base_url="http://test"
+        ) as ac:
+            yield ac
     clean_up_mocks()
 
 # This fixture sets the CCAT_API_KEY and CCAT_API_KEY_WS environment variables,
@@ -151,12 +169,12 @@ def just_installed_plugin(client):
 
 # fixtures to test the main agent
 @pytest.fixture(scope="function")
-def main_agent(client):
-    yield CheshireCat(client.app).main_agent  # each test receives as argument the main agent instance
+def main_agent(async_client):
+    yield cheshire_cat_api.state.ccat.main_agent  # each test receives as argument the main agent instance
 
 # fixture to have available an instance of StrayCat
 @pytest.fixture(scope="function")
-def stray(client):
+def stray(async_client):
     user_data = AuthUserInfo(
         id="Alice",
         name="Alice"

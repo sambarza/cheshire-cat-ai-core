@@ -24,7 +24,6 @@ from cat.routes.websocket import websocket
 from cat.routes.static import admin, static
 from cat.routes.openapi import get_openapi_configuration_function
 from cat.routes.websocket.websocket_manager import WebsocketManager
-
 from cat.looking_glass.cheshire_cat import CheshireCat
 
 @asynccontextmanager
@@ -37,18 +36,25 @@ async def lifespan(app: FastAPI):
     # - Not using middleware because I can't make it work with both http and websocket;
     # - Not using Depends because it only supports callables (not instances)
     # - Starlette allows this: https://www.starlette.io/applications/#storing-state-on-the-app-instance
-    app.state.ccat = CheshireCat(cheshire_cat_api)
+    ccat = CheshireCat()
+    ccat.bootstrap(app)
+    
+    # set reference to the cat in fastapi state
+    app.state.ccat = ccat
 
     # set a reference to asyncio event loop
     app.state.event_loop = asyncio.get_running_loop()
-
+    
     # keep track of websocket connections
     app.state.websocket_manager = WebsocketManager()
 
     # startup message with admin, public and swagger addresses
     log.welcome()
 
-    yield
+    # mcp client requires an async context manager itself
+    async with ccat.mcp:
+        #await ccat.mcp.list_tools() # force initialization
+        yield
 
 
 def custom_generate_unique_id(route: APIRoute):
@@ -61,7 +67,7 @@ cheshire_cat_api = FastAPI(
     generate_unique_id_function=custom_generate_unique_id,
     docs_url=None,
     redoc_url=None,
-    title="Cheshire-Cat API",
+    title="Cheshire Cat AI",
     license_info={
         "name": "GPL-3",
         "url": "https://www.gnu.org/licenses/gpl-3.0.en.html",

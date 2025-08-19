@@ -635,3 +635,8 @@ Allowed classes are:
     def cache(self):
         """Gives access to internal cache."""
         return CheshireCat().cache
+    
+    @property
+    def mcp(self):
+        """Gives access to the MCP client."""
+        return CheshireCat().mcp
