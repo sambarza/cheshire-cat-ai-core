@@ -32,3 +32,19 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
 - should core plugins hooks have priority 0 so they go first?
 - should all hooks be able to return a ChatResponse and interrupt the flow with the direct final response?
 - should core_plugins be present in `./plugins`
+
+## Installation
+
+- contributor:
+  ```bash
+  git clone ....
+  uv run ccat
+  ```
+
+- user:
+  ```bash
+  uv init --bare mycat
+  cd mycat
+  uv add cheshire-cat-ai
+  uv run ccat
+  ```
