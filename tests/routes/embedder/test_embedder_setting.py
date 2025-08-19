@@ -18,8 +18,8 @@ def test_get_all_embedder_settings(client):
         expected_schema = EMBEDDER_SCHEMAS[setting["name"]]
         assert dumps(jsonable_encoder(expected_schema)) == dumps(setting["schema"])
 
-    # automatically selected embedder
-    assert json["selected_configuration"] == "EmbedderDumbConfig"
+    # selected embedder
+    assert json["selected_configuration"] is None # no llm configured at startup
 
 
 def test_get_embedder_settings_non_existent(client):
@@ -32,20 +32,20 @@ def test_get_embedder_settings_non_existent(client):
 
 
 def test_get_embedder_settings(client):
-    embedder_name = "EmbedderDumbConfig"
+    embedder_name = "EmbedderDefaultConfig"
     response = client.get(f"/embedder/settings/{embedder_name}")
     json = response.json()
 
     assert response.status_code == 200
     assert json["name"] == embedder_name
-    assert json["value"] == {}  # Dumb Embedder has indeed an empty config (no options)
+    assert json["value"] == {}  # Default Embedder has indeed an empty config (no options)
     assert json["schema"]["languageEmbedderName"] == embedder_name
     assert json["schema"]["type"] == "object"
 
 
-def test_upsert_embedder_settings(client):
+def test_upsert_embedder_settings(client, just_installed_plugin):
     # set a different embedder from default one (same class different size # TODO: have another fake/test embedder class)
-    new_embedder = "EmbedderFakeConfig"
+    new_embedder = "EmbedderTestConfig"
     embedder_config = {"size": 64}
     response = client.put(f"/embedder/settings/{new_embedder}", json=embedder_config)
     json = response.json()
@@ -70,6 +70,8 @@ def test_upsert_embedder_settings(client):
     assert json["name"] == new_embedder
     assert json["value"]["size"] == embedder_config["size"]
     assert json["schema"]["languageEmbedderName"] == new_embedder
+
+    # TODOV2: there should be an endpoint to produce the embeddings
 
 
 

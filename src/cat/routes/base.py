@@ -34,4 +34,5 @@ async def chat(
     cat=check_permissions(AuthResource.CONVERSATION, AuthPermission.WRITE),
 ) -> ChatResponse:
     
+    # TODOV2: streaming
     return await cat.run(chat_request, True)

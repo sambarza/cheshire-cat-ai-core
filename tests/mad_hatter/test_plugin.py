@@ -83,6 +83,8 @@ def test_activate_plugin(plugin):
         assert hook.name in [
             "factory_allowed_llms",
             "before_cat_sends_message",
+            "factory_alowed_llms",
+            "factory_allowed_embedders"
         ]
         assert isfunction(hook.function)
 

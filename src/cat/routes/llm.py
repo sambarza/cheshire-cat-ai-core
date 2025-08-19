@@ -96,6 +96,7 @@ def upsert_llm_setting(
     cat=check_permissions(AuthResource.LLM, AuthPermission.EDIT),
 ) -> Dict:
     """Upsert the Large Language Model setting"""
+    
     LLM_SCHEMAS = get_llms_schemas()
 
     # check that languageModelName is a valid name
@@ -126,8 +127,5 @@ def upsert_llm_setting(
     ccat = request.app.state.ccat
     # reload llm and embedder of the cat
     ccat.load_natural_language()
-
-    # recreate tools embeddings
-    ccat.mad_hatter.find_plugins()
 
     return status

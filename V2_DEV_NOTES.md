@@ -29,9 +29,11 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
 - update plugins so they attach to hooks exposed by core and provide their own hooks for other plugins
 - statelessness is paramount to avoid side effects and scalability. Just working_memory should be saved, as a simple JSON or in a DB. Plugins will deal with long term memories
 - `qdrant_vector_memory` should deal with embedder changes, maybe reactivating the snapshot
+- security must be always ON, with a default jwt secret and API key. Pages in `/docs` should allow logging in
 
 ## Questions
 
+- should core plugins be shipped in an internal folder in the external plugins?
 - should core plugins hooks have priority 0 so they go first?
 - should all hooks be able to return a ChatResponse and interrupt the flow with the direct final response?
 - should core_plugins be present in `./plugins`

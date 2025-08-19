@@ -26,8 +26,8 @@ def get_core_plugins_info():
             "white_rabbit",
             "why"
         },
-        "hooks": 6, # + 2
-        "unique_hooks": 5, # + ?
+        "hooks": 10,
+        "unique_hooks": 7,
         "tools": 1,
         "endpoints": 10,
         "forms": 0
@@ -37,11 +37,32 @@ def get_core_plugins_info():
 def get_mock_plugin_info():
     return {
         "id": "mock_plugin",
-        "hooks": 3,
+        "hooks": 4,
         "tools": 1,
         "forms": 1,
         "endpoints": 7
     }
+
+
+def send_http_message(msg, client, streaming=False):
+    res = client.post(
+        "/chat",
+        json={
+            "messages": [
+                {
+                    "role": "user",
+                    "content": {
+                        "type": "input_text",
+                        "text": msg
+                    }
+                }
+            ],
+            "stream": streaming # TODOV2: should test streaming
+    })
+
+    assert res.status_code == 200
+    return res.json()        
+        
 
 
 # utility function to communicate with the cat via websocket

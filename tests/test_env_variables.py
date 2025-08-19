@@ -27,7 +27,3 @@ def test_get_env(client):
         else:
             # default values          
             assert get_env(k) == v
-
-            # TODO: take away in v2
-            # missing prefix (legacy)
-            assert get_env(k.replace("CCAT_", "")) == v

@@ -2,6 +2,8 @@ from json import dumps
 from fastapi.encoders import jsonable_encoder
 from cat.factory.llm import get_llms_schemas
 
+from tests.utils import send_http_message
+
 
 def test_get_all_llm_settings(client):
     llms_schemas = get_llms_schemas()
@@ -43,18 +45,19 @@ def test_get_llm_settings(client):
     assert json["schema"]["type"] == "object"
 
 
-def test_upsert_llm_settings_success(client):
+def test_upsert_llm_settings_success(client, just_installed_plugin):
+    
     # set a different LLM
-    new_llm = "LLMCustomConfig"
-    invented_url = "https://example.com"
-    payload = {"url": invented_url, "options": {}}
+    new_llm = "TestLLMConfig"
+    expected_responses = ["meow", "bao", "baobab"]
+    payload = {"responses": expected_responses}
     response = client.put(f"/llm/settings/{new_llm}", json=payload)
 
     # check immediate response
     json = response.json()
     assert response.status_code == 200
     assert json["name"] == new_llm
-    assert json["value"]["url"] == invented_url
+    assert json["value"]["responses"] == expected_responses
 
     # retrieve all LLMs settings to check if it was saved in DB
     response = client.get("/llm/settings")
@@ -62,12 +65,17 @@ def test_upsert_llm_settings_success(client):
     assert response.status_code == 200
     assert json["selected_configuration"] == new_llm
     saved_config = [c for c in json["settings"] if c["name"] == new_llm]
-    assert saved_config[0]["value"]["url"] == invented_url
+    assert saved_config[0]["value"]["responses"] == expected_responses
 
     # check also specific LLM endpoint
     response = client.get(f"/llm/settings/{new_llm}")
     assert response.status_code == 200
     json = response.json()
     assert json["name"] == new_llm
-    assert json["value"]["url"] == invented_url
+    assert json["value"]["responses"] == expected_responses
     assert json["schema"]["languageModelName"] == new_llm
+
+    # check expected replies form test LLM
+    for er in expected_responses:
+        reply = send_http_message("meow", client)
+        assert reply["text"] == er

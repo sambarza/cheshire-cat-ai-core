@@ -1,3 +1,6 @@
+from typing import List
+
+from .memory_item import MemoryItem
 from cat.log import log
 
 
@@ -14,12 +17,14 @@ class LongTermMemory:
         """Store something in long term memory"""
         return # TODOV2
 
-    async def recall(self, cat, query=None):
+    async def recall(self, cat, query=None) -> List[MemoryItem]:
         """Recall something from long term memory"""
 
         # log.critical(await cat.embedder.aembed_query("meow"))
 
-        return [] # TODOV2 cat.mad_hatter.execute_hook([])
+        # TODOV2 cat.mad_hatter.execute_hook([])
+
+        # TODOV2: do validation here, so all contents are indeed MemoryItem objs
+        
+        return [] 
     
-
-

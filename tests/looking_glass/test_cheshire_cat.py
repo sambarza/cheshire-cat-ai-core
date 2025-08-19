@@ -8,7 +8,7 @@ from cat.looking_glass.cheshire_cat import CheshireCat
 from cat.mad_hatter.mad_hatter import MadHatter
 from cat.memory.long_term_memory import LongTermMemory
 from cat.agents.main_agent import MainAgent
-from cat.factory.custom_embedder import DumbEmbedder
+from cat.factory.defaults import EmbedderDefault
 from cat.factory.defaults import LLMDefault
 
 
@@ -37,12 +37,16 @@ def test_default_llm_loaded(cheshire_cat):
 
 
 def test_default_embedder_loaded(cheshire_cat):
-    assert isinstance(cheshire_cat.embedder, DumbEmbedder)
+    assert isinstance(cheshire_cat.embedder, EmbedderDefault)
 
     sentence = "I'm smarter than a random embedder BTW"
-    sample_embed = DumbEmbedder().embed_query(sentence)
+    sample_embed = EmbedderDefault().embed_query(sentence)
     out = cheshire_cat.embedder.embed_query(sentence)
-    assert sample_embed == out
+    # DefaultEmbedder is random, so they will be different but same size
+    for e in [sample_embed, out]:
+        assert len(e) == 128
+        for i in e:
+            assert isinstance(i, float)
 
 # TODOV2 where do we put this
 """

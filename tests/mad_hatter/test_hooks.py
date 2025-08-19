@@ -1,12 +1,10 @@
 import pytest
 
-
-
 from cat.mad_hatter.mad_hatter import MadHatter
 from cat.mad_hatter.decorators import CatHook
 from cat.convo.messages import ChatResponse
 
-from tests.utils import create_mock_plugin_zip
+from tests.utils import create_mock_plugin_zip, get_mock_plugin_info
 
 
 # this function will be run before each test function
@@ -25,7 +23,7 @@ def mad_hatter(client):  # client here injects the monkeypatched version of the 
 def test_hook_discovery(mad_hatter):
     mock_plugin_hooks = mad_hatter.plugins["mock_plugin"].hooks
 
-    assert len(mock_plugin_hooks) == 3
+    assert len(mock_plugin_hooks) == get_mock_plugin_info()["hooks"]
     for h in mock_plugin_hooks:
         assert isinstance(h, CatHook)
         assert h.plugin_id == "mock_plugin"
