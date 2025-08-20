@@ -1,12 +1,9 @@
 import uvicorn
 
-from cat.env import get_env, fix_legacy_env_variables
+from cat.env import get_env
 
 # RUN!
 def main():
-
-    # TODO: take away in v2
-    fix_legacy_env_variables()
 
     # debugging utilities, to deactivate put `DEBUG=false` in .env
     debug_config = {}

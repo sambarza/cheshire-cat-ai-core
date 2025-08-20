@@ -9,6 +9,7 @@ from cat.log import log
 
 router = APIRouter()
 
+
 async def handle_messages(websocket: WebSocket, cat: StrayCat):
 
     while True:
@@ -21,7 +22,6 @@ async def handle_messages(websocket: WebSocket, cat: StrayCat):
 
         # Run the `cat` message main flow
         await cat.run(user_message, return_message=False)
-
 
 @router.websocket("/ws")
 @router.websocket("/ws/{user_id}")

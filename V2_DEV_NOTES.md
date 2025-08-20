@@ -26,10 +26,13 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
 
 ## TODO
 
-- update plugins so they attach to hooks exposed by core and provide their own hooks for other plugins
-- statelessness is paramount to avoid side effects and scalability. Just working_memory should be saved, as a simple JSON or in a DB. Plugins will deal with long term memories
+- update core plugins so they attach to hooks exposed by core and provide their own hooks for other plugins
+- statelessness is paramount to avoid side effects and scalability. Just working_memory and settings should be saved, as a simple JSON or in a DB. Plugins will deal with long term memories
+- which DB to use internally? easiest route is to go `sql_alchemy` and ship with a default `sqlite`, that can be changed to a `postgres` for scalability and statelessness
 - `qdrant_vector_memory` should deal with embedder changes, maybe reactivating the snapshot
-- security must be always ON, with a default jwt secret and API key. Pages in `/docs` should allow logging in
+- security must be always ON, also on a fresh installation, with a default jwt secret and API key. Pages in `/docs` should allow logging in
+- model selection should be possible to do directly via message, i.e. `"model": "openai:gpt-5" or "ollama:qwen:7b"`. If model is not passed, a default model chosen by admin in the settings will be used. Admin still decides which models are available to end users. Still to determine how to adapt the permissions system to this.
+- `StrayCat.__call_` should be an async generator using `yield` to send tokens and notifications. Those yielded result are then managed at the transport layer (websocket or http/streaming/sse). Cat internals should know absolutely nothing about network protocols.
 
 ## Questions
 
@@ -39,6 +42,7 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
 - should core_plugins be present in `./plugins`
 - new plugins with custom requirements may not work as expected (need a restart).
 - should we ship a small LLM and embedder via llama.cpp or other lightweight runner?
+- as there are docker and pyPI releases, makes no sense to have a `develop` branch
 
 ## Installation
 
