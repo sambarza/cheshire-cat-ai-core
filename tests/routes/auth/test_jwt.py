@@ -7,7 +7,7 @@ from cat.env import get_env
 from cat.auth.permissions import AuthPermission, AuthResource
 from cat.auth.auth_utils import is_jwt
 
-from tests.utils import send_websocket_message
+from tests.utils import send_websocket_message, send_http_message
 
 # TODOAUTH: test token refresh / invalidation / logoff
 
@@ -199,18 +199,15 @@ def test_jwt_self_signature_passes_on_unsecure_client(client):
             algorithm=get_env("CCAT_JWT_ALGORITHM"),
         )
 
-        message = { "text": "hey" }
-
         headers = {
             "Authorization": f"Bearer {token}"
         }
-        response = client.post("/chat", headers=headers, json=message)
-        assert response.status_code == 200
-        assert "You did not configure" in response.json()["content"]
+        response = send_http_message("hey", client, headers=headers)
+        assert "You did not configure" in response["text"]
 
         params = {"token": token}
-        response = send_websocket_message(message, client, query_params=params)
-        assert "You did not configure" in response["content"]
+        response = send_websocket_message({"text": "hey"}, client, query_params=params)
+        assert "You did not configure" in response["text"]
 
 
 # test that a JWT signed with the wrong secret is not accepted

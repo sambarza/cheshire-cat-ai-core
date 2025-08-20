@@ -10,6 +10,7 @@ def fast_reply(_, cat):
 
     if not isinstance(cat.chat_request, ChatRequest):
         # legacy `user_message_json`
+        log.critical(cat.chat_request)
         user_message_json = UserMessage.model_validate(cat.chat_request)
         # Impose user_id as the one authenticated
         # (ws message may contain a fake id)

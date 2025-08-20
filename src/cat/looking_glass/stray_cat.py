@@ -2,7 +2,7 @@ import time
 import asyncio
 import tiktoken
 
-from typing import Literal, get_args, List, Dict, Union, Any
+from typing import Literal, get_args, List, Dict, Union, Any, Callable
 
 from websockets.exceptions import ConnectionClosedOK
 
@@ -79,18 +79,24 @@ class StrayCat:
     def __repr__(self):
         return f"StrayCat(user_id={self.user_id}, user_name={self.user_data.name})"
 
+    # TODOV2: method should be one and should be `send_message`.
+    #         Stray should not know about websockets or anything network related
     async def __send_ws_json(self, data: Any):
+        
+        if self.message_callback:
+            await self.message_callback(data)
+        
         # Run the corutine in the main event loop in the main thread
         # and wait for the result
 
-        app = CheshireCat().fastapi_app
-        ws_manager = app.state.websocket_manager
-        ws_connection = ws_manager.get_connection(self.user_id)
-        if not ws_connection:
-            log.debug(f"No websocket connection is open for user {self.user_id}")
-            return
+        #app = CheshireCat().fastapi_app
+        #ws_manager = app.state.websocket_manager
+        #ws_connection = ws_manager.get_connection(self.user_id)
+        #if not ws_connection:
+        #    log.debug(f"No websocket connection is open for user {self.user_id}")
+        #    return
 
-        await ws_connection.send_json(data)
+        #await ws_connection.send_json(data)
 
 
     async def recall(self, query=None):
@@ -115,6 +121,8 @@ class StrayCat:
         updated_cache_item = CacheItem(f"{self.user_id}_working_memory", self.working_memory, -1)
         self.cache.insert(updated_cache_item)
 
+
+    # TODOV2: take away `ws` and simplify these methods so it is only one
     async def send_ws_message(self, content: str | dict, msg_type: MSG_TYPES = "notification"):
         """Send a message via websocket.
 
@@ -157,7 +165,8 @@ class StrayCat:
         else:
             await self.__send_ws_json({"type": msg_type, "content": content})
 
-    async def send_chat_message(self, message: str | ChatResponse, save=False):
+
+    async def send_chat_message(self, message: str | ChatResponse):
         """Sends a chat message to the user using the active WebSocket connection.  
         In case there is no connection the message is skipped and a warning is logged
 
@@ -181,11 +190,6 @@ class StrayCat:
         if isinstance(message, str):
             message = ChatResponse(text=message, user_id=self.user_id)
 
-        #if save:
-        #    self.working_memory.update_history(
-        #        message
-        #    )
-
         await self.__send_ws_json(message.model_dump())
 
 
@@ -204,6 +208,7 @@ class StrayCat:
         >>> cat.send_notification("It's late!")
         """
         await self.send_ws_message(content=content, msg_type="notification")
+
 
     async def send_error(self, error: Union[str, Exception]):
         """Sends an error message to the user using the active WebSocket connection.
@@ -325,7 +330,10 @@ class StrayCat:
         return output
     
 
-    async def __call__(self, message_request: ChatRequest) -> ChatResponse:
+    async def __call__(
+        self, message_request: ChatRequest,
+        message_callback: Callable | None = None
+    ) -> ChatResponse:
         """Run the conversation turn.
 
         This method is called on the user's message received from the client.  
@@ -342,6 +350,8 @@ class StrayCat:
             ChatResponse object, the Cat's answer to be sent back to the client.
         """
 
+        # Store message_callback to send intermediate messages back to the client
+        self.message_callback = message_callback
 
         # Both request and response are available during the whole flow
         self.chat_request = message_request
@@ -367,39 +377,16 @@ class StrayCat:
 
         log.info(self.chat_request)
 
-        # recall episodic and declarative memories from vector collections
-        #   and store them in working_memory
         try:
+            # recall episodic and declarative memories from vector collections
+            #   and store them in working_memory
             await self.recall()
-        except Exception:
-            log.error("Error during recall.")
-            err_message = "An error occurred while recalling relevant memories."
-            return {
-                "type": "error",
-                "name": "VectorMemoryError",
-                "description": err_message,
-            }
-        
-        # reply with agent
-        try:
+
+            # reply with agent
             agent_output: AgentOutput = await self.main_agent.execute(self)
         except Exception as e:
-            # This error happens when the LLM
-            #   does not respect prompt instructions.
-            # We grab the LLM output here anyway, so small and
-            #   non instruction-fine-tuned models can still be used.
-            error_description = str(e)
-
-            log.error(error_description)
-            if "Could not parse LLM output: `" not in error_description:
-                raise e
-
-            unparsable_llm_output = error_description.replace(
-                "Could not parse LLM output: `", ""
-            ).replace("`", "")
-            agent_output = AgentOutput(
-                output=unparsable_llm_output,
-            )
+            log.error(e)
+            await self.send_error(str(e))
 
         log.info(agent_output)
         
@@ -414,30 +401,34 @@ class StrayCat:
             "before_cat_sends_message", final_output, cat=self
         )
 
+        # will both call the callback (if any) and return the final reply
+        await self.send_chat_message(final_output)
         return final_output
 
-    async def run(self, message, return_message=False):
-        try:
-            # run main flow
-            cat_message = await self.__call__(message)
-            # save working memory to cache
-            self.update_working_memory_cache()
 
-            if return_message:
-                # return the message for HTTP usage
-                return cat_message
-            else:
-                # send message back to client via WS
-                await self.send_chat_message(cat_message)
-        except Exception as e:
-            log.error(e)
-            if return_message:
-                return {"error": str(e)}
-            else:
-                try:
-                    await self.send_error(e)
-                except ConnectionClosedOK as ex:
-                    log.warning(ex)
+    # async def run(self, message, return_message=False):
+    #     try:
+    #         # run main flow
+    #         cat_message = await self.__call__(message)
+    #         # save working memory to cache
+    #         self.update_working_memory_cache()
+
+    #         if return_message:
+    #             # return the message for HTTP usage
+    #             return cat_message
+    #         else:
+    #             # send message back to client via WS
+    #             await self.send_chat_message(cat_message)
+    #     except Exception as e:
+    #         log.error(e)
+    #         if return_message:
+    #             return {"error": str(e)}
+    #         else:
+    #             try:
+    #                 await self.send_error(e)
+    #             except ConnectionClosedOK as ex:
+    #                 log.warning(ex)
+
 
     async def classify(
         self, sentence: str, labels: List[str] | Dict[str, List[str]], score_threshold: float = 0.5

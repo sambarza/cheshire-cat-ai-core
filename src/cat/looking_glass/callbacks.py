@@ -9,3 +9,4 @@ class NewTokenHandler(BaseCallbackHandler):
         await self.cat.send_ws_message(token, msg_type="chat_token")
 
 
+

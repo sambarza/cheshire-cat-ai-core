@@ -44,9 +44,15 @@ def get_mock_plugin_info():
     }
 
 
-def send_http_message(msg, client, streaming=False):
+def send_http_message(
+        msg,
+        client,
+        streaming=False,
+        headers={}
+    ):
     res = client.post(
         "/chat",
+        headers=headers,
         json={
             "messages": [
                 {
@@ -58,7 +64,8 @@ def send_http_message(msg, client, streaming=False):
                 }
             ],
             "stream": streaming # TODOV2: should test streaming
-    })
+        }
+    )
 
     assert res.status_code == 200
     return res.json()        

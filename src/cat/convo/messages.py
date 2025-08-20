@@ -30,7 +30,15 @@ class ChatRequest(BaseModelDict):
     model: str | None = None # e.g. "openai:gpt-5". If None, default LLM will be picked up
     stream: bool = True # whether to stream tokens or not
     instructions: str | None = None
-    messages: List[ChatMessage] = []
+    messages: List[ChatMessage] = [
+        ChatMessage(
+            role="user",
+            content=ChatMessageContent(
+                type="input_text",
+                text="Meow"
+            )
+        )
+    ]
 
 
 class ChatResponse(BaseModelDict):

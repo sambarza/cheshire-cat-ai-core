@@ -1,6 +1,7 @@
+import asyncio
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from fastapi.concurrency import run_in_threadpool
-
 
 from cat.auth.permissions import AuthPermission, AuthResource
 from cat.auth.connection import WebSocketAuth
@@ -23,16 +24,59 @@ async def handle_messages(websocket: WebSocket, cat: StrayCat):
         # Run the `cat` message main flow
         await cat.run(user_message, return_message=False)
 
+
+
+
+# async generator
+async def number_generator():
+    
+    yield {"count": 1}
+    await asyncio.sleep(1)
+    yield {"count": 2}
+    await asyncio.sleep(1)
+    yield {"count": 3}
+
+
+
+
+
+
 @router.websocket("/ws")
 @router.websocket("/ws/{user_id}")
 async def websocket_endpoint(
     websocket: WebSocket,
     cat=Depends(WebSocketAuth(AuthResource.CONVERSATION, AuthPermission.WRITE)),
 ):
-
-    # Establish connection
     await websocket.accept()
 
+    try:
+        while True:
+
+            # Receive the next message from WebSocket.
+            user_message = await websocket.receive_json()
+
+            # http endpoints may have been called while waiting for a message
+            cat.load_working_memory_from_cache()
+
+
+            async def msg_callback(msg):
+                await websocket.send_json(msg)
+
+            # Run the `cat` message main flow
+            await cat(
+                user_message,
+                message_callback=msg_callback
+            )
+
+    except Exception:
+        log.error("Error in websocket loop")
+
+    await websocket.close()
+
+
+
+
+"""
     # Add the new WebSocket connection to the manager.
     websocket_manager = websocket.scope["app"].state.websocket_manager
     websocket_manager.add_connection(cat.user_id, websocket)
@@ -49,3 +93,4 @@ async def websocket_endpoint(
 
         # Remove connection on disconnect
         websocket_manager.remove_connection(cat.user_id)
+"""
