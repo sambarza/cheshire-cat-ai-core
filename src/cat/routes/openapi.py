@@ -3,7 +3,6 @@ from fastapi.openapi.utils import get_openapi
 import tomli
 
 
-
 def get_openapi_configuration_function(cheshire_cat_api: FastAPI):
     # Configure openAPI schema for swagger and redoc
     def custom_openapi():
@@ -14,10 +13,11 @@ def get_openapi_configuration_function(cheshire_cat_api: FastAPI):
             project_toml = tomli.load(f)["project"]
 
         openapi_schema = get_openapi(
-            title=f"😸 {project_toml['name']} API",
+            title=f"Cheshire Cat AI - {project_toml["version"]} 🐈",
             version=project_toml["version"],
             description=project_toml["description"],
             routes=cheshire_cat_api.routes,
+            
         )
 
         # Image should be an url and it's mostly used for redoc

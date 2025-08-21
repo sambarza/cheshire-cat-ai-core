@@ -122,13 +122,11 @@ async def validation_exception_handler(request, exc):
     )
 
 
-# openapi customization
-cheshire_cat_api.openapi = get_openapi_configuration_function(cheshire_cat_api)
-
 @cheshire_cat_api.get("/docs", include_in_schema=False)
 async def scalar_docs():
+    cheshire_cat_api.openapi = get_openapi_configuration_function(cheshire_cat_api)
     return get_scalar_api_reference(
-        openapi_url=cheshire_cat_api.openapi_url,
+        openapi_url="/openapi.json",
         title=cheshire_cat_api.title,
         scalar_favicon_url="https://cheshirecat.ai/wp-content/uploads/2023/10/Logo-Cheshire-Cat.svg",
     )
