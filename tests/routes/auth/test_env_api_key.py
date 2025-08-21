@@ -55,10 +55,12 @@ def test_all_core_endpoints_secured(client):
     # using client fixture, so both http and ws keys are set
 
     open_endpoints = [
-        "/openapi.json", # TODOV2: shuold be closed
+        "/openapi.json",
         "/auth/login",
         "/auth/token",
-        "/docs", # TODOV2: open but to use endpoints auth is required
+        "/auth/token-form",
+        "/docs",
+        "/docs/oauth2-redirect" # TODO: can this endpoint be avoided? it's added by OAuth scheme for the swagger
     ]
 
     # test all endpoints are secured
@@ -83,6 +85,9 @@ def test_all_core_endpoints_secured(client):
         else:    
             for verb in endpoint.methods:
                 response = client.request(verb, endpoint.path)
+
+                from cat.log import log
+                log.warning(endpoint.path)
 
                 if endpoint.path in open_endpoints:
                     assert response.status_code in {200, 400}

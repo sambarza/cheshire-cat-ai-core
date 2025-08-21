@@ -3,8 +3,9 @@ from typing import Dict, List, Annotated
 from urllib.parse import urlencode
 from pydantic import BaseModel
 
-from fastapi import APIRouter, Request, HTTPException, Response, status, Query, Form
+from fastapi import APIRouter, Request, HTTPException, Response, status, Query, Form, Depends
 from fastapi.responses import RedirectResponse
+from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 
 from cat.db import crud
 from cat.looking_glass.stray_cat import StrayCat
@@ -25,16 +26,11 @@ class JWTResponse(BaseModel):
 # TODOAUTH /logout endpoint
 # TODOAUTH TODOV2 /token/refresh
 
-@router.post("/token", response_model=JWTResponse)
-async def auth_token(request: Request, credentials: UserCredentials):
-    """Endpoint called from client to get a JWT from local identity provider.
-    This endpoint receives username and password as form-data, validates credentials and issues a JWT.
-    """
-
+async def get_access_token(request, username, password):
     # use username and password to authenticate user from local identity provider and get token
     auth_handler = request.app.state.ccat.core_auth_handler
     access_token = auth_handler.issue_jwt(
-        credentials.username, credentials.password
+        username, password
     )
 
     if access_token:
@@ -44,6 +40,21 @@ async def auth_token(request: Request, credentials: UserCredentials):
     # wait a little to avoid brute force attacks
     await asyncio.sleep(1)
     raise HTTPException(status_code=403, detail={"error": "Invalid Credentials"})
+
+
+@router.post("/token")
+async def auth_token(request: Request, credentials: UserCredentials) -> JWTResponse:
+    """Endpoint called from client to get a JWT from local identity provider.
+    This endpoint receives username and password as form-data, validates credentials and issues a JWT.
+    """
+    return await get_access_token(request, credentials.username, credentials.password)
+
+@router.post("/token-form")
+async def login(
+    request: Request, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+) -> JWTResponse:
+    """Form based version of the /token endpoint, in order to make the openapi login work"""
+    return await get_access_token(request, form_data.username, form_data.password)
 
 
 # login HTML form GET
@@ -118,4 +129,5 @@ async def get_available_permissions(
 ):
     """Returns all available resources and permissions."""
     return get_full_permissions()
+
 

@@ -20,29 +20,10 @@ def get_openapi_configuration_function(cheshire_cat_api: FastAPI):
             routes=cheshire_cat_api.routes,
         )
 
-        # provide user/pass login
-        openapi_schema["components"]["securitySchemes"] = {
-            "BearerAuth": {
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": "JWT",
-            }
-        }
-
         # Image should be an url and it's mostly used for redoc
         openapi_schema["info"]["x-logo"] = {
             "url": "https://cheshirecat.ai/wp-content/uploads/2023/10/Logo-Cheshire-Cat.svg"  # TODO: update with logo
         }
-
-        # force security None on endpoints if API_KEY is not present
-        # API_KEY = get_env("CCAT_API_KEY")
-        # if not API_KEY:
-        #    openapi_schema["components"]["securitySchemes"] = None
-
-        #    paths = openapi_schema["paths"]
-        #    for _, path in paths.items():
-        #        for __, verb in path.items():
-        #            verb["security"] = None  # default is [{'APIKeyHeader': []}]
 
         cheshire_cat_api.openapi_schema = openapi_schema
         return cheshire_cat_api.openapi_schema

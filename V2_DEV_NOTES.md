@@ -26,6 +26,7 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
 - endpoint `/message` has been moved to core_plugin `legacy_v1`, so it is still available. The main http enbdpoint to chat with the cat is `/chat` and must receive a `ChatRequest` JSON, which is very similar to the format use by all major LLM/assistant vendors. The endpoint supports streaming
 - Auth system semplifications (TODO review):
  - All endpoints, http and websocket, start close (except `/auth/token` and `/auth/login`)
+ - You can now login into `/docs` using username and password
  - The default `CCAT_API_KEY` is `meow`.
  - The default `CCAT_JWT_SECRET` is `meow_jwt`
  - Both the key and the jwt must be sent via header `Authorization: Bearer xxx`.
@@ -34,6 +35,7 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
  - If you are calling the cat form an unsecure client (a browser), use *only* jwt auth.
  - You need to authenticate also to see `/docs` and there is a little form to do it in the page
  - TODO users crud
+
 
 ## TODO
 

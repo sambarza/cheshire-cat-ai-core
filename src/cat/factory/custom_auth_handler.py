@@ -30,13 +30,19 @@ class BaseAuthHandler(ABC):  # TODOAUTH: pydantic model?
         auth_resource: AuthResource,
         auth_permission: AuthPermission,
         # when there is no JWT, user id is passed via `user_id: xxx` header or via websocket path
-        # with JWT, the user id is in the token ad has priority
-        user_id: str = "user",
+        # with JWT, the user id is in the token and has priority
+        user_id: str
     ) -> AuthUserInfo | None:
         
         # TODOV2: is credential is a tuple, that's username and password!
         #   have a method self.authorize_user_from_user_and_password
-        
+
+        if credential is None:
+            return None
+
+        if user_id is None:
+            user_id = "user"
+
         if is_jwt(credential):
             # JSON Web Token auth
             return self.authorize_user_from_jwt(

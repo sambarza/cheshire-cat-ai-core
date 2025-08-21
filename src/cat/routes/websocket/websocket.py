@@ -2,7 +2,8 @@ import asyncio
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 
-from cat.auth.permissions import check_permissions, AuthPermission, AuthResource
+from cat.auth.permissions import AuthPermission, AuthResource
+from cat.auth.connection import WebsocketAuth
 from cat.looking_glass.stray_cat import StrayCat
 from cat.log import log
 
@@ -13,7 +14,7 @@ router = APIRouter()
 @router.websocket("/ws/{user_id}") # TODOV2: remove, because the user is taken form the jwt
 async def websocket_endpoint(
     websocket: WebSocket,
-    cat=check_permissions(AuthResource.CONVERSATION, AuthPermission.WRITE),
+    cat=Depends(WebsocketAuth(AuthResource.CONVERSATION, AuthPermission.WRITE)), # check_permissions only for http
 ):
     await websocket.accept()
 
