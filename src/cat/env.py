@@ -7,8 +7,7 @@ def get_supported_env_variables():
         "CCAT_CORE_HOST": "localhost",
         "CCAT_CORE_PORT": "1865",
         "CCAT_CORE_USE_SECURE_PROTOCOLS": "",
-        "CCAT_API_KEY": None,
-        "CCAT_API_KEY_WS": None,
+        "CCAT_API_KEY": "meow",
         "CCAT_DEBUG": "true",
         "CCAT_LOG_LEVEL": "INFO",
         "CCAT_CORS_ALLOWED_ORIGINS": None,
@@ -17,7 +16,7 @@ def get_supported_env_variables():
         "CCAT_QDRANT_API_KEY": None,
         "CCAT_QDRANT_CLIENT_TIMEOUT": None,
         "CCAT_SAVE_MEMORY_SNAPSHOTS": "false",
-        "CCAT_JWT_SECRET": "secret",
+        "CCAT_JWT_SECRET": "meow_jwt",
         "CCAT_JWT_ALGORITHM": "HS256",
         "CCAT_JWT_EXPIRE_MINUTES": str(60 * 24),  # JWT expires after 1 day
         "CCAT_HTTPS_PROXY_MODE": "false",

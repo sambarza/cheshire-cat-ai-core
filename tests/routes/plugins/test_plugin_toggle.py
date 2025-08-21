@@ -11,21 +11,21 @@ def check_unactive_plugin_properties(plugin):
         assert len(plugin[k]) == 0
 
 
-def test_toggle_non_existent_plugin(client, just_installed_plugin):
-    response = client.put("/plugins/toggle/no_plugin")
+def test_toggle_non_existent_plugin(client, just_installed_plugin, admin_headers):
+    response = client.put("/plugins/toggle/no_plugin", headers=admin_headers)
     response_json = response.json()
 
     assert response.status_code == 404
     assert response_json["detail"]["error"] == "Plugin not found"
 
 
-def test_deactivate_plugin(client, just_installed_plugin):
+def test_deactivate_plugin(client, just_installed_plugin, admin_headers):
 
     # deactivate
-    response = client.put("/plugins/toggle/mock_plugin")
+    response = client.put("/plugins/toggle/mock_plugin", headers=admin_headers)
 
     # GET plugins endpoint lists the plugin
-    response = client.get("/plugins")
+    response = client.get("/plugins", headers=admin_headers)
     installed_plugins = response.json()["installed"]
     assert len(installed_plugins) == len(get_core_plugins_ids()) + 1  # core_plugins and mock_plugin
 
@@ -35,21 +35,21 @@ def test_deactivate_plugin(client, just_installed_plugin):
     check_unactive_plugin_properties(mock_plugin)
 
     # GET single plugin info, plugin is not active
-    response = client.get("/plugins/mock_plugin")
+    response = client.get("/plugins/mock_plugin", headers=admin_headers)
     assert isinstance(response.json()["data"]["active"], bool)
     assert not response.json()["data"]["active"]
     check_unactive_plugin_properties(response.json()["data"])
 
 
-def test_reactivate_plugin(client, just_installed_plugin):
+def test_reactivate_plugin(client, just_installed_plugin, admin_headers):
     # deactivate
-    response = client.put("/plugins/toggle/mock_plugin")
+    response = client.put("/plugins/toggle/mock_plugin", headers=admin_headers)
 
     # re-activate
-    response = client.put("/plugins/toggle/mock_plugin")
+    response = client.put("/plugins/toggle/mock_plugin", headers=admin_headers)
 
     # GET plugins endpoint lists the plugin
-    response = client.get("/plugins")
+    response = client.get("/plugins", headers=admin_headers)
     installed_plugins = response.json()["installed"]
     assert len(installed_plugins) == len(get_core_plugins_ids()) + 1
     mock_plugin = [p for p in installed_plugins if p["id"] == "mock_plugin"][0]
@@ -58,7 +58,7 @@ def test_reactivate_plugin(client, just_installed_plugin):
     check_active_plugin_properties(mock_plugin)
 
     # GET single plugin info, plugin is active
-    response = client.get("/plugins/mock_plugin")
+    response = client.get("/plugins/mock_plugin", headers=admin_headers)
     assert isinstance(response.json()["data"]["active"], bool)
     assert response.json()["data"]["active"]
     check_active_plugin_properties(response.json()["data"])

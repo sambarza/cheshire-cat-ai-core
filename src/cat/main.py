@@ -12,9 +12,9 @@ def main():
             "reload": True,
             "reload_includes": ["plugin.json"],
             "reload_excludes": ["*test_*.*", "*mock_*.*"],
-            # TODOV2: watcher looks into pycaches or venv, something sketchy
+            # TODOV2: watcher looks into .venv, something sketchy
             # TODOV2: there should be a reload in production
-            #         to allow uv sync with plugins dependencies
+            #         to allow uv sync with plugins dependencies (it does not restart the interpreter)
         }
     # uvicorn running behind an https proxy
     proxy_pass_config = {}

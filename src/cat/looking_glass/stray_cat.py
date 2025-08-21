@@ -388,8 +388,6 @@ class StrayCat:
             log.error(e)
             await self.send_error(str(e))
 
-        log.info(agent_output)
-        
         # prepare final cat message
         # TODOV2: makes no sense, the agent itself can edit cat.working_memory.chat_response
         final_output = ChatResponse(
@@ -402,6 +400,7 @@ class StrayCat:
         )
 
         # will both call the callback (if any) and return the final reply
+        log.info(final_output)
         await self.send_chat_message(final_output)
         return final_output
 

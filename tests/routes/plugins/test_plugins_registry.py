@@ -4,9 +4,8 @@ from tests.utils import create_mock_plugin_zip, get_mock_plugins_path
 
 # TODO: registry responses here should be mocked, at the moment we are actually calling the service
 
-
-def test_list_registry_plugins(client):
-    response = client.get("/plugins")
+def test_list_registry_plugins(client, admin_headers):
+    response = client.get("/plugins", headers=admin_headers)
     json = response.json()
 
     assert response.status_code == 200
@@ -23,9 +22,9 @@ def test_list_registry_plugins(client):
         assert key in json["filters"].keys()
 
 
-def test_list_registry_plugins_by_query(client):
+def test_list_registry_plugins_by_query(client, admin_headers):
     params = {"query": "podcast"}
-    response = client.get("/plugins", params=params)
+    response = client.get("/plugins", params=params, headers=admin_headers)
     json = response.json()
 
     assert response.status_code == 200
@@ -39,7 +38,7 @@ def test_list_registry_plugins_by_query(client):
 async def mock_registry_download_plugin(url: str):
     return create_mock_plugin_zip(True)
 
-def test_plugin_install_from_registry(client, monkeypatch):
+def test_plugin_install_from_registry(client, monkeypatch, admin_headers):
     # Mock the download from the registry creating a zip on-the-fly
     monkeypatch.setattr(
         "cat.routes.plugins.registry_download_plugin", mock_registry_download_plugin
@@ -54,14 +53,14 @@ def test_plugin_install_from_registry(client, monkeypatch):
 
     # install plugin from registry
     payload = {"url": "https://mockup_url.com"}
-    response = client.post("/plugins/upload/registry", json=payload)
+    response = client.post("/plugins/upload/registry", headers=admin_headers, json=payload)
 
     assert response.status_code == 200
     assert response.json()["url"] == payload["url"]
     assert response.json()["info"] == "Plugin is being installed asynchronously"
 
     # GET plugin endpoint responds
-    response = client.get("/plugins/mock_plugin")
+    response = client.get("/plugins/mock_plugin", headers=admin_headers)
     assert response.status_code == 200
     json = response.json()
     assert json["data"]["id"] == "mock_plugin"
@@ -69,7 +68,7 @@ def test_plugin_install_from_registry(client, monkeypatch):
     assert json["data"]["active"]
 
     # GET plugins endpoint lists the plugin
-    response = client.get("/plugins")
+    response = client.get("/plugins", headers=admin_headers)
     assert response.status_code == 200
     installed_plugins = response.json()["installed"]
     installed_plugins_names = list(map(lambda p: p["id"], installed_plugins))
@@ -86,13 +85,13 @@ def test_plugin_install_from_registry(client, monkeypatch):
 
 
 # take away from the list of availbale registry plugins, the ones that are already installed
-def test_list_registry_plugins_without_duplicating_installed_plugins(client):
+def test_list_registry_plugins_without_duplicating_installed_plugins(client, admin_headers):
     # 1. install plugin from registry
     # TODO !!!
 
     # 2. get available plugins searching for the one just installed
     params = {"query": "podcast"}
-    response = client.get("/plugins", params=params)
+    response = client.get("/plugins", headers=admin_headers, params=params)
     #json = response.json()
 
     # 3. plugin should show up among installed by not among registry ones

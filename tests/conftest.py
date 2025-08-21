@@ -126,25 +126,15 @@ async def async_client(monkeypatch):
             yield ac
     clean_up_mocks()
 
-# This fixture sets the CCAT_API_KEY and CCAT_API_KEY_WS environment variables,
-# making mandatory for clients to possess api keys or JWT
-@pytest.fixture(scope="function")
-def secure_client(client):
-    # set ENV variables
-    os.environ["CCAT_API_KEY"] = "meow_http"
-    os.environ["CCAT_API_KEY_WS"] = "meow_ws"
-    os.environ["CCAT_JWT_SECRET"] = "meow_jwt"
-    yield client
-    del os.environ["CCAT_API_KEY"]
-    del os.environ["CCAT_API_KEY_WS"]
-    del os.environ["CCAT_JWT_SECRET"]
-
+@pytest.fixture(scope="package")
+def admin_headers():
+    yield { "Authorization": "Bearer meow"}
 
 # This fixture is useful to write tests in which
 #   a plugin was just uploaded via http.
 #   It wraps any test function having `just_installed_plugin` as an argument
 @pytest.fixture(scope="function")
-def just_installed_plugin(client):
+def just_installed_plugin(client, admin_headers):
     ### executed before each test function
 
     # create zip file with a plugin
@@ -154,7 +144,9 @@ def just_installed_plugin(client):
     # upload plugin via endpoint
     with open(zip_path, "rb") as f:
         response = client.post(
-            "/plugins/upload/", files={"file": (zip_file_name, f, "application/zip")}
+            "/plugins/upload/",
+            headers=admin_headers,
+            files={"file": (zip_file_name, f, "application/zip")}
         )
 
     # request was processed
@@ -180,6 +172,7 @@ def stray(async_client):
         name="Alice"
     )
     stray_cat = StrayCat(user_data)
+    # TODOV2: update to new data structure
     stray_cat.working_memory.user_message_json = {"user_id": user_data.id, "text": "meow"}
     yield stray_cat
 

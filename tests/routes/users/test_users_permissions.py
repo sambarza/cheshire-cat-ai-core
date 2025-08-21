@@ -2,10 +2,6 @@
 import pytest
 
 # test endpoints with different user permissions
-# NOTE: we are using here the secure_client:
-# - CCAT_API_KEY, CCAT_API_KEY_WS and CCAT_JWT_SECRET are active
-# - we will auth with JWT
-
 
 @pytest.mark.parametrize("credentials", [
     # default users: `admin` has USERS permissions, `user` has not
@@ -39,19 +35,15 @@ import pytest
         "payload": None
     }
 ])
-def test_users_permissions(secure_client, credentials, endpoint):
+def test_users_permissions(client, admin_headers, credentials, endpoint):
 
     # create new user that will be edited by calling the endpoints
-    # we create it using directly CCAT_API_KEY
-    response = secure_client.post(
+    response = client.post(
         "/users",
+        headers=admin_headers,
         json={
             "username": "Caterpillar",
             "password": "U R U"
-        },
-        headers={
-            "Authorization": "Bearer meow_http",
-            "user_id": "admin"
         }
     )
     assert response.status_code == 200
@@ -60,7 +52,7 @@ def test_users_permissions(secure_client, credentials, endpoint):
     # tests for `admin` and `user` using the endpoints
 
     # no JWT, no pass
-    res = secure_client.request(
+    res = client.request(
         endpoint["method"],
         endpoint["path"].replace("ID_PLACEHOLDER", target_user_id),
         json=endpoint["payload"]
@@ -69,12 +61,12 @@ def test_users_permissions(secure_client, credentials, endpoint):
     assert res.json()["detail"]["error"] == "Invalid Credentials"
     
     # obtain JWT
-    res = secure_client.post("/auth/token", json=credentials)
+    res = client.post("/auth/token", json=credentials)
     assert res.status_code == 200
     jwt = res.json()["access_token"]
 
     # now using JWT
-    res = secure_client.request(
+    res = client.request(
         endpoint["method"],
         endpoint["path"].replace("ID_PLACEHOLDER", target_user_id),
         json=endpoint["payload"],

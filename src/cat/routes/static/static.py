@@ -2,7 +2,7 @@ from fastapi.staticfiles import StaticFiles
 #from fastapi import Request, HTTPException
 
 from cat import utils
-#from cat.auth.connection import HTTPAuth
+#from cat.auth.connection import Auth
 #from cat.auth.permissions import AuthPermission, AuthResource
 
 
@@ -14,7 +14,7 @@ from cat import utils
 
 #     async def __call__(self, scope, receive, send) -> None:
 #         request = Request(scope, receive=receive)
-#         http_auth = HTTPAuth(
+#         http_auth = Auth(
 #             resource=AuthResource.STATIC, permission=AuthPermission.READ
 #         )
 #         allowed = False

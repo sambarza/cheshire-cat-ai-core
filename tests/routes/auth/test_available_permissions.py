@@ -1,9 +1,12 @@
 
 from cat.auth.permissions import get_full_permissions
 
-def test_get_available_permissions(client):
+def test_get_available_permissions(client, admin_headers):
 
-    response = client.get("/auth/available-permissions")
+    response = client.get(
+        "/auth/available-permissions",
+        headers=admin_headers
+    )
     assert response.status_code == 200
     data = response.json()
     

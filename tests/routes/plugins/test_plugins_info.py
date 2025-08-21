@@ -1,7 +1,7 @@
 from tests.utils import get_core_plugins_ids
 
-def test_list_plugins(client):
-    response = client.get("/plugins")
+def test_list_plugins(client, admin_headers):
+    response = client.get("/plugins", headers=admin_headers)
     json = response.json()
 
     assert response.status_code == 200
@@ -23,8 +23,8 @@ def test_list_plugins(client):
     assert len(json["registry"]) > 0
 
 
-def test_get_plugin_id(client):
-    response = client.get("/plugins/qdrant_vector_memory") # one of the core plugins
+def test_get_plugin_id(client, admin_headers):
+    response = client.get("/plugins/qdrant_vector_memory", headers=admin_headers) # one of the core plugins
 
     json = response.json()
 
@@ -35,8 +35,8 @@ def test_get_plugin_id(client):
     assert json["data"]["active"]
 
 
-def test_get_non_existent_plugin(client):
-    response = client.get("/plugins/no_plugin")
+def test_get_non_existent_plugin(client, admin_headers):
+    response = client.get("/plugins/no_plugin", headers=admin_headers)
     json = response.json()
 
     assert response.status_code == 404

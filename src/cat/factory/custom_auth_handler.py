@@ -20,6 +20,9 @@ class BaseAuthHandler(ABC):  # TODOAUTH: pydantic model?
     MUST be implemented by subclasses.
     """
 
+    # TODOV2: authorize_user_from_password SHOULD BE HERE!!!!
+    #           so no need for core auth handler
+
     def authorize_user_from_credential(
         self,
         protocol: Literal["http", "websocket"],
@@ -30,6 +33,10 @@ class BaseAuthHandler(ABC):  # TODOAUTH: pydantic model?
         # with JWT, the user id is in the token ad has priority
         user_id: str = "user",
     ) -> AuthUserInfo | None:
+        
+        # TODOV2: is credential is a tuple, that's username and password!
+        #   have a method self.authorize_user_from_user_and_password
+        
         if is_jwt(credential):
             # JSON Web Token auth
             return self.authorize_user_from_jwt(
@@ -105,43 +112,14 @@ class CoreAuthHandler(BaseAuthHandler):
             api_key: str,
             auth_resource: AuthResource,
             auth_permission: AuthPermission,
-    ) -> AuthUserInfo | None:
-        http_key = get_env("CCAT_API_KEY")
-        ws_key = get_env("CCAT_API_KEY_WS")
+    ) -> AuthUserInfo | None: 
 
-        if not http_key and not ws_key:
+        # allow access with full permissions
+        if api_key == get_env("CCAT_API_KEY"):
             return AuthUserInfo(
                 id=user_id,
                 name=user_id,
                 permissions=get_full_permissions()
-            )
-
-        if protocol == "websocket":
-            return self._authorize_websocket_key(user_id, api_key, ws_key)
-        else:
-            return self._authorize_http_key(user_id, api_key, http_key)
-
-    def _authorize_http_key(self, user_id: str, api_key: str, http_key: str) -> AuthUserInfo | None:
-
-        # HTTP API key match -> allow access with full permissions
-        if api_key == http_key:
-            return AuthUserInfo(
-                id=user_id,
-                name=user_id,
-                permissions=get_full_permissions()
-            )
-
-        # No match -> deny access
-        return None
-
-    def _authorize_websocket_key(self, user_id: str, api_key: str, ws_key: str) -> AuthUserInfo | None:
-
-        # WebSocket API key match -> allow access with base permissions
-        if api_key == ws_key:
-            return AuthUserInfo(
-                id=user_id,
-                name=user_id,
-                permissions=get_base_permissions()
             )
 
         # No match -> deny access

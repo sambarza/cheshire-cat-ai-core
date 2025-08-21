@@ -22,8 +22,10 @@ RUN rm -fr .venv
 
 ### INSTALL PYTHON DEPENDENCIES (Core) ###
 RUN pip install uv && uv sync
-RUN uv run python3 -c "import nltk; nltk.download('punkt');nltk.download('averaged_perceptron_tagger');import tiktoken;tiktoken.get_encoding('cl100k_base')"
+# TODO: should the memory plugin run this on its own
+# RUN uv run python3 -c "import nltk; nltk.download('punkt');nltk.download('averaged_perceptron_tagger');import tiktoken;tiktoken.get_encoding('cl100k_base')"
 # RUN uv run python3 install_plugin_dependencies.py TODO: use uv inside the script
 
 ### FINISH ###
-CMD python3 -m cat.main
+# TODO: should be ccat or something
+CMD python3 -m cat.main 

@@ -80,18 +80,4 @@ async def chat(
         return await cat(chat_request)
 
 
-
-@router.post("/sse")
-async def sse(
-    #chat_request: ChatRequest,
-    cat=check_permissions(AuthResource.CONVERSATION, AuthPermission.READ),
-):
-    async def event_generator():
-        for i in range(1, 11):
-            event = {"number": i}
-            yield f"data: {json.dumps(event)}\n\n"
-            await asyncio.sleep(1)  # simulate delay
-
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
-
 # TODOV2: notifications should be under a GET endpoint with SSE (same as MCP)

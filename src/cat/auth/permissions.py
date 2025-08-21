@@ -82,7 +82,7 @@ class AuthUserInfo(BaseModelDict):
     # - profile data
     # - custom attributes
     # - roles
-    extra: BaseModelDict = {}
+    extra: BaseModelDict = BaseModelDict()
 
 
 def check_permissions(resource: AuthResource | str, permission: AuthPermission | str):
@@ -103,8 +103,8 @@ def check_permissions(resource: AuthResource | str, permission: AuthPermission |
     """
 
     # import here to avoid circular imports
-    from cat.auth.connection import HTTPAuth
-    return Depends(HTTPAuth(
+    from cat.auth.connection import Auth
+    return Depends(Auth(
         # in case strings are passed, we do not force to the enum, to allow custom permissions
         # (which in any case are to be matched in the endpoint)
         resource = resource, 

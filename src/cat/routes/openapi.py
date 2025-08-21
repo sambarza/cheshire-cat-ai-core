@@ -20,6 +20,15 @@ def get_openapi_configuration_function(cheshire_cat_api: FastAPI):
             routes=cheshire_cat_api.routes,
         )
 
+        # provide user/pass login
+        openapi_schema["components"]["securitySchemes"] = {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+            }
+        }
+
         # Image should be an url and it's mostly used for redoc
         openapi_schema["info"]["x-logo"] = {
             "url": "https://cheshirecat.ai/wp-content/uploads/2023/10/Logo-Cheshire-Cat.svg"  # TODO: update with logo

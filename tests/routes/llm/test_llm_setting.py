@@ -5,10 +5,10 @@ from cat.factory.llm import get_llms_schemas
 from tests.utils import send_http_message
 
 
-def test_get_all_llm_settings(client):
+def test_get_all_llm_settings(client, admin_headers):
     llms_schemas = get_llms_schemas()
 
-    response = client.get("/llm/settings")
+    response = client.get("/llm/settings", headers=admin_headers)
     json = response.json()
 
     assert response.status_code == 200
@@ -24,18 +24,21 @@ def test_get_all_llm_settings(client):
     assert json["selected_configuration"] is None  # no llm configured at startup
 
 
-def test_get_llm_settings_non_existent(client):
+def test_get_llm_settings_non_existent(client, admin_headers):
     non_existent_llm_name = "LLMNonExistentConfig"
-    response = client.get(f"/llm/settings/{non_existent_llm_name}")
+    response = client.get(
+        f"/llm/settings/{non_existent_llm_name}",
+        headers=admin_headers
+    )
     json = response.json()
 
     assert response.status_code == 400
     assert f"{non_existent_llm_name} not supported" in json["detail"]["error"]
 
 
-def test_get_llm_settings(client):
+def test_get_llm_settings(client, admin_headers):
     llm_name = "LLMDefaultConfig"
-    response = client.get(f"/llm/settings/{llm_name}")
+    response = client.get(f"/llm/settings/{llm_name}", headers=admin_headers)
     json = response.json()
 
     assert response.status_code == 200
@@ -45,13 +48,13 @@ def test_get_llm_settings(client):
     assert json["schema"]["type"] == "object"
 
 
-def test_upsert_llm_settings_success(client, just_installed_plugin):
+def test_upsert_llm_settings_success(client, just_installed_plugin, admin_headers):
     
     # set a different LLM
     new_llm = "TestLLMConfig"
     expected_responses = ["meow", "bao", "baobab"]
     payload = {"responses": expected_responses}
-    response = client.put(f"/llm/settings/{new_llm}", json=payload)
+    response = client.put(f"/llm/settings/{new_llm}", headers=admin_headers, json=payload)
 
     # check immediate response
     json = response.json()
@@ -60,7 +63,7 @@ def test_upsert_llm_settings_success(client, just_installed_plugin):
     assert json["value"]["responses"] == expected_responses
 
     # retrieve all LLMs settings to check if it was saved in DB
-    response = client.get("/llm/settings")
+    response = client.get("/llm/settings", headers=admin_headers)
     json = response.json()
     assert response.status_code == 200
     assert json["selected_configuration"] == new_llm
@@ -68,7 +71,7 @@ def test_upsert_llm_settings_success(client, just_installed_plugin):
     assert saved_config[0]["value"]["responses"] == expected_responses
 
     # check also specific LLM endpoint
-    response = client.get(f"/llm/settings/{new_llm}")
+    response = client.get(f"/llm/settings/{new_llm}", headers=admin_headers)
     assert response.status_code == 200
     json = response.json()
     assert json["name"] == new_llm
@@ -77,5 +80,5 @@ def test_upsert_llm_settings_success(client, just_installed_plugin):
 
     # check expected replies form test LLM
     for er in expected_responses:
-        reply = send_http_message("meow", client)
+        reply = send_http_message("meow", client, headers=admin_headers)
         assert reply["text"] == er

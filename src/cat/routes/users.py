@@ -8,6 +8,11 @@ from cat.db import crud
 from cat.auth.permissions import AuthPermission, AuthResource, get_base_permissions, check_permissions
 from cat.auth.auth_utils import hash_password
 
+
+# TODOV2: insert "/me" endpoints to get and put user0s own info
+#   (should not require special permissions, just the basic ones)
+
+
 router = APIRouter()
 
 class UserBase(BaseModel):
@@ -40,7 +45,7 @@ def create_user(
     for id, u in users_db.items():
         if u["username"] == new_user.username:
             raise HTTPException(
-                status_code=403,
+                status_code=400,
                 detail={"error": "Cannot duplicate user"}
             )
         
@@ -73,7 +78,7 @@ def read_user(
     cat=check_permissions(AuthResource.USERS, AuthPermission.READ),
 ):
     if user_id not in users_db:
-        raise HTTPException(status_code=404, detail={"error": "User not found"})
+        raise HTTPException(status_code=400, detail={"error": "User not found"})
     return users_db[user_id]
 
 @router.put("/{user_id}", response_model=UserResponse)
@@ -84,7 +89,7 @@ def update_user(
     cat=check_permissions(AuthResource.USERS, AuthPermission.EDIT),
 ):
     if user_id not in users_db:
-        raise HTTPException(status_code=404, detail={"error": "User not found"})
+        raise HTTPException(status_code=400, detail={"error": "User not found"})
     
     stored_user = users_db[user_id]
     if user.password:
@@ -101,7 +106,7 @@ def delete_user(
     cat=check_permissions(AuthResource.USERS, AuthPermission.DELETE),
 ):
     if user_id not in users_db:
-        raise HTTPException(status_code=404, detail={"error": "User not found"})
+        raise HTTPException(status_code=400, detail={"error": "User not found"})
     
     user = users_db.pop(user_id)
     crud.update_users(users_db)

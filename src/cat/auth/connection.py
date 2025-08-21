@@ -23,12 +23,13 @@ from cat.looking_glass.stray_cat import StrayCat
 from cat.log import log
 
 
-class ConnectionAuth(ABC):
+class BaseAuth(ABC):
 
     def __init__(
             self,
             resource: AuthResource | str,
-            permission: AuthPermission | str):
+            permission: AuthPermission | str
+        ):
         
         self.resource = resource
         self.permission = permission
@@ -68,7 +69,7 @@ class ConnectionAuth(ABC):
         self.not_allowed(connection)
 
     @abstractmethod
-    def extract_credentials(self, connection: Request | WebSocket) -> Tuple[str] | None:
+    def extract_credentials(self, connection: Request | WebSocket) -> Tuple[str] | Tuple[None]:
         pass
 
     @abstractmethod
@@ -76,64 +77,43 @@ class ConnectionAuth(ABC):
         pass
         
 
-class HTTPAuth(ConnectionAuth):
+class Auth(BaseAuth):
 
-    def extract_credentials(self, connection: Request) -> Tuple[str, str] | None:
+    def extract_credentials(self, connection: Request | WebSocket) -> Tuple[str] | Tuple[None]:
         """
         Extract user_id and token/key from headers
         """
 
-        # when using CCAT_API_KEY, user_id is passed in headers
-        user_id = connection.headers.get("user_id", "user")
+        if isinstance(connection, WebSocket):
+            user_id = connection.path_params.get("user_id", "user")
+            token = connection.query_params.get("token", None)
 
-        # Proper Authorization header
-        token = connection.headers.get("Authorization", None)
-        if token and ("Bearer " in token):
-            token = token.replace("Bearer ", "")
-
-        if not token:
-            # Legacy header to pass CCAT_API_KEY
-            token = connection.headers.get("access_token", None)
+        elif isinstance(connection, Request):
+            user_id = connection.headers.get("user_id", "user")
+            token = connection.headers.get("Authorization", None)
             if token:
-                log.warning(
-                    "Deprecation Warning: `access_token` header will not be supported in v2."
-                    "Pass your token/key using the `Authorization: Bearer <token>` format."
-                )
-        
-        # some clients may send an empty string instead of just not setting the header
-        if token == "":
+                if "Bearer " in token:
+                    token = token.replace("Bearer ", "")
+                else:
+                    token = None
+        else:
+            user_id = None
             token = None
 
         return user_id, token
 
 
-    def not_allowed(self, connection: Request):
-        raise HTTPException(status_code=403, detail={"error": "Invalid Credentials"})
+    def not_allowed(self, connection: Request | WebSocket):
+        if isinstance(connection, Request):
+            raise HTTPException(status_code=403, detail={"error": "Invalid Credentials"})
+        elif isinstance(connection, WebSocket):
+            raise WebSocketException(code=1004, reason="Invalid Credentials")
+        else:
+            raise Exception("Invalid Credentials")
     
 
-    
-
-class WebSocketAuth(ConnectionAuth):
-
-    def extract_credentials(self, connection: WebSocket) -> Tuple[str, str] | None:
-        """
-        Extract user_id from WebSocket path params
-        Extract token from WebSocket query string
-        """
-        user_id = connection.path_params.get("user_id", "user")
-
-        # TODOAUTH: is there a more secure way to pass the token over websocket?
-        #   Headers do not work from the browser
-        token = connection.query_params.get("token", None)
-        
-        return user_id, token
-
-    def not_allowed(self, connection: WebSocket):
-        raise WebSocketException(code=1004, reason="Invalid Credentials")
-
-
-
-class CoreFrontendAuth(HTTPAuth):
+# TODOV2: get rid of this
+class CoreFrontendAuth(Auth):
 
     def extract_credentials(self, connection: Request) -> Tuple[str, str] | None:
         """

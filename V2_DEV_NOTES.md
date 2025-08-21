@@ -2,6 +2,7 @@
 # Version 2 dev notes
 
 - Most core functionality has been moved to plugins so it can be easily extended or deactivated. Find them in `cat/core_plugins`.
+- There are many changes and most plugins need to be adjusted (will provide a dedicated guide). The old admin still works with v2 via core plugin `legacy_v1`.
 - All websocket methods (`send_ws_message`, `send_chat_message`, `send_notification`, `send_error`) must be awaited as they are now async:
 
     ```python
@@ -22,7 +23,17 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
 - Due to difficulties in keeping up with langchain, core only depends on `langchain_core`. All LLM and embedder vendors are now packed in core_plugin `langchain_models_pack` so they are isolated and more easily maintained.
 - We only support chat models, text-only or multimodal. Pure completion models are not supported anymore. If you need to use one, create your own LLM adapter and hook it via `factory_allowed_llms`
 - Embedders are not automatically associated with the chosen LLM vendor. You will need to configure that yourself, The cat will notify you at every message if the embedder is not set.
-
+- endpoint `/message` has been moved to core_plugin `legacy_v1`, so it is still available. The main http enbdpoint to chat with the cat is `/chat` and must receive a `ChatRequest` JSON, which is very similar to the format use by all major LLM/assistant vendors. The endpoint supports streaming
+- Auth system semplifications (TODO review):
+ - All endpoints, http and websocket, start close (except `/auth/token` and `/auth/login`)
+ - The default `CCAT_API_KEY` is `meow`.
+ - The default `CCAT_JWT_SECRET` is `meow_jwt`
+ - Both the key and the jwt must be sent via header `Authorization: Bearer xxx`.
+ - `CCAT_API_KEY_WS` does not exist anymore.
+ - If you are calling the cat machine-to-machine, use `CCAT_API_KEY`, for both http and ws. Websocket in a machine-to-machine settings supports headers, so you can follow the same schema (query parameter `?token=` is not supported anymore). TODO: still active just for dev v2
+ - If you are calling the cat form an unsecure client (a browser), use *only* jwt auth.
+ - You need to authenticate also to see `/docs` and there is a little form to do it in the page
+ - TODO users crud
 
 ## TODO
 
@@ -43,6 +54,7 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
 - new plugins with custom requirements may not work as expected (need a restart).
 - should we ship a small LLM and embedder via llama.cpp or other lightweight runner?
 - as there are docker and pyPI releases, makes no sense to have a `develop` branch
+- move settings out of plugins?
 
 ## Installation
 

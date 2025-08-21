@@ -23,7 +23,7 @@ class JWTResponse(BaseModel):
 
 
 # TODOAUTH /logout endpoint
-# TODOAUTH /token/refresh
+# TODOAUTH TODOV2 /token/refresh
 
 @router.post("/token", response_model=JWTResponse)
 async def auth_token(request: Request, credentials: UserCredentials):
@@ -47,6 +47,7 @@ async def auth_token(request: Request, credentials: UserCredentials):
 
 
 # login HTML form GET
+# TODOV2: delete this endpoint and manage auth from the admin via /auth/token
 @router.get("/login", include_in_schema=False)
 async def auth_login_form_get(
     request: Request, referer: str = Query(None), retry: int = Query(0)

@@ -3,9 +3,12 @@ from fastapi.encoders import jsonable_encoder
 from cat.factory.auth_handler import get_auth_handlers_schemas
 
 
-def test_get_all_auth_handler_settings(client):
+def test_get_all_auth_handler_settings(client, admin_headers):
     AUTH_HANDLER_SCHEMAS = get_auth_handlers_schemas()
-    response = client.get("/auth_handler/settings")
+    response = client.get(
+        "/auth_handler/settings",
+        headers=admin_headers
+    )
     json = response.json()
 
     assert response.status_code == 200
@@ -22,9 +25,12 @@ def test_get_all_auth_handler_settings(client):
     assert json["selected_configuration"] == "CoreOnlyAuthConfig"
 
 
-def test_get_auth_handler_settings_non_existent(client):
+def test_get_auth_handler_settings_non_existent(client, admin_headers):
     non_existent_auth_handler_name = "AuthHandlerNonExistent"
-    response = client.get(f"/auth_handler/settings/{non_existent_auth_handler_name}")
+    response = client.get(
+        f"/auth_handler/settings/{non_existent_auth_handler_name}",
+        headers=admin_headers
+    )
     json = response.json()
 
     assert response.status_code == 400

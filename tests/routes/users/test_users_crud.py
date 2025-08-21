@@ -15,10 +15,10 @@ def check_user_fields(u):
         # If a ValueError is raised, the UUID string is invalid
         assert False, "Not a UUID"
 
-def test_create_user(client):
+def test_create_user(client, admin_headers):
 
     # create user
-    data = create_new_user(client)
+    data = create_new_user(client, admin_headers)
 
     # assertions on user structure
     check_user_fields(data)
@@ -26,30 +26,34 @@ def test_create_user(client):
     assert data["username"] == "Alice"
     assert data["permissions"] == get_base_permissions()
 
-def test_cannot_create_duplicate_user(client):
+def test_cannot_create_duplicate_user(client, admin_headers):
 
     # create user
-    response = create_new_user(client)
+    response = create_new_user(client, admin_headers)
 
     # create user with same username
-    response = client.post("/users", json={"username": "Alice", "password": "ecilA"})
-    assert response.status_code == 403
+    response = client.post(
+        "/users",
+        headers=admin_headers,
+        json={"username": "Alice", "password": "ecilA"}
+    )
+    assert response.status_code == 400
     assert response.json()["detail"]["error"] == "Cannot duplicate user"
 
-def test_get_users(client):
+def test_get_users(client, admin_headers):
 
     # get list of users
-    response = client.get("/users")
+    response = client.get("/users", headers=admin_headers)
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
     assert len(data) == 2 # admin and user
 
     # create user
-    create_new_user(client)
+    create_new_user(client, admin_headers)
 
     # get updated list of users
-    response = client.get("/users")
+    response = client.get("/users", headers=admin_headers)
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -64,18 +68,18 @@ def test_get_users(client):
         else:
             assert d["permissions"] == get_base_permissions()
 
-def test_get_user(client):
+def test_get_user(client, admin_headers):
 
     # get unexisting user
-    response = client.get("/users/wrong_user_id")
-    assert response.status_code == 404
+    response = client.get("/users/wrong_user_id", headers=admin_headers)
+    assert response.status_code == 400
     assert response.json()["detail"]["error"] == "User not found"
 
     # create user and obtain id
-    user_id = create_new_user(client)["id"]
+    user_id = create_new_user(client, admin_headers)["id"]
 
     # get specific existing user
-    response = client.get(f"/users/{user_id}")
+    response = client.get(f"/users/{user_id}", headers=admin_headers)
     assert response.status_code == 200
     data = response.json()
 
@@ -84,23 +88,27 @@ def test_get_user(client):
     assert data["username"] == "Alice"
     assert data["permissions"] == get_base_permissions()
 
-def test_update_user(client):
+def test_update_user(client, admin_headers):
 
     # update unexisting user
-    response = client.put("/users/non_existent_id", json={"username": "Red Queen"})
-    assert response.status_code == 404
+    response = client.put(
+        "/users/non_existent_id",
+        headers=admin_headers,
+        json={"username": "Red Queen"}
+    )
+    assert response.status_code == 400
     assert response.json()["detail"]["error"] == "User not found"
 
     # create user and obtain id
-    user_id = create_new_user(client)["id"]
+    user_id = create_new_user(client, admin_headers)["id"]
 
     # update unexisting attribute (bad request)
     updated_user = {"username": "Alice", "something": 42}
-    response = client.put(f"/users/{user_id}", json=updated_user)
+    response = client.put(f"/users/{user_id}", headers=admin_headers, json=updated_user)
     assert response.status_code == 400
 
     # change nothing
-    response = client.put(f"/users/{user_id}", json={})
+    response = client.put(f"/users/{user_id}", headers=admin_headers, json={})
     assert response.status_code == 200
     data = response.json()
 
@@ -111,7 +119,7 @@ def test_update_user(client):
     
     # update password
     updated_user = {"password": "12345"}
-    response = client.put(f"/users/{user_id}", json=updated_user)
+    response = client.put(f"/users/{user_id}", headers=admin_headers, json=updated_user)
     assert response.status_code == 200
     data = response.json()
     check_user_fields(data)
@@ -121,7 +129,7 @@ def test_update_user(client):
     
     # change username
     updated_user = {"username": "Alice2"}
-    response = client.put(f"/users/{user_id}", json=updated_user)
+    response = client.put(f"/users/{user_id}", headers=admin_headers, json=updated_user)
     assert response.status_code == 200
     data = response.json()
     check_user_fields(data)
@@ -130,7 +138,7 @@ def test_update_user(client):
 
     # change permissions
     updated_user = {"permissions": {"MEMORY": ["READ"]}}
-    response = client.put(f"/users/{user_id}", json=updated_user)
+    response = client.put(f"/users/{user_id}", headers=admin_headers, json=updated_user)
     assert response.status_code == 200
     data = response.json()
     check_user_fields(data)
@@ -139,7 +147,7 @@ def test_update_user(client):
 
     # change username and permissions
     updated_user = {"username": "Alice3", "permissions": {"UPLOAD":["WRITE"]}}
-    response = client.put(f"/users/{user_id}", json=updated_user)
+    response = client.put(f"/users/{user_id}", headers=admin_headers, json=updated_user)
     assert response.status_code == 200
     data = response.json()
     check_user_fields(data)
@@ -147,7 +155,7 @@ def test_update_user(client):
     assert data["permissions"] == {"UPLOAD":["WRITE"]}
 
     # get list of users, should be admin, user and Alice3
-    response = client.get("/users")
+    response = client.get("/users", headers=admin_headers)
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 3
@@ -161,29 +169,29 @@ def test_update_user(client):
         else:
             assert d["permissions"] == get_base_permissions()
 
-def test_delete_user(client):
+def test_delete_user(client, admin_headers):
 
     # delete unexisting user
-    response = client.delete("/users/non_existent_id")
-    assert response.status_code == 404
+    response = client.delete("/users/non_existent_id", headers=admin_headers)
+    assert response.status_code == 400
     assert response.json()["detail"]["error"] == "User not found"
 
     # create user and obtain id
-    user_id = create_new_user(client)["id"]
+    user_id = create_new_user(client, admin_headers)["id"]
 
     # delete user
-    response = client.delete(f"/users/{user_id}")
+    response = client.delete(f"/users/{user_id}", headers=admin_headers)
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == user_id
 
     # check that the user is not in the db anymore
-    response = client.get(f"/users/{user_id}")
-    assert response.status_code == 404
+    response = client.get(f"/users/{user_id}", headers=admin_headers)
+    assert response.status_code == 400
     assert response.json()["detail"]["error"] == "User not found"
 
     # check user is no more in the list of users
-    response = client.get("/users")
+    response = client.get("/users", headers=admin_headers)
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -192,31 +200,3 @@ def test_delete_user(client):
     assert data[1]["username"] == "user"
 
 
-# note: using secure client (api key set both for http and ws)
-def test_no_access_if_api_keys_active(secure_client):
-
-    # create user (forbidden)
-    response = secure_client.post(
-        "/users",
-        json={"username": "Alice", "password": "wandering_in_wonderland"}
-    )
-    assert response.status_code == 403
-
-    # read users (forbidden)
-    response = secure_client.get("/users")
-    assert response.status_code == 403
-
-    # edit user (forbidden)
-    response = secure_client.put(
-        "/users/non_existent_id", # is does not exist, but request should be blocked before the check
-        json={"username": "Alice"}
-    )
-    assert response.status_code == 403
-
-    # check default list giving the correct CCAT_API_KEY
-    headers = {"Authorization": "Bearer meow_http"}
-    response = secure_client.get("/users", headers=headers)
-    assert response.status_code == 200
-    assert len(response.json()) == 2
-    assert response.json()[0]["username"] == "admin"
-    assert response.json()[1]["username"] == "user"

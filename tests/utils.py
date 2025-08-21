@@ -89,10 +89,14 @@ def send_websocket_message(msg, client, user_id="user", query_params=None):
 
 
 # utility to send n messages via chat
-def send_n_websocket_messages(num_messages, client):
+def send_n_websocket_messages(num_messages, client, query_params=None):
     responses = []
 
-    with client.websocket_connect("/ws") as websocket:
+    url = f"/ws"
+    if query_params:
+        url += "?" + urlencode(query_params)
+
+    with client.websocket_connect(url) as websocket:
         for m in range(num_messages):
             message = {"text": f"Red Queen {m}"}
             # sed ws message
@@ -127,8 +131,8 @@ def create_mock_plugin_zip(flat: bool):
     )
 
 
-def create_new_user(client):
+def create_new_user(client, admin_headers):
     new_user = {"username": "Alice", "password": "wandering_in_wonderland"}
-    response = client.post("/users", json=new_user)
+    response = client.post("/users", headers=admin_headers, json=new_user)
     assert response.status_code == 200
     return response.json()

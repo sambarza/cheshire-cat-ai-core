@@ -1,51 +1,19 @@
 import asyncio
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
-from fastapi.concurrency import run_in_threadpool
 
-from cat.auth.permissions import AuthPermission, AuthResource
-from cat.auth.connection import WebSocketAuth
+from cat.auth.permissions import check_permissions, AuthPermission, AuthResource
 from cat.looking_glass.stray_cat import StrayCat
 from cat.log import log
 
 router = APIRouter()
 
 
-async def handle_messages(websocket: WebSocket, cat: StrayCat):
-
-    while True:
-
-        # Receive the next message from the WebSocket.
-        user_message = await websocket.receive_json()
-
-        # http endpoints may have been called while waiting for a message
-        cat.load_working_memory_from_cache()
-
-        # Run the `cat` message main flow
-        await cat.run(user_message, return_message=False)
-
-
-
-
-# async generator
-async def number_generator():
-    
-    yield {"count": 1}
-    await asyncio.sleep(1)
-    yield {"count": 2}
-    await asyncio.sleep(1)
-    yield {"count": 3}
-
-
-
-
-
-
 @router.websocket("/ws")
-@router.websocket("/ws/{user_id}")
+@router.websocket("/ws/{user_id}") # TODOV2: remove, because the user is taken form the jwt
 async def websocket_endpoint(
     websocket: WebSocket,
-    cat=Depends(WebSocketAuth(AuthResource.CONVERSATION, AuthPermission.WRITE)),
+    cat=check_permissions(AuthResource.CONVERSATION, AuthPermission.WRITE),
 ):
     await websocket.accept()
 
@@ -70,8 +38,7 @@ async def websocket_endpoint(
 
     except Exception:
         log.error("Error in websocket loop")
-
-    await websocket.close()
+        await websocket.close()
 
 
 
