@@ -158,34 +158,20 @@ def test_jwt_imposes_user_id(client):
     token = res.json()["access_token"]
 
     # we will send this message both via http and ws, having the user_id carried by the JWT
-    message = {
-        "text": "hey"
-    }
+    message = "hey"
 
     # send user specific message via http
     headers = {
-        "Authorization": f"Bearer {token}"
+        "Authorization": f"Bearer {token}",
+        "user_id": "fake"
     }
-    response = client.post("/chat", headers=headers, json=message)
-    assert response.status_code == 200
+    res =send_http_message(message, client, headers=headers)
+    assert res["user_id"] == "admin"
 
     # send user specific request via ws
     query_params = {"token": token}
-    res = send_websocket_message(message, client, query_params=query_params)
-
-    # TODOV2: we are not asserting anything yet on user_id (maybe check working memory ahs been created?)
-
-    # TODOV2: should be moved inside memory plugin, cannot use here
-    # we now recall episodic memories from the user, there should be two of them, both by admin
-    #params = {"text": "hey"}
-    #response = client.get("/memory/recall/", headers=headers, params=params)
-    #json = response.json()
-    #assert response.status_code == 200
-    #episodic_memories = json["vectors"]["collections"]["episodic"]
-    #assert len(episodic_memories) == 2
-    #for em in episodic_memories:
-    #    assert em["metadata"]["source"] == "admin"
-    #    assert em["page_content"] == "hey"
+    res = send_websocket_message(message, client, user_id="fake", query_params=query_params)
+    assert res["user_id"] == "admin"
 
 
 # test that a JWT signed knowing the secret, passes
@@ -212,7 +198,7 @@ def test_jwt_self_signature_passes(client, admin_headers):
         assert "You did not configure" in response["text"]
 
         params = {"token": token}
-        response = send_websocket_message({"text": "hey"}, client, query_params=params)
+        response = send_websocket_message("hey", client, query_params=params)
         assert "You did not configure" in response["text"]
 
 
@@ -236,19 +222,17 @@ def test_jwt_self_signature_fails(client, admin_headers):
             algorithm=get_env("CCAT_JWT_ALGORITHM"),
         )
 
-        message = { "text": "hey" }
-
         # not allowed because CCAT_JWT_SECRET for client is `meow_jwt`
         headers = {
             "Authorization": f"Bearer {token}"
         }
-        response = client.post("/chat", headers=headers, json=message)
+        response = client.post("/chat", headers=headers)
         assert response.status_code == 403
 
         # not allowed because CCAT_JWT_SECRET for client is `meow_jwt`
         params = {"token": token}
         with pytest.raises(Exception) as e_info:
-            send_websocket_message(message, client, query_params=params)
+            send_websocket_message("hey", client, query_params=params)
             assert str(e_info.type.__name__) == "WebSocketDisconnect"
 
 

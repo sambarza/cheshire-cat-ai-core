@@ -22,7 +22,7 @@ def test_websocket(client):
     
     # send websocket message
     res = send_websocket_message(
-        {"text": "It's late! It's late"},
+        "It's late! It's late",
         client,
         query_params={"token": "meow"}
     )

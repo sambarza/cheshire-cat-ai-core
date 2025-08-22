@@ -331,7 +331,8 @@ class StrayCat:
     
 
     async def __call__(
-        self, message_request: ChatRequest,
+        self,
+        message_request: ChatRequest,
         message_callback: Callable | None = None
     ) -> ChatResponse:
         """Run the conversation turn.
@@ -404,6 +405,25 @@ class StrayCat:
         await self.send_chat_message(final_output)
         return final_output
 
+
+    async def run(self, user_message):
+        queue = asyncio.Queue()
+
+        async def callback(msg):
+            await queue.put(msg)
+
+        # Add a sentinel to mark completion
+        async def runner():
+            await self(user_message, callback)
+            await queue.put(None)
+
+        asyncio.create_task(runner())
+
+        while True:
+            msg = await queue.get()
+            if msg is None:
+                break
+            yield msg
 
     # async def run(self, message, return_message=False):
     #     try:

@@ -130,6 +130,10 @@ async def async_client(monkeypatch):
 def admin_headers():
     yield { "Authorization": "Bearer meow"}
 
+@pytest.fixture(scope="package")
+def admin_query_params():
+    yield { "token": "meow"}
+
 # This fixture is useful to write tests in which
 #   a plugin was just uploaded via http.
 #   It wraps any test function having `just_installed_plugin` as an argument

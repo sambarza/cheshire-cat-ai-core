@@ -27,15 +27,8 @@ async def websocket_endpoint(
             # http endpoints may have been called while waiting for a message
             cat.load_working_memory_from_cache()
 
-
-            async def msg_callback(msg):
+            async for msg in cat.run(user_message):
                 await websocket.send_json(msg)
-
-            # Run the `cat` message main flow
-            await cat(
-                user_message,
-                message_callback=msg_callback
-            )
 
     except Exception:
         log.error("Error in websocket loop")

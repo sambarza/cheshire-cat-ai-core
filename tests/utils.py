@@ -59,7 +59,7 @@ def send_http_message(
                     "role": "user",
                     "content": {
                         "type": "input_text",
-                        "text": msg
+                        "text": str(msg)
                     }
                 }
             ],
@@ -81,7 +81,7 @@ def send_websocket_message(msg, client, user_id="user", query_params=None):
     with client.websocket_connect(url) as websocket:
 
         # send ws message
-        websocket.send_json(msg)
+        websocket.send_json({"text": str(msg)})
         # get reply
         reply = websocket.receive_json()
 

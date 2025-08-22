@@ -33,7 +33,7 @@ def test_http_auth(client):
 
 def test_ws_auth(client):
 
-    mex = {"text": "Where do I go?"}
+    mex = "Where do I go?"
 
     wrong_query_params = [
         None, # no key
@@ -69,7 +69,7 @@ def test_all_core_endpoints_secured(client):
         # websocket endpoint
         if "/ws" in endpoint.path:
             with pytest.raises(Exception) as e_info:
-                send_websocket_message({"text": "Where do I go?"}, client)
+                send_websocket_message("Where do I go?", client)
                 assert str(e_info.type.__name__) == "WebSocketDisconnect"
         # static admin files (redirect to login)
         elif "/admin" in endpoint.path:
