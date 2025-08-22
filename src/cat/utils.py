@@ -85,36 +85,46 @@ def verbal_timedelta(td: timedelta) -> str:
 
 
 def get_base_url():
-    """Allows exposing the base url."""
+    """Base url for the installation."""
     secure = "s" if get_env("CCAT_CORE_USE_SECURE_PROTOCOLS") in ("true", "1") else ""
     cat_host = get_env("CCAT_CORE_HOST")
     cat_port = get_env("CCAT_CORE_PORT")
     return f"http{secure}://{cat_host}:{cat_port}/"
 
 
+def get_static_url():
+    """Static files url."""
+    return get_base_url() + "static/"
+
+
 def get_base_path():
-    """Allows exposing the base path."""
-    return os.path.dirname(os.path.abspath(cat.__file__)) + "/" # TODV2 take away trailing slash
+    """Path to the cat package, for internal core usage."""
+    return os.path.dirname(os.path.abspath(cat.__file__))
+
+
+def get_core_plugins_path():
+    """Core plugins' path, for internal core usage"""
+    return os.path.join(get_base_path(), "core_plugins")
+
+
+def get_project_path():
+    """Path to the folder from which the cat was run (contains data, plugins and static folders)"""
+    return os.getcwd()
+
+
+def get_data_path():
+    """Allows exposing the data folder path."""
+    return os.path.join(get_project_path(), "data")
 
 
 def get_plugins_path():
     """Allows exposing the plugins' path."""
-    return os.path.join(os.getcwd(), "plugins")
-
-
-def get_core_plugins_path():
-    """Allows exposing the plugins' path."""
-    return os.path.join(get_base_path(), "core_plugins")
-
-
-def get_static_url():
-    """Allows exposing the static server url."""
-    return get_base_url() + "static/"
+    return os.path.join(get_project_path(), "plugins")
 
 
 def get_static_path():
     """Allows exposing the static files' path."""
-    return os.path.join(get_base_path(), "static/")  # TODV2 take away trailing slash
+    return os.path.join(get_project_path(), "static")
 
 
 def is_https(url):

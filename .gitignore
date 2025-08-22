@@ -17,17 +17,6 @@ venv
 *metadata.json
 *metadata-test.json
 test_db.db
-/qdrant
-
-# data folder (settings and models)
-src/cat/data/*
-!src/cat/data/.gitkeep
-
-# plugins are not tracked by git
-/plugins/*
-!/plugins/how-to-write-a-plugin.md
-# plugins readme can stay
-!src/cat/plugins/how-to-write-a-plugin.md
 
 # cache embedder
 src/local_cache/*

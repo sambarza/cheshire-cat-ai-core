@@ -14,7 +14,7 @@ def mount(cheshire_cat_api):
     mount_admin_spa(cheshire_cat_api)
 
     # note html=False because index.html needs to be injected with runtime information
-    admin_dir = utils.get_base_path() + "routes/static/core_static_folder/admin"
+    admin_dir = utils.get_base_path() + "/routes/static/core_static_folder/admin"
     cheshire_cat_api.mount("/admin", StaticFiles(directory=admin_dir), name="admin")
 
 
@@ -32,5 +32,5 @@ def mount_admin_spa(cheshire_cat_api):
         # https://github.com/cheshire-cat-ai/admin-vue
         # the files live inside the /admin folder (not visible in volume / cat code)
         return FileResponse(
-            utils.get_base_path() + "routes/static/core_static_folder/admin/index.html"
+            utils.get_base_path() + "/routes/static/core_static_folder/admin/index.html"
         )

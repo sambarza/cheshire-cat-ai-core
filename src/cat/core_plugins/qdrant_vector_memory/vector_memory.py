@@ -6,7 +6,7 @@ from qdrant_client import QdrantClient
 
 from cat.log import log
 from cat.env import get_env
-from cat.utils import get_base_path
+from cat.utils import get_data_path
 from cat.mad_hatter.decorators import hook
 
 from .vector_memory_collection import VectorMemoryCollection
@@ -158,7 +158,7 @@ class VectorMemory:
             setattr(self, collection_name, collection)
 
     def connect_to_vector_memory(self) -> None:
-        db_path = get_base_path() + "data/local_vector_memory/"
+        db_path = get_data_path() + "/local_vector_memory/"
         qdrant_host = get_env("CCAT_QDRANT_HOST")
 
         if not qdrant_host:

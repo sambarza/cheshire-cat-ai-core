@@ -90,7 +90,7 @@ class EmbedderQdrantFastEmbedConfig(EmbedderSettings):
     max_length: int = 512
     # as suggest on fastembed documentation, "passage" is the best option for documents.
     doc_embed_type: str = "passage"
-    cache_dir: str = "cat/data/models/fast_embed" # TODOV2: data folder is not there anymore
+    cache_dir: str = "data/models/fast_embed" # TODOV2: data folder is not there anymore
 
     _pyclass: Type = FastEmbedEmbeddings
 
