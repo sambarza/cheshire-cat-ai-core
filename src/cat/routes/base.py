@@ -1,9 +1,7 @@
-import asyncio
-from typing import Dict
-import os
-import tomli
+
 import json
-import asyncio
+from importlib import metadata
+
 from fastapi import APIRouter, Body, Request
 from fastapi.responses import StreamingResponse
 
@@ -27,13 +25,9 @@ async def status(
 ) -> StatusResponse:
     """Server status"""
 
-    toml_path = os.path.join(get_base_path(), "..", "..", "pyproject.toml")
-    with open(toml_path, "rb") as f:
-        project_toml = tomli.load(f)["project"]
-
     return StatusResponse(
         status = "We're all mad here, dear!",
-        version =  project_toml["version"]
+        version = metadata.version("cheshire-cat-ai")
     )
 
 
