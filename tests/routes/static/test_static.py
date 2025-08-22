@@ -2,6 +2,8 @@ import os
 from cat.utils import get_static_path
 
 # TODOV2: the static folder should be mocked
+# TODOV2: should the static folder be open or protected? (at the moment open)
+
 
 def test_call(client):
     response = client.get("/static/")
@@ -10,7 +12,7 @@ def test_call(client):
 
 def test_call_specific_file(client):
     static_file_name = "Meooow.txt"
-    static_file_path = f"{get_static_path()}{static_file_name}"
+    static_file_path = f"{get_static_path()}/{static_file_name}"
 
     # ask for inexistent file
     response = client.get(f"/static/{static_file_name}")
@@ -28,7 +30,7 @@ def test_call_specific_file(client):
 
 def test_call_specific_file_secured(client):
     static_file_name = "Meooow.txt"
-    static_file_path = f"{get_static_path()}{static_file_name}"
+    static_file_path = f"{get_static_path()}/{static_file_name}"
 
     # insert file in static folder
     with open(static_file_path, "w") as f:

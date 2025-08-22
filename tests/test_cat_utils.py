@@ -16,7 +16,7 @@ def test_get_base_url(client):
 
 
 def test_get_base_path(client):
-    assert utils.get_base_path().endswith("cat/")
+    assert utils.get_base_path() == "a"
 
 
 def test_mocked_get_plugin_path(client):
@@ -26,11 +26,15 @@ def test_mocked_get_plugin_path(client):
 
 def test_core_plugin_path(client):
     # core plugins are in "cat/core_plugins/"
-    assert utils.get_core_plugins_path().endswith("/cat/core_plugins")
+    assert utils.get_core_plugins_path() == "a"
 
 
 def test_get_static_path(client):
-    assert utils.get_static_path().endswith("/cat/static/")
+    assert utils.get_static_path() == "a"
+
+
+def test_get_base_url(client):
+    assert utils.get_base_url() == "a"
 
 
 def test_get_static_url(client):
