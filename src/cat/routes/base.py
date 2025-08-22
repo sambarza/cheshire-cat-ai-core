@@ -1,5 +1,6 @@
 import asyncio
 from typing import Dict
+import os
 import tomli
 import json
 import asyncio
@@ -8,7 +9,7 @@ from fastapi.responses import StreamingResponse
 
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
 from cat.convo.messages import ChatRequest, ChatResponse
-from cat.utils import BaseModelDict
+from cat.utils import BaseModelDict, get_base_path
 from cat.log import log
 
 
@@ -25,7 +26,9 @@ async def status(
     cat=check_permissions(AuthResource.STATUS, AuthPermission.READ),
 ) -> StatusResponse:
     """Server status"""
-    with open("pyproject.toml", "rb") as f:
+
+    toml_path = os.path.join(get_base_path(), "..", "..", "pyproject.toml")
+    with open(toml_path, "rb") as f:
         project_toml = tomli.load(f)["project"]
 
     return StatusResponse(

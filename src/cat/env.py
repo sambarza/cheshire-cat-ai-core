@@ -23,7 +23,7 @@ def get_supported_env_variables():
         "CCAT_CORS_FORWARDED_ALLOW_IPS": "*",
         "CCAT_CORS_ENABLED": "true",
         "CCAT_CACHE_TYPE": "in_memory",
-        "CCAT_CACHE_DIR": "/tmp",
+        "CCAT_CACHE_DIR": "/tmp", # TODOV2: will it break on winzozz?
     }
 
 

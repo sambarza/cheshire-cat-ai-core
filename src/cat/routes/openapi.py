@@ -1,6 +1,8 @@
+import os
+import tomli
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
-import tomli
+from cat.utils import get_base_path
 
 
 def get_openapi_configuration_function(cheshire_cat_api: FastAPI):
@@ -9,7 +11,8 @@ def get_openapi_configuration_function(cheshire_cat_api: FastAPI):
         if cheshire_cat_api.openapi_schema:
             return cheshire_cat_api.openapi_schema
 
-        with open("pyproject.toml", "rb") as f:
+        toml_path = os.path.join(get_base_path(), "..", "..", "pyproject.toml")
+        with open(toml_path, "rb") as f:
             project_toml = tomli.load(f)["project"]
 
         openapi_schema = get_openapi(
