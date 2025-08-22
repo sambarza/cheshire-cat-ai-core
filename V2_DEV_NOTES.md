@@ -74,3 +74,10 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
   uv add cheshire-cat-ai
   uv run cat
   ```
+
+- action:
+ ```bash
+ uv sync
+ uv build
+ uv publish --token={TOKEN}
+ ```
