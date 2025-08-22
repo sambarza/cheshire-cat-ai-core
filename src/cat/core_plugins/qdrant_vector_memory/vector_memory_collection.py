@@ -302,7 +302,7 @@ class VectorMemoryCollection:
         return isinstance(self.client._client, QdrantRemote)
 
     # dump collection on disk before deleting
-    def save_dump(self, folder="dormouse/"):
+    def save_dump(self, folder="dormouse/"): # TODOV2: should be in /data/dormouse
         # only do snapshotting if using remote Qdrant
         if not self.db_is_remote():
             return
