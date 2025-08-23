@@ -42,8 +42,8 @@ def after_cat_bootstrap(cat):
 def before_cat_sends_message(msg, cat):
     
     # Store conversation turns with session id
-
-    human_message = {}
+    pass
+    #human_message = {}
     #cat.store()
 
     #cat_message = {}

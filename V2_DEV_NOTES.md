@@ -61,12 +61,6 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
 
 ## Installation
 
-- contributor:
-  ```bash
-  git clone ....
-  uv run cat
-  ```
-
 - user:
   ```bash
   uv init --bare mycat
@@ -75,9 +69,23 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
   uv run cat
   ```
 
-- action:
- ```bash
- uv sync
- uv build
- uv publish --token={TOKEN}
- ```
+- contributor:
+  ```bash
+  git clone ....
+  cd core
+  uv venv
+  uv run cat
+  ```
+
+  To run linter and tests
+  ```bash
+  uv run ruff check
+  uv run pytest tests
+  ```
+
+- github action:
+  ```bash
+  uv sync
+  uv build
+  uv publish --token={TOKEN}
+  ```

@@ -1,7 +1,6 @@
 from typing import List
 
 from .memory_item import MemoryItem
-from cat.log import log
 
 
 class LongTermMemory:

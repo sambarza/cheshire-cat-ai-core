@@ -1,11 +1,8 @@
-import time
-import tiktoken
+
 import asyncio
 from collections.abc import AsyncGenerator
 
 from typing import Literal, get_args, List, Dict, Union, Any, Callable
-
-from websockets.exceptions import ConnectionClosedOK
 
 from langchain_core.runnables import RunnableConfig, RunnableLambda
 from langchain_core.prompts import ChatPromptTemplate
@@ -86,18 +83,6 @@ class StrayCat:
         
         if self.message_callback:
             await self.message_callback(data)
-        
-        # Run the corutine in the main event loop in the main thread
-        # and wait for the result
-
-        #app = CheshireCat().fastapi_app
-        #ws_manager = app.state.websocket_manager
-        #ws_connection = ws_manager.get_connection(self.user_id)
-        #if not ws_connection:
-        #    log.debug(f"No websocket connection is open for user {self.user_id}")
-        #    return
-
-        #await ws_connection.send_json(data)
 
 
     async def recall(self, query=None):

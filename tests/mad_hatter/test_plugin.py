@@ -5,7 +5,6 @@ import shutil
 
 from inspect import isfunction
 
-from tests.conftest import clean_up_mocks
 from tests.utils import get_mock_plugin_info
 from tests.mocks.mock_plugin.mock_form import PizzaOrder, PizzaForm
 
@@ -119,8 +118,8 @@ def test_activate_plugin(plugin):
     # forms
     assert len(plugin.forms) == get_mock_plugin_info()["forms"]
     form = plugin.forms[0]
-    assert type(form) == type(PizzaForm)
-    assert type(form.model_class) == type(PizzaOrder)
+    assert type(form) is type(PizzaForm)
+    assert type(form.model_class) is type(PizzaOrder)
     assert form.plugin_id == "mock_plugin"
     assert form.name == "PizzaForm"
     assert form.description == "Pizza Order"

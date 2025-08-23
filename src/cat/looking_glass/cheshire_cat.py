@@ -1,4 +1,3 @@
-import time
 from typing import List, Dict
 from typing_extensions import Protocol
 
@@ -14,7 +13,6 @@ from cat.agents.main_agent import MainAgent
 from cat.log import log
 from cat.mad_hatter.mad_hatter import MadHatter
 from cat.utils import singleton
-from cat import utils
 from cat.cache.cache_manager import CacheManager
 
 

@@ -1,4 +1,3 @@
-import os
 import pytest
 from tests.utils import send_websocket_message
 

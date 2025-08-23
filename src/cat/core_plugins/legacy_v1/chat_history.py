@@ -1,9 +1,9 @@
 
 from cat.mad_hatter.decorators import hook
 from cat.convo.messages import ChatRequest, ChatMessage, ChatMessageContent
-from cat.log import log
 
 from .convo import UserMessage
+
 
 @hook(priority=-1000)
 def fast_reply(_, cat):

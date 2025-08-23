@@ -97,7 +97,7 @@ def test_issue_jwt_for_new_user(client, admin_headers):
     assert is_jwt(received_token)
 
     # new jwt works
-    res = client.get("/status", headers={ "Authorization": f"Bearer {res.json()["access_token"]}"})
+    res = client.get("/status", headers={ "Authorization": f"Bearer {res.json()['access_token']}"})
     assert res.status_code == 200
 
 

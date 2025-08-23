@@ -1,4 +1,3 @@
-import asyncio
 from contextlib import asynccontextmanager
 from scalar_fastapi import get_scalar_api_reference
 
@@ -23,7 +22,6 @@ from cat.routes import (
 from cat.routes.websocket import websocket
 from cat.routes.static import admin, static
 from cat.routes.openapi import get_openapi_configuration_function
-from cat.routes.websocket.websocket_manager import WebsocketManager
 from cat.looking_glass.cheshire_cat import CheshireCat
 
 
@@ -42,12 +40,6 @@ async def lifespan(app: FastAPI):
     
     # set reference to the cat in fastapi state
     app.state.ccat = ccat
-
-    # set a reference to asyncio event loop
-    app.state.event_loop = asyncio.get_running_loop()
-    
-    # keep track of websocket connections
-    app.state.websocket_manager = WebsocketManager()
 
     # startup message with admin, public and swagger addresses
     log.welcome()

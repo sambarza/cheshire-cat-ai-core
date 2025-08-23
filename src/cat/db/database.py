@@ -1,7 +1,6 @@
 from tinydb import TinyDB
 
 from cat.utils import singleton
-from cat.env import get_env
 from cat.utils import get_data_path
 
 

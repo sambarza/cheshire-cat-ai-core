@@ -1,7 +1,6 @@
 from typing import List, Literal
 
-from cat.utils import BaseModelDict, deprecation_warning
-from cat.log import log
+from cat.utils import BaseModelDict
 
 
 class ChatMessageContent(BaseModelDict):

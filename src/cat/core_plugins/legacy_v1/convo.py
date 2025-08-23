@@ -2,7 +2,7 @@ import time
 import base64
 from io import BytesIO
 from enum import Enum
-from typing import List, Optional, Literal
+from typing import Optional
 import requests
 from PIL import Image
 

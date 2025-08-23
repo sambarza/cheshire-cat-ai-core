@@ -6,7 +6,7 @@ import jwt
 
 from cat.db.crud import get_users
 from cat.auth.permissions import (
-    AuthPermission, AuthResource, AuthUserInfo, get_base_permissions, get_full_permissions
+    AuthPermission, AuthResource, AuthUserInfo, get_full_permissions
 )
 from cat.auth.auth_utils import is_jwt, check_password
 from cat.env import get_env

@@ -2,7 +2,6 @@
 from importlib.metadata import metadata
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
-from cat.utils import get_base_path
 
 
 def get_openapi_configuration_function(cheshire_cat_api: FastAPI):
@@ -14,7 +13,7 @@ def get_openapi_configuration_function(cheshire_cat_api: FastAPI):
         meta = metadata("cheshire-cat-ai")
 
         openapi_schema = get_openapi(
-            title=f"Cheshire Cat AI - {meta.get("version")} 🐈",
+            title=f"Cheshire Cat AI - {meta.get('version')} 🐈",
             version=meta.get("version", "unknown"),
             description=meta.get("Summary"),
             routes=cheshire_cat_api.routes,

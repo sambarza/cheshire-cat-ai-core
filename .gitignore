@@ -18,13 +18,6 @@ venv
 # testing folder (should be removed automatically)
 /mocks/
 
-# DBs
-*metadata.db
-*metadata-v*.db
-*metadata.json
-*metadata-test.json
-test_db.db
-
 # cache embedder
 src/local_cache/*
 

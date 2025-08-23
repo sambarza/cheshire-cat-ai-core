@@ -1,7 +1,6 @@
 """Various utiles used from the projects."""
 
 import os
-from pathlib import Path
 import inspect
 from datetime import timedelta
 from urllib.parse import urlparse

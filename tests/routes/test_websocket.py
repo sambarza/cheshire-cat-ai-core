@@ -1,6 +1,6 @@
-import time
 from tests.utils import send_websocket_message, send_n_websocket_messages
 
+# TODOV2: websocket manager is not there anymore, so need new tests to check active connections
 
 def check_correct_websocket_reply(reply):
     for k in ["type", "content", "user_id"]:
@@ -11,11 +11,11 @@ def check_correct_websocket_reply(reply):
     assert "You did not configure" in reply["content"]
 
 
-
 def test_websocket_no_connections(client):
 
-    # no ws 
-    assert client.app.state.websocket_manager.connections == {}
+    # no ws
+    pass
+    #assert client.app.state.websocket_manager.connections == {}
 
 
 def test_websocket(client):
@@ -30,8 +30,8 @@ def test_websocket(client):
     check_correct_websocket_reply(res)
 
     # websocket connection is closed
-    time.sleep(0.5)
-    assert client.app.state.websocket_manager.connections == {}
+    #time.sleep(0.5)
+    #assert client.app.state.websocket_manager.connections == {}
 
 
 def test_websocket_multiple_messages(client):
@@ -42,8 +42,8 @@ def test_websocket_multiple_messages(client):
         check_correct_websocket_reply(res)
 
     # websocket connection is closed
-    time.sleep(0.5)
-    assert client.app.state.websocket_manager.connections == {}
+    #time.sleep(0.5)
+    #assert client.app.state.websocket_manager.connections == {}
 
 
 # TODOV2: should be done with async_client and send many request concurrently

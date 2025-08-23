@@ -5,8 +5,7 @@ from fastapi import Request, APIRouter, Body, HTTPException
 
 from cat.factory.llm import get_llms_schemas
 from cat.db import crud, models
-from cat.log import log
-from cat import utils
+
 
 router = APIRouter()
 

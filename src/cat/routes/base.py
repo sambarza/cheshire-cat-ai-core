@@ -2,13 +2,12 @@
 import json
 from importlib import metadata
 
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
 from cat.convo.messages import ChatRequest, ChatResponse
-from cat.utils import BaseModelDict, get_base_path
-from cat.log import log
+from cat.utils import BaseModelDict
 
 
 router = APIRouter()

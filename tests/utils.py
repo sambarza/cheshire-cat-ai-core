@@ -1,4 +1,3 @@
-import os
 import shutil
 from urllib.parse import urlencode
 
@@ -85,7 +84,7 @@ def send_websocket_message(msg, client, user_id="user", query_params=None):
 def send_n_websocket_messages(num_messages, client, query_params=None):
     responses = []
 
-    url = f"/ws"
+    url = "/ws"
     if query_params:
         url += "?" + urlencode(query_params)
 

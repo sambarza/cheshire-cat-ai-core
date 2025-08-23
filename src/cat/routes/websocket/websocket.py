@@ -1,10 +1,8 @@
-import asyncio
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 
 from cat.auth.permissions import AuthPermission, AuthResource
 from cat.auth.connection import WebsocketAuth
-from cat.looking_glass.stray_cat import StrayCat
 from cat.log import log
 
 router = APIRouter()
@@ -34,23 +32,3 @@ async def websocket_endpoint(
         log.info(f"WebSocket connection closed for user {cat.user_id}")
     except Exception:
         log.error("Error in websocket loop")
-
-
-"""
-    # Add the new WebSocket connection to the manager.
-    websocket_manager = websocket.scope["app"].state.websocket_manager
-    websocket_manager.add_connection(cat.user_id, websocket)
-
-    try:
-        # Process messages
-        await handle_messages(websocket, cat)
-    except WebSocketDisconnect:
-        log.info(f"WebSocket connection closed for user {cat.user_id}")
-    finally:
-
-        # cat's working memory in this scope has not been updated
-        cat.load_working_memory_from_cache()
-
-        # Remove connection on disconnect
-        websocket_manager.remove_connection(cat.user_id)
-"""

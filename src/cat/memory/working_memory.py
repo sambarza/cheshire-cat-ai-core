@@ -1,7 +1,7 @@
-from typing import List, Optional
+from typing import Optional
 
 from cat.experimental.form import CatForm
-from cat.utils import BaseModelDict, deprecation_warning
+from cat.utils import BaseModelDict
 
 
 class WorkingMemory(BaseModelDict):
@@ -25,7 +25,7 @@ class WorkingMemory(BaseModelDict):
 
     """
 
-    ######### TAKE AWAY ########
+    ######### TODOV2 TAKE AWAY ########
     active_form: Optional[CatForm] = None
     recall_query: str = ""
     ######### TAKE AWAY ########

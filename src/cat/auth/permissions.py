@@ -85,16 +85,6 @@ class AuthUserInfo(BaseModelDict):
     extra: BaseModelDict = BaseModelDict()
 
 
-
-
-from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
-#@router.post("/token2")
-#async def login( schema=Depends(oauth2_scheme)):
-#   return {"access_token": "PORCA MADONNA", "token_type": "bearer"}
-
-
 def check_permissions(resource: AuthResource | str, permission: AuthPermission | str):
     """
     Helper function to inject a StrayCat into endpoints after checking for required permissions.

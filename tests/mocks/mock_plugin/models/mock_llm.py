@@ -1,6 +1,5 @@
 
 from typing import List, Type
-from pydantic import ConfigDict
 
 from langchain_core.language_models.fake_chat_models import FakeListChatModel
 

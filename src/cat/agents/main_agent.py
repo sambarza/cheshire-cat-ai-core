@@ -1,10 +1,8 @@
-from typing import List, Tuple
 
 from cat.mad_hatter.mad_hatter import MadHatter
 from cat.env import get_env
 from cat.agents import BaseAgent, AgentOutput
 from cat.agents.memory_agent import MemoryAgent
-from cat.agents.procedures_agent import ProceduresAgent
 from cat.log import log
 
 

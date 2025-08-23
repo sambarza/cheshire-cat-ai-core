@@ -1,6 +1,5 @@
 import os
 import pytest
-import cat
 from cat import utils
 
 

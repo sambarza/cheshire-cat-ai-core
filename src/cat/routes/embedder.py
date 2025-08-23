@@ -3,10 +3,9 @@ from typing import Dict
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
 from fastapi import Request, APIRouter, Body, HTTPException
 
-from cat.factory.embedder import get_allowed_embedder_models, get_embedders_schemas
+from cat.factory.embedder import get_embedders_schemas
 from cat.db import crud, models
-from cat.log import log
-from cat import utils
+
 
 router = APIRouter()
 
@@ -28,7 +27,6 @@ def get_embedders_settings(
 ) -> Dict:
     """Get the list of the Embedders"""
 
-    SUPPORTED_EMDEDDING_MODELS = get_allowed_embedder_models()
     # get selected Embedder, if any
     selected = crud.get_setting_by_name(name=EMBEDDER_SELECTED_NAME)
     if selected is not None:
