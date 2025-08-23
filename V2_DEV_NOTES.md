@@ -1,6 +1,13 @@
 
 # Version 2 dev notes
 
+## Vision
+
+- the good and the bad so far
+- synthesis of many requiests and common issues
+- necessity to make maintaining easier
+- new standards
+
 
 ## Installation
 
@@ -41,6 +48,10 @@
 - there is a new decorator (TODO) `@agent` that allows you to define your own agents. When you send a request to the cat, you can ask a reply from a specific agent (more details below). If the agent name is not specified in the request, a default `SimpleAgent` will be used. 
 - you can declare an agent in your plugin using `@agent` and subclassing the `BaseAgent` class, which only requires a method `execute` and a `name` attribute. TODO example.
 - the agent router is name based. You can still define a custom routing agent that can do way more complicated stuff (embedding based routing, LLM base routing, etc.).
+- So yes, now a plugin can contain one or more agents, and the agents can talk among themselves. I don't recommend such setups in production, but for sure having more agents and having the user decide which one to run, should allow more stable and useful AI apps.
+- Agents can decide whether or not to run hooks, and even create new ones. Just call `cat.mad_hatter.execute_hook("my_hook", default_value, cat)` and everything works as it already worked.
+- TODO: nice utility method `cat.execute_hook("hook_name", default)`.
+
 
 ## Plugins
 
@@ -100,7 +111,7 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
       return m
   ```
 - `before_agent_starts` hook now has no argument aside `cat`, as all context/agent_input is directly stored and inserted into prompt based on the content of working memory (you can hook this via `agent_prompt_suffix`)
-  
+
 
 ## Auth
 
@@ -129,6 +140,7 @@ Auth system semplifications (TODO review):
       prompts = await cat.mcp.list_prompts()
       resources = await cat.mcp.list_resources()
   ```
+- you can connect to the cat only MCP servers that have http transport. Do not even try to ask me to run stdio based servers inside the cat. Use a proper proxy and aggregator for your local stuff, for example [MetaMCP](https://docs.metamcp.com/en).
 
 
 ## Others
