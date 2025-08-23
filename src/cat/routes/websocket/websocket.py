@@ -30,11 +30,10 @@ async def websocket_endpoint(
             async for msg in cat.run(user_message):
                 await websocket.send_json(msg)
 
+    except WebSocketDisconnect:
+        log.info(f"WebSocket connection closed for user {cat.user_id}")
     except Exception:
         log.error("Error in websocket loop")
-        await websocket.close()
-
-
 
 
 """

@@ -103,14 +103,17 @@ cheshire_cat_api.include_router(
     auth_handler.router, tags=["AuthHandler"], prefix="/auth_handler"
 )
 cheshire_cat_api.include_router(websocket.router, tags=["Websocket"])
+cheshire_cat_api.include_router(static.router, tags=["Static Files"])
 
 # mount static files
 # this cannot be done via fastapi.APIrouter:
 # https://github.com/tiangolo/fastapi/discussions/9070
 
 # admin single page app (static build)
+# TODOV2: should it be under static?
 admin.mount(cheshire_cat_api)
-# static files (for plugins and other purposes)
+
+# TODOV2: take away
 static.mount(cheshire_cat_api)
 
 

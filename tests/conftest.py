@@ -58,13 +58,6 @@ def patches(monkeypatch, tmp_path):
         lambda: str(tmp_path / "mocks")
     )
 
-    monkeypatch.setattr(
-        cat.utils,
-        'get_static_path',
-        lambda: str("sstatic")
-    )
-    os.mkdir("sstatic")
-
     # TODOV2: maybe with uv this is fast enough
     # do not check plugin dependencies at every restart
     def mock_install_requirements(self, *args, **kwargs):
