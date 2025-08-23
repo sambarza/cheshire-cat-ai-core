@@ -98,7 +98,7 @@ for mi in why["model_interactions"]:
         assert mi["output_tokens"] > 0
         assert isinstance(mi["ended_at"], float)
         assert mi["ended_at"] > mi["started_at"]
-        assert mi["source"] == "MemoryAgent.execute"
+        assert mi["source"] == "DefaultAgent.execute"
     else:
         assert mi["model_type"] == "embedder"
         assert isinstance(mi["reply"], list)

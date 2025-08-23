@@ -234,7 +234,6 @@ class StrayCat:
             self,
             system_prompt: str,
             prompt_variables: dict = {},
-            use_chat_history: bool = False,
             messages: list[ChatMessage] = [],
             tools: list[CatTool] = [], # TODOV2
             model: str | None = None,  # TODOV2
@@ -249,10 +248,9 @@ class StrayCat:
             The system prompt (context, personality, or a simple instruction/request).
         prompt_variables : dict
             Structured info to hydrate the system_prompt.
-        use_chat_history : bool
-            When `True`, will load messages from working memory. Default is `False`
         messages : list[Message]
-            Chat messages so far, as a list of `HumanMessage` and `CatMessage`. Will override `use_chat_history` when used.
+            Chat messages so far, as a list of `HumanMessage` and `CatMessage`.
+        tools : TODOV2
         model : str | None
             LLM to use, in the format `vendor:model`, e.g. `openai:gpt-5`.
             If None, uses default LLM as in the settings.
@@ -365,10 +363,6 @@ class StrayCat:
         log.info(self.chat_request)
 
         try:
-            # recall episodic and declarative memories from vector collections
-            #   and store them in working_memory
-            await self.recall()
-
             # reply with agent
             agent_output: AgentOutput = await self.main_agent.execute(self)
         except Exception as e:

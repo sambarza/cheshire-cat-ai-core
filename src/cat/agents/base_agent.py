@@ -13,5 +13,5 @@ class AgentOutput(BaseModelDict):
 class BaseAgent(ABC):
 
     @abstractmethod
-    def execute(*args, **kwargs) -> AgentOutput:
+    async def execute(*args, **kwargs) -> AgentOutput:
         pass

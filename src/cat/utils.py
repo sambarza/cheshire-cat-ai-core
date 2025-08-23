@@ -4,7 +4,7 @@ import os
 import inspect
 from datetime import timedelta
 from urllib.parse import urlparse
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Any
 from pydantic import BaseModel, ConfigDict
 
 from rapidfuzz.distance import Levenshtein
@@ -302,7 +302,7 @@ def get_caller_info(skip=2, return_short=True, return_string=True):
 def langchain_log_prompt(langchain_prompt, title):
     if(get_env("CCAT_DEBUG") == "true"):
         print("\n")
-        print(get_colored_text(f"===== {title} =====", "green"))
+        print(get_colored_text(f"===== {title} INPUT =====", "green"))
         for m in langchain_prompt.messages:
             print(get_colored_text(type(m).__name__, "green"))
             if isinstance(m.content, list):
@@ -322,13 +322,20 @@ def langchain_log_prompt(langchain_prompt, title):
 def langchain_log_output(langchain_output, title):
     if(get_env("CCAT_DEBUG") == "true"):
         print("\n")
-        print(get_colored_text(f"===== {title} =====", "blue"))
+        print(get_colored_text(f"===== {title} OUTPUT =====", "blue"))
         if hasattr(langchain_output, 'content'):
             print(langchain_output.content)
         else:
             print(langchain_output)
         print(get_colored_text("========================================", "blue"))
     return langchain_output
+
+
+async def run_sync_or_async(f, *args, **kwargs) -> Any:
+    if inspect.iscoroutinefunction(f):
+        return await f(*args, **kwargs)
+    deprecation_warning(f"Function {f} should be async.")
+    return f(*args, **kwargs)
 
 
 # This is our masterwork during tea time
