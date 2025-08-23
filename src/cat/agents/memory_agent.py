@@ -1,8 +1,6 @@
 
 from cat.looking_glass import prompts
-from cat.looking_glass.callbacks import NewTokenHandler
 from cat.agents import BaseAgent, AgentOutput
-from cat import utils
 
 
 class MemoryAgent(BaseAgent):

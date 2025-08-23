@@ -3,7 +3,7 @@
 #  to have a standard auth interface.
 
 from abc import ABC, abstractmethod
-from typing import Tuple, AsyncGenerator
+from typing import AsyncGenerator
 from urllib.parse import urlencode
 
 from fastapi import (
@@ -22,7 +22,6 @@ from cat.auth.permissions import (
     AuthUserInfo,
 )
 from cat.looking_glass.stray_cat import StrayCat
-from cat.log import log
 
 
 class BaseAuth(ABC):
