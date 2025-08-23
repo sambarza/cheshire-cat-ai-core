@@ -3,13 +3,6 @@ import shutil
 from urllib.parse import urlencode
 
 
-def get_mock_plugins_path():
-    """Plugins folder used just for testing"""
-    path = os.path.join(os.getcwd(), "mock_plugins")
-    os.makedirs(path, exist_ok=True)
-    return path
-
-
 def get_core_plugins_ids():
     return get_core_plugins_info()["ids"]
 

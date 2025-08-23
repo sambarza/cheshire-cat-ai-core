@@ -7,9 +7,7 @@ from cat.utils import get_base_path, get_project_path
 
 
 def scaffold():
-
     scaffold_path = os.path.join(get_base_path(), "scaffold")
-
     for folder in os.listdir(scaffold_path):
         origin = os.path.join(scaffold_path, folder)
         destination = os.path.join(get_project_path(), folder)
@@ -20,7 +18,7 @@ def scaffold():
 # RUN!
 def main():
 
-    # scaffold dev project (cat is used as a package)
+    # scaffold dev project with minimal folders (cat is used as a package)
     scaffold()
 
     # debugging utilities, to deactivate put `DEBUG=false` in .env

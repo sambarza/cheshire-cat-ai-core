@@ -15,6 +15,9 @@ venv
 /plugins/
 /static/
 
+# testing folder (should be removed automatically)
+/mocks/
+
 # DBs
 *metadata.db
 *metadata-v*.db

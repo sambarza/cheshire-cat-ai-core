@@ -12,7 +12,7 @@ def test_call(client):
 
 def test_call_specific_file(client):
     static_file_name = "Meooow.txt"
-    static_file_path = f"{get_static_path()}/{static_file_name}"
+    static_file_path = os.path.join(get_static_path(), static_file_name)
 
     # ask for inexistent file
     response = client.get(f"/static/{static_file_name}")
@@ -22,22 +22,13 @@ def test_call_specific_file(client):
     with open(static_file_path, "w") as f:
         f.write("Meow")
 
+
+    from cat.log import log
+    log.critical(get_static_path())
+    for r in client.app.routes:
+        if r.path == '/static':
+            log.warning(r.app.directory)
+
     response = client.get(f"/static/{static_file_name}")
-    assert response.status_code == 200
+    assert response.status_code == 200 # TODOV2: should this be 403?
 
-    os.remove(static_file_path)
-
-
-def test_call_specific_file_secured(client):
-    static_file_name = "Meooow.txt"
-    static_file_path = f"{get_static_path()}/{static_file_name}"
-
-    # insert file in static folder
-    with open(static_file_path, "w") as f:
-        f.write("Meow")
-
-    # file exists, but access is forbidden
-    response = client.get(f"/static/{static_file_name}")
-    assert response.status_code == 200 # TODOV2: should be 403
-
-    os.remove(static_file_path)

@@ -1,6 +1,7 @@
 import os
 import shutil
-from tests.utils import create_mock_plugin_zip, get_mock_plugins_path
+from tests.utils import create_mock_plugin_zip
+from cat.utils import get_plugins_path
 
 # TODO: registry responses here should be mocked, at the moment we are actually calling the service
 
@@ -45,7 +46,7 @@ def test_plugin_install_from_registry(client, monkeypatch, admin_headers):
     )
 
     # during tests, the cat uses a different folder for plugins
-    new_plugin_final_folder = get_mock_plugins_path() + "/mock_plugin"
+    new_plugin_final_folder = get_plugins_path() + "/mock_plugin"
 
     if os.path.exists(new_plugin_final_folder):
         shutil.rmtree(new_plugin_final_folder)

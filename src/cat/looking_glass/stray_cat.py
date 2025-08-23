@@ -1,6 +1,7 @@
 import time
-import asyncio
 import tiktoken
+import asyncio
+from collections.abc import AsyncGenerator
 
 from typing import Literal, get_args, List, Dict, Union, Any, Callable
 
@@ -406,24 +407,35 @@ class StrayCat:
         return final_output
 
 
-    async def run(self, user_message):
-        queue = asyncio.Queue()
+    async def run(
+        self,
+        user_message: ChatRequest,
+    ) -> AsyncGenerator[Any, None]:
+        queue: asyncio.Queue[str | None] = asyncio.Queue()
 
-        async def callback(msg):
+        async def callback(msg: str) -> None:
             await queue.put(msg)
 
-        # Add a sentinel to mark completion
-        async def runner():
-            await self(user_message, callback)
-            await queue.put(None)
+        async def runner() -> None:
+            try:
+                # Assuming self(user_message, callback) is awaitable
+                await self(user_message, callback)  # type: ignore[call-arg]
+            except Exception as e:
+                await queue.put(f"[Error] {e}")
+            finally:
+                await queue.put(None)
 
-        asyncio.create_task(runner())
+        runner_task: asyncio.Task[None] = asyncio.create_task(runner())
 
-        while True:
-            msg = await queue.get()
-            if msg is None:
-                break
-            yield msg
+        try:
+            while True:
+                msg = await queue.get()
+                if msg is None:
+                    break
+                yield msg
+        except asyncio.CancelledError:
+            runner_task.cancel()
+            raise
 
     # async def run(self, message, return_message=False):
     #     try:

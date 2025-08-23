@@ -6,25 +6,28 @@ import shutil
 from inspect import isfunction
 
 from tests.conftest import clean_up_mocks
-from tests.utils import get_mock_plugin_info, get_mock_plugins_path
+from tests.utils import get_mock_plugin_info
 from tests.mocks.mock_plugin.mock_form import PizzaOrder, PizzaForm
 
 from cat.mad_hatter.mad_hatter import Plugin
 from cat.mad_hatter.decorators import CatHook, CatTool, CustomEndpoint
+from cat.utils import get_plugins_path
 
-mock_plugin_path = get_mock_plugins_path() + "/mock_plugin"
 
 # this fixture will give test functions a ready instantiated plugin
 # (and having the `client` fixture, a clean setup every unit)
 @pytest.fixture(scope="function")
 def plugin(client):
 
-    shutil.copytree("tests/mocks/mock_plugin", mock_plugin_path)
+    mock_plugin_path = get_plugins_path() + "/mock_plugin"
+
+    shutil.copytree(
+        "tests/mocks/mock_plugin",
+        mock_plugin_path
+    )
     
     p = Plugin(mock_plugin_path)
     yield p
-
-    shutil.rmtree(get_mock_plugins_path())
 
 
 def test_create_plugin_wrong_folder():
@@ -35,7 +38,7 @@ def test_create_plugin_wrong_folder():
 
 
 def test_not_create_plugin_with_empty_folder():
-    path = get_mock_plugins_path() + "/empty_folder"
+    path = get_plugins_path() + "/empty_folder"
 
     os.mkdir(path)
 
@@ -49,7 +52,7 @@ def test_not_create_plugin_with_empty_folder():
 def test_create_plugin(plugin):
     assert not plugin.active
 
-    assert plugin.path == mock_plugin_path
+    assert plugin.path == get_plugins_path() + "/mock_plugin"
     assert plugin.id == "mock_plugin"
 
     # manifest

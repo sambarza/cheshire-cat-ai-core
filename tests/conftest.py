@@ -3,28 +3,20 @@ import pytest
 import pytest_asyncio
 import os
 import shutil
-import importlib
 from typing import Any, Generator
-
-import warnings
-from pydantic import PydanticDeprecatedSince20
 
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cat.startup import cheshire_cat_api # will instantiate the cat
-from cat.looking_glass.cheshire_cat import CheshireCat
 from cat.looking_glass.stray_cat import StrayCat
 from cat.auth.permissions import AuthUserInfo
-from cat.db.database import Database
-import cat.utils
-from cat.mad_hatter.plugin import Plugin
-from tests.utils import create_mock_plugin_zip
-
 from cat.mad_hatter.mad_hatter import MadHatter
+from cat.mad_hatter.plugin import Plugin
+import cat.utils
 
-from tests.utils import create_mock_plugin_zip, get_mock_plugins_path
+from tests.utils import create_mock_plugin_zip
 
 
 FAKE_TIMESTAMP = 1705855981
@@ -33,13 +25,8 @@ FAKE_TIMESTAMP = 1705855981
 def clean_up_mocks():
     # clean up service files and mocks
     to_be_removed = [
-        "cat/metadata-test.json",  # legacy position, now moved into mocks folder
-        "tests/mocks/metadata-test.json",
-        "tests/mocks/mock_plugin.zip",
-        "tests/mocks/mock_plugin/settings.json",
         "tmp_test",
         "tmp_cache",
-        get_mock_plugins_path(),
     ]
     for tbr in to_be_removed:
         if os.path.exists(tbr):
@@ -47,9 +34,6 @@ def clean_up_mocks():
                 shutil.rmtree(tbr)
             else:
                 os.remove(tbr)
-
-    # installed with mock_plugin, here we uninstall
-    os.system("uv pip uninstall -y pip-install-test")
 
 
 def clean_up_envs():
@@ -59,32 +43,39 @@ def clean_up_envs():
     os.environ["CCAT_CACHE_DIR"] = "tmp_test"
 
 
-def monkey_patches(mp):
+@pytest.fixture(scope="function")
+def patches(monkeypatch, tmp_path):
 
-    # monkeypatch classes
-    # (substitute classes' methods where necessary for testing purposes)
+    # scaffold directories
+    (tmp_path / "mocks/data").mkdir(parents=True)
+    (tmp_path / "mocks/plugins").mkdir()
+    (tmp_path / "mocks/static").mkdir()
 
-    # Use mock utils plugin folder
-    mp.setattr(
+    # Use mock folder as project folder
+    monkeypatch.setattr(
         cat.utils,
-        'get_plugins_path',
-        get_mock_plugins_path
+        'get_project_path',
+        lambda: str(tmp_path / "mocks")
     )
-    
-    # Use a different json settings db
-    def mock_get_file_name(self, *args, **kwargs):
-        return "tests/mocks/metadata-test.json"
-    mp.setattr(Database().__class__, "get_file_name", mock_get_file_name)
+
+    monkeypatch.setattr(
+        cat.utils,
+        'get_static_path',
+        lambda: str("sstatic")
+    )
+    os.mkdir("sstatic")
 
     # TODOV2: maybe with uv this is fast enough
     # do not check plugin dependencies at every restart
-    #def mock_install_requirements(self, *args, **kwargs):
-    #    pass
-    #from cat.mad_hatter.plugin import Plugin
-    #mp.setattr(Plugin, "_install_requirements", mock_install_requirements)
+    def mock_install_requirements(self, *args, **kwargs):
+        pass
+    monkeypatch.setattr(Plugin, "_install_requirements", mock_install_requirements)
+    # TODOV2: this was in cleanups
+    # installed with mock_plugin, here we uninstall
+    #os.system("uv pip uninstall -y pip-install-test")
 
     # delete all singletons!!!
-    mp.setattr(
+    monkeypatch.setattr(
         cat.utils.singleton,
         "instances",
         {}
@@ -94,37 +85,44 @@ def monkey_patches(mp):
 # Main fixture for the FastAPI app #
 ####################################
 @pytest.fixture(scope="function")
-def client(monkeypatch) -> Generator[TestClient, Any, None]:
+def app(patches) -> Generator[FastAPI, Any, None]:
+    
+    clean_up_mocks()
+    clean_up_envs()
+
+    from cat.startup import cheshire_cat_api # will instantiate the cat
+    #from fastapi.staticfiles import StaticFiles
+
+    #cheshire_cat_api.mount("/static", StaticFiles(directory=cat.utils.get_static_path()), name="static")
+    yield cheshire_cat_api
+
+    clean_up_mocks()
+    clean_up_envs()
+
+
+##############################
+# Sync version of the client #
+##############################
+@pytest.fixture(scope="function")
+def client(app) -> Generator[TestClient, Any, None]:
     """
     Create a new FastAPI TestClient.
     """
-    
-    clean_up_mocks()
-    clean_up_envs()
-
-    # change methods for testing purposes
-    monkey_patches(monkeypatch)
-    
-    with TestClient(cheshire_cat_api) as client:
+    with TestClient(app) as client:
         yield client
 
-    # clean up tmp files and folders (useful when tests fail)
-    clean_up_mocks()
-
-######################################
-# Async version of the main fixturep #
-######################################
+###############################
+# Async version of the client #
+###############################
 @pytest_asyncio.fixture(scope="function")
-async def async_client(monkeypatch):
-    clean_up_mocks()
-    clean_up_envs()
-    monkey_patches(monkeypatch)
-    async with LifespanManager(cheshire_cat_api):
+async def async_client(app):
+    
+    async with LifespanManager(app):
         async with AsyncClient(
-            transport=ASGITransport(app=cheshire_cat_api), base_url="http://test"
+            transport=ASGITransport(app=app), base_url="http://test"
         ) as ac:
             yield ac
-    clean_up_mocks()
+
 
 @pytest.fixture(scope="package")
 def admin_headers():
@@ -165,8 +163,8 @@ def just_installed_plugin(client, admin_headers):
 
 # fixtures to test the main agent
 @pytest.fixture(scope="function")
-def main_agent(async_client):
-    yield cheshire_cat_api.state.ccat.main_agent  # each test receives as argument the main agent instance
+def main_agent(app, async_client):
+    yield app.state.ccat.main_agent  # each test receives as argument the main agent instance
 
 # fixture to have available an instance of StrayCat
 @pytest.fixture(scope="function")
@@ -180,13 +178,6 @@ def stray(async_client):
     stray_cat.working_memory.user_message_json = {"user_id": user_data.id, "text": "meow"}
     yield stray_cat
 
-# TODOV2 either langchain or qdrant are the root cause of this warning
-#   check if warnings disappeared with core_plugins enabled
-# autouse fixture will be applied to *all* the tests
-#@pytest.fixture(autouse=True, scope="function")
-#def apply_warning_filters():
-    # ignore deprecation warnings due to langchain not updating to pydantic v2
-#    warnings.filterwarnings("ignore", category=PydanticDeprecatedSince20)
 
 #fixture for mock time.time function
 @pytest.fixture(scope="function")

@@ -26,6 +26,7 @@ from cat.routes.openapi import get_openapi_configuration_function
 from cat.routes.websocket.websocket_manager import WebsocketManager
 from cat.looking_glass.cheshire_cat import CheshireCat
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 

@@ -1,12 +1,12 @@
 import os
 import pytest
-
+import cat
 from cat import utils
 
 
 def test_get_base_url(client):
     assert utils.get_base_url() == "http://localhost:1865/"
-     # test when CCAT_CORE_USE_SECURE_PROTOCOLS is set
+    # test when CCAT_CORE_USE_SECURE_PROTOCOLS is set
     os.environ["CCAT_CORE_USE_SECURE_PROTOCOLS"] = "1"
     assert utils.get_base_url() == "https://localhost:1865/"
     os.environ["CCAT_CORE_USE_SECURE_PROTOCOLS"] = "0"
@@ -15,30 +15,44 @@ def test_get_base_url(client):
     assert utils.get_base_url() == "http://localhost:1865/"
 
 
+def test_get_static_url(client):
+    assert utils.get_static_url() == "http://localhost:1865/static/"
+
+
 def test_get_base_path(client):
-    assert utils.get_base_path() == "a"
-
-
-def test_mocked_get_plugin_path(client):
-    # plugin folder is "./plugins" in production, "./mock_plugins" during tests
-    assert utils.get_plugins_path() == os.getcwd() + "/mock_plugins"
+    assert utils.get_base_path() == os.getcwd() + "/src/cat"
 
 
 def test_core_plugin_path(client):
     # core plugins are in "cat/core_plugins/"
-    assert utils.get_core_plugins_path() == "a"
+    assert utils.get_core_plugins_path() == os.path.join(
+        utils.get_base_path(), "core_plugins"
+    )
+
+
+def test_get_project_path(client):
+    # during tests, project is in a temp folder
+    pytest_tmp_folder = utils.get_project_path()
+    assert pytest_tmp_folder.startswith("/tmp/pytest-")
+    assert pytest_tmp_folder.endswith("/mocks")
+
+
+def test_get_data_path(client):
+    # "data" in production, "mocks/data" during tests
+    assert utils.get_data_path() == \
+        os.path.join(utils.get_project_path(), "data")
+
+
+def test_get_plugin_path(client):
+    # "plugins" in production, "mocks/plugins" during tests
+    assert utils.get_plugins_path() == \
+        os.path.join(utils.get_project_path(), "plugins")
 
 
 def test_get_static_path(client):
-    assert utils.get_static_path() == "a"
-
-
-def test_get_base_url(client):
-    assert utils.get_base_url() == "a"
-
-
-def test_get_static_url(client):
-    assert utils.get_static_url() == "http://localhost:1865/static/"
+    # "statis" in production, "mocks/static" during tests
+    assert utils.get_static_path() == \
+        os.path.join(utils.get_project_path(), "static")
 
 
 def test_levenshtein_distance():
