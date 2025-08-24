@@ -29,8 +29,6 @@ def main():
             "reload_dirs": [
                 get_base_path(),
                 get_plugins_path()
-                
-                #"**/plugin.json"
             ],
             "reload_includes": [
                 "plugin.json"

@@ -7,7 +7,6 @@ from cat.agents import AgentOutput
 
 @pytest.mark.asyncio
 async def test_execute_main_agent(main_agent, stray):
-    
     assert isinstance(main_agent, MainAgent)
     
     # empty agent execution

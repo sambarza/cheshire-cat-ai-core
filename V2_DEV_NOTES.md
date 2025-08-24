@@ -158,6 +158,7 @@ Auth system semplifications (TODO review):
 - model selection should be possible to do directly via message, i.e. `"model": "openai:gpt-5" or "ollama:qwen:7b"`. If model is not passed, a default model chosen by admin in the settings will be used. Admin still decides which models are available to end users. Still to determine how to adapt the permissions system to this.
 - `StrayCat.__call_` should be an async generator using `yield` to send tokens and notifications. Those yielded result are then managed at the transport layer (websocket or http/streaming/sse). Cat internals should know absolutely nothing about network protocols.
 - core plugins cannot really save settings in their own path (package is not editable). Maybe ship core_plugins in standard plugins folder?
+- core tests should only deal with core (also because plugin install dependencies is mocked!!!)
 
 ## Questions
 
