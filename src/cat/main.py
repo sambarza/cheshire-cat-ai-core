@@ -28,7 +28,12 @@ def main():
             "reload": True,
             "reload_dirs": [
                 get_base_path(),
-                get_plugins_path(),
+                get_plugins_path()
+                
+                #"**/plugin.json"
+            ],
+            "reload_includes": [
+                "plugin.json"
             ]
         }
     # uvicorn running behind an https proxy
