@@ -26,8 +26,10 @@ def main():
     if get_env("CCAT_DEBUG") == "true":
         debug_config = {
             "reload": True,
-            "reload_includes": ["plugin.json"],
-            "reload_excludes": ["*test_*.*", "*mock_*.*"],
+            #"reload_includes": ["plugin.json"],
+            #"reload_excludes": ["*test_*.*", "*mock_*.*"],
+            # 
+            #"reload_excludes": [".venv/*", ".venv/**"],
             # TODOV2: watcher looks into .venv, something sketchy
             # TODOV2: there should be a reload in production
             #         to allow uv sync with plugins dependencies (it does not restart the interpreter)

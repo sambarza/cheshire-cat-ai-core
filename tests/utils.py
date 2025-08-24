@@ -1,4 +1,5 @@
 import shutil
+from cat.convo.messages import ChatRequest, ChatMessage, ChatMessageContent
 from urllib.parse import urlencode
 
 
@@ -35,6 +36,19 @@ def get_mock_plugin_info():
         "endpoints": 7
     }
 
+
+def get_chat_request(msg="meow"):
+    return ChatRequest(
+        messages=[
+            ChatMessage(
+                role="user",
+                content=ChatMessageContent(
+                    type="input_text",
+                    text=msg
+                )
+            )
+        ]
+    )
 
 def send_http_message(
         msg,
@@ -98,10 +112,6 @@ def send_n_websocket_messages(num_messages, client, query_params=None):
             responses.append(reply)
 
     return responses
-
-
-def key_in_json(key, json):
-    return key in json.keys()
 
 
 # create a plugin zip out of the mock plugin folder.

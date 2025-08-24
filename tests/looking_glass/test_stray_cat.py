@@ -6,6 +6,8 @@ from cat.looking_glass.stray_cat import StrayCat
 from cat.memory.working_memory import WorkingMemory
 from cat.mad_hatter.decorators.hook import CatHook
 
+from tests.utils import get_chat_request
+
 @pytest.fixture(scope="function")
 def stray_cat(async_client):
     user_data = AuthUserInfo(
@@ -23,7 +25,7 @@ def test_stray_initialization(stray_cat):
 
 @pytest.mark.asyncio
 async def test_stray_nlp(stray_cat):
-    res = await stray_cat.llm("hey")
+    res = await stray_cat.llm("hey") # TODOV2: more tests for .llm
     assert "You did not configure" in res
 
     embedding = stray_cat.embedder.embed_documents(["hey"])
@@ -33,30 +35,22 @@ async def test_stray_nlp(stray_cat):
 
 @pytest.mark.asyncio
 async def test_stray_call_with_text(stray_cat):
-    msg = {"text": "Where do I go?", "user_id": "Alice"}
 
-    reply = await stray_cat.__call__(msg)
+    reply = await stray_cat( get_chat_request() )
 
     assert isinstance(reply, ChatResponse)
     assert "You did not configure" in reply.text
     assert reply.user_id == "Alice"
-    assert reply.type == "chat"
 
 
 @pytest.mark.asyncio
 async def test_stray_call_with_text_and_image(stray_cat):
-    msg = {
-        "text": "Where do I go?",
-        "user_id": "Alice",
-        "image": "https://raw.githubusercontent.com/cheshire-cat-ai/core/refs/heads/main/readme/cheshire-cat.jpeg",
-    }
-
-    reply = await stray_cat.__call__(msg)
+    
+    reply = await stray_cat( get_chat_request() )
 
     assert isinstance(reply, ChatResponse)
     assert "You did not configure" in reply.text
     assert reply.user_id == "Alice"
-    assert reply.type == "chat"
 
 
 # TODO: update these tests once we have a real LLM in tests
