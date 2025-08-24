@@ -298,9 +298,11 @@ class MadHatter:
         module = inspect.getmodule(calling_frame)
         # Get the absolute and then relative path of the calling module's file
         abs_path = inspect.getabsfile(module)
-        rel_path = os.path.relpath(abs_path)
+        
         # Replace the root and get only the current plugin folder
-        plugin_suffix = rel_path.replace(utils.get_plugins_path(), "")
+        plugin_suffix = os.path.normpath(
+            abs_path.replace(utils.get_plugins_path() + "/", "")
+        )
         # Plugin's folder
         name = plugin_suffix.split("/")[0]
         return self.plugins[name]
