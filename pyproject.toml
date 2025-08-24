@@ -22,7 +22,6 @@ dependencies = [
     "beautifulsoup4>=4.12.3",
     "pdfminer.six>=20221105",
     "unstructured>=0.12.6",
-    "tiktoken>=0.7.0",
     "loguru>=0.7.2",
     "text_generation>=0.6.1",
     "tinydb>=4.8.0",

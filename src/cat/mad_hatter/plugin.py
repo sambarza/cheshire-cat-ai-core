@@ -290,6 +290,9 @@ class Plugin:
 
                 try:
                     subprocess.run(
+                        # When your daemon detects certain events requiring dependency installation,
+                        #  invoke uv pip install or uv commands with the --project option
+                        #  pointing to the root directory that contains the main pyproject.toml.
                         ["uv", "pip", "install", "--no-cache-dir", "-r", tmp.name], check=True
                     )
                 except subprocess.CalledProcessError:
