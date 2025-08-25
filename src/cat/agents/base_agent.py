@@ -111,6 +111,9 @@ class BaseAgent(ABC):
     #     # TODOV2: run a hook to inspect and select
     #     return prompts
 
+    #async def human_in_the_loop(cat) -> 
+    # TODOV2: deal with tool confirmations or json_schema fills
+    #               that required human in the loop
 
     @abstractmethod
     async def execute(*args, **kwargs) -> AgentOutput:

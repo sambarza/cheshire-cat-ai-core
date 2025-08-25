@@ -4,18 +4,25 @@ from cat.looking_glass import prompts
 from cat.utils import BaseModelDict
 
 
+# TODOV2: maybe there sohuld be a small class for each content type? looks verbose
 class MessageContent(BaseModelDict):
-    type: Literal["text", "image", "file", "tool_call", "json"] # TODOV2: to review
+    type: Literal[
+        "text", "image", "file",
+        "tool_call", "input_required",
+        "custom"
+    ] # TODOV2: to review
     text: str = ""
     image: str | None = None
     file: bytes | None = None # ?
     tool_call: dict | None = None # Maybe for rich media types, specific objects with mime_type
-    json: dict | None = None
+    input_required : dict | None = None # json_schema for the input required
+    custom: dict | None = None  # perfect for unpredicted creative utilization 
+                                #   (i.e. state deltas, canvas, any json, or rich media)
 
     def langchainfy(self):
         if self.type == "text":
             return self.text
-        # TODOV2: support images
+        # TODOV2: support all the others
 
 
 class Message(BaseModelDict):
@@ -52,7 +59,6 @@ class Message(BaseModelDict):
                 )
             )
         
-
 
 class ChatRequest(BaseModelDict):
 

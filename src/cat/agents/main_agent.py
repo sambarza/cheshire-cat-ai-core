@@ -61,7 +61,6 @@ class MainAgent(BaseAgent):
             return AgentOutput(**agent_fast_reply)
         
         selected_agent = self.agent_router(cat)
-        #TODOV2 allow sync with inspection (iscoroutine)
         return await run_sync_or_async(
             selected_agent.execute, cat
         )
@@ -74,7 +73,4 @@ class MainAgent(BaseAgent):
         #procedures_agent_out : AgentOutput = await procedures_agent.execute(cat)
         #if procedures_agent_out.return_direct:
         #    return procedures_agent_out
-
-
-
-        return main_agent_out
+        #return main_agent_out
