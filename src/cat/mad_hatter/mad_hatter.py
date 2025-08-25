@@ -15,7 +15,7 @@ from cat.mad_hatter.plugin_extractor import PluginExtractor
 from cat.mad_hatter.plugin import Plugin
 from cat.mad_hatter.decorators.hook import CatHook
 from cat.mad_hatter.decorators.tool import CatTool
-from cat.mad_hatter.decorators.endpoint import CustomEndpoint
+from cat.mad_hatter.decorators.endpoint import CatEndpoint
 
 from cat.experimental.form import CatForm
 
@@ -44,7 +44,7 @@ class MadHatter:
         ] = {}  # dict of active plugins hooks ( hook_name -> [CatHook, CatHook, ...])
         self.tools: List[CatTool] = []  # list of active plugins tools
         self.forms: List[CatForm] = []  # list of active plugins forms
-        self.endpoints: List[CustomEndpoint] = []  # list of active plugins endpoints
+        self.endpoints: List[CatEndpoint] = []  # list of active plugins endpoints
 
         # this callback is set from outside to be notified when plugin sync is finished
         self.on_finish_plugins_sync_callback = lambda: None

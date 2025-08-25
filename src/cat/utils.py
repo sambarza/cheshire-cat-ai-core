@@ -300,6 +300,7 @@ def get_caller_info(skip=2, return_short=True, return_string=True):
 
 
 def langchain_log_prompt(langchain_prompt, title):
+    
     if(get_env("CCAT_DEBUG") == "true"):
         print("\n")
         print(get_colored_text(f"===== {title} INPUT =====", "green"))
@@ -316,6 +317,7 @@ def langchain_log_prompt(langchain_prompt, title):
             else:
                 print(m.content)
         print(get_colored_text("========================================", "green"))
+    
     return langchain_prompt
 
 

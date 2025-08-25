@@ -9,7 +9,7 @@ from tests.utils import get_mock_plugin_info
 from tests.mocks.mock_plugin.mock_form import PizzaOrder, PizzaForm
 
 from cat.mad_hatter.mad_hatter import Plugin
-from cat.mad_hatter.decorators import CatHook, CatTool, CustomEndpoint
+from cat.mad_hatter.decorators import CatHook, CatTool, CatEndpoint
 from cat.utils import get_plugins_path
 
 
@@ -112,7 +112,7 @@ def test_activate_plugin(plugin):
     # endpoints
     assert len(plugin.endpoints) == get_mock_plugin_info()["endpoints"]
     for endpoint in plugin.endpoints:
-        assert isinstance(endpoint, CustomEndpoint)
+        assert isinstance(endpoint, CatEndpoint)
         assert endpoint.plugin_id == "mock_plugin"
 
     # forms

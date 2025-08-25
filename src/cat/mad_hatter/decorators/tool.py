@@ -1,6 +1,11 @@
+import functools
+import inspect
 from typing import Union, Callable, List
 from inspect import signature
+
 from pydantic import ConfigDict
+from langchain_core.tools import StructuredTool
+
 
 # All @tool decorated functions in plugins become a CatTool.
 # The difference between base langchain Tool and CatTool is that CatTool has an instance of the cat as attribute (set by the MadHatter)
@@ -11,8 +16,11 @@ class CatTool:
         func: Callable,
         return_direct: bool = False,
         examples: List[str] = [],
-    ):
-        description = func.__doc__.strip()
+    ):  
+        if func.__doc__:
+            description = func.__doc__.strip()
+        else:
+            description = "" # or the function name?
         
         self.func = func
         self.procedure_type = "tool"
@@ -36,6 +44,67 @@ class CatTool:
 
     def run(self, input_by_llm: str, cat) -> str:
         return self.func(input_by_llm, cat=cat)
+    
+    def remove_cat_from_args(self, function: Callable) -> Callable:
+        """
+        Remove 'cat' and '_' parameters from function signature for LangChain compatibility.
+        
+        Parameters
+        ----------
+        function : Callable
+            The function to modify.
+
+        Returns
+        -------
+        Callable
+            The modified function without 'cat' and '_' parameters.
+        """
+        signature = inspect.signature(function)
+        parameters = list(signature.parameters.values())
+        
+        filtered_parameters = [p for p in parameters if p.name != 'cat' and p.name != '_']
+        new_signature = signature.replace(parameters=filtered_parameters)
+        
+        @functools.wraps(function)
+        def wrapper(*args, **kwargs):
+            if 'cat' in kwargs:
+                del kwargs['cat']
+            return function(*args, **kwargs)
+        
+        wrapper.__signature__ = new_signature
+        return wrapper
+    
+    def langchainfy(self):
+        """Convert CatTool to a langchain compatible StructuredTool object"""
+
+        if getattr(self, "arg_schema", None) is not None:
+            new_tool = StructuredTool(
+                name=self.name.strip().replace(" ", "_"),
+                description=self.description,
+                func=self.remove_cat_from_args(self.func),
+                args_schema=self.arg_schema,
+            )
+        else:
+            new_tool = StructuredTool.from_function(
+                name=self.name.strip().replace(" ", "_"),
+                description=self.description,
+                func=self.remove_cat_from_args(self.func),
+            )
+
+        return new_tool
+
+        # return {
+        #     "name": "multiply",
+        #     "description": "Multiply two numbers",
+        #     "parameters": {
+        #         "type": "object",
+        #         "properties": {
+        #             "a": {"type": "number", "description": "First number"},
+        #             "b": {"type": "number", "description": "Second number"}
+        #         },
+        #         "required": ["a", "b"]
+        #     }
+        # }
 
     # TODOV2: test support for pydantic2 works in langchain
     #class Config:

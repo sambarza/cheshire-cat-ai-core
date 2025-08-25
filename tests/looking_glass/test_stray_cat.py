@@ -104,7 +104,7 @@ async def test_stray_fast_reply_hook(stray_cat):
                 {
                     "role": "user",
                     "content": {
-                        "type": "input_text",
+                        "type": "text",
                         "text": user_msg
                     }
                 }

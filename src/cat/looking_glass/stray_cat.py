@@ -12,7 +12,7 @@ from cat.auth.permissions import AuthUserInfo
 from cat.looking_glass.cheshire_cat import CheshireCat
 from cat.looking_glass.callbacks import NewTokenHandler
 from cat.memory.working_memory import WorkingMemory
-from cat.convo.messages import ChatRequest, ChatResponse, ChatMessage
+from cat.convo.messages import ChatRequest, ChatResponse, Message
 from cat.mad_hatter.decorators import CatTool
 from cat.agents import AgentOutput
 from cat.cache.cache_item import CacheItem
@@ -233,8 +233,8 @@ class StrayCat:
             self,
             system_prompt: str,
             prompt_variables: dict = {},
-            messages: list[ChatMessage] = [],
-            tools: list[CatTool] = [], # TODOV2
+            messages: list[Message] = [],
+            tools: list[CatTool] = [],
             model: str | None = None,  # TODOV2
             stream: bool = False,
             execution_name: str = "prompt"
@@ -296,13 +296,17 @@ class StrayCat:
                 )
             ] + [m.langchainfy() for m in messages]
         )
+        
+        llm_with_tools = self._llm.bind_tools([
+            t.langchainfy() for t in tools
+        ])
 
         chain = (
             prompt
             | RunnableLambda(lambda x: utils.langchain_log_prompt(x, execution_name))
-            | self._llm # TODOV2: make configurable via init_chat_model
+            | llm_with_tools # TODOV2: make configurable via init_chat_model
             | RunnableLambda(lambda x: utils.langchain_log_output(x, execution_name))
-            | StrOutputParser()
+            #| StrOutputParser()
         )
 
         output = await chain.ainvoke(
@@ -310,7 +314,7 @@ class StrayCat:
             config=RunnableConfig(callbacks=callbacks)
         )
 
-        return output
+        return Message.delangchainfy(output)
     
 
     async def __call__(
@@ -367,16 +371,15 @@ class StrayCat:
         except Exception as e:
             log.error(e)
             await self.send_error(str(e))
-
-        # prepare final cat message
-        # TODOV2: makes no sense, the agent itself can edit cat.working_memory.chat_response
-        final_output = ChatResponse(
-            user_id=self.user_id, text=str(agent_output.output)
-        )
+            agent_output = AgentOutput(output="nu lo so")
+        
+        # ?????
+        self.chat_response.text = str(agent_output.output)
+        self.chat_response.tools = list(agent_output.actions)
 
         # run message through plugins
         final_output = self.mad_hatter.execute_hook(
-            "before_cat_sends_message", final_output, cat=self
+            "before_cat_sends_message", self.chat_response, cat=self
         )
 
         # will both call the callback (if any) and return the final reply

@@ -1,6 +1,7 @@
 
 from fastmcp import FastMCP, Client
 from fastmcp.resources import TextResource
+from mcp.types import Tool
 
 
 ######################
@@ -25,15 +26,9 @@ async def add(a: int, b: int) -> int:
 def explain_topic(topic: str, language: str) -> str:
     return f"Can you explain {topic} in {language}?"
 
-# Add a resource to the server - a simple text resource
-welcome_resource = TextResource(
-    uri="resource://welcome-message",
-    name="Welcome Message",
-    text="This is a welcoming resource",
-    tags={"welcome", "info"}
-)
-server.add_resource(welcome_resource)
-
+@server.resource("resource://welcome-message")
+def get_resource() -> str:
+    return "This is a welcoming resource"
 
 
 mcp_servers_config = server # TODO: hiding the real config for now
@@ -42,5 +37,6 @@ mcp_servers_config = server # TODO: hiding the real config for now
 # using a wrapper class in case adjustments are needed
 class MCPClient(Client):
     # TODOV2: keep client alive in case of disconnection (encapsulate!)
-    pass
+    async def list_tools(self) -> list[Tool]:
+        return await super().list_tools()
 

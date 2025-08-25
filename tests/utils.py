@@ -1,5 +1,5 @@
 import shutil
-from cat.convo.messages import ChatRequest, ChatMessage, ChatMessageContent
+from cat.convo.messages import ChatRequest, Message, MessageContent
 from urllib.parse import urlencode
 
 
@@ -40,14 +40,15 @@ def get_mock_plugin_info():
 def get_chat_request(msg="meow"):
     return ChatRequest(
         messages=[
-            ChatMessage(
+            Message(
                 role="user",
-                content=ChatMessageContent(
-                    type="input_text",
+                content=MessageContent(
+                    type="text",
                     text=msg
                 )
             )
-        ]
+        ],
+        stream=False
     )
 
 def send_http_message(
@@ -64,7 +65,7 @@ def send_http_message(
                 {
                     "role": "user",
                     "content": {
-                        "type": "input_text",
+                        "type": "text",
                         "text": str(msg)
                     }
                 }

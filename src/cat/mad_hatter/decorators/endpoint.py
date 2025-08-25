@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from cat.log import log
 
 # class to represent a @endpoint
-class CustomEndpoint:
+class CatEndpoint:
     def __init__(
         self,
         prefix: str,
@@ -26,7 +26,7 @@ class CustomEndpoint:
         self.cheshire_cat_api = None
 
     def __repr__(self) -> str:
-        return f"CustomEndpoint(path={self.name} methods={self.methods})"
+        return f"CatEndpoint(path={self.name} methods={self.methods})"
 
     def activate(self, cheshire_cat_api):
 
@@ -116,7 +116,7 @@ class Endpoint:
         """
 
         def _make_endpoint(endpoint):
-            custom_endpoint = CustomEndpoint(
+            custom_endpoint = CatEndpoint(
                 prefix=prefix,
                 path=path,
                 function=endpoint,

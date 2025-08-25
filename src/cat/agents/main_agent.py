@@ -67,15 +67,6 @@ class MainAgent(BaseAgent):
         )
         
 
-        #################################################################
-        # TODOV2: here is how you list MCP tools, prompts and resources #
-        #################################################################
-        tools = await cat.mcp.list_tools()
-        prompts = await cat.mcp.list_prompts()
-        resources = await cat.mcp.list_resources()
-        log.warning(tools)
-        log.warning(prompts)
-        log.warning(resources)
 
         # TODOV2: tools and forms are currently deactivated
         # run tools and forms

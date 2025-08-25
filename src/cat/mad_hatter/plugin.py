@@ -10,7 +10,7 @@ from inspect import getmembers, isclass
 from pydantic import BaseModel, ValidationError
 from packaging.requirements import Requirement
 
-from cat.mad_hatter.decorators import CatTool, CatHook, CatPluginDecorator, CustomEndpoint
+from cat.mad_hatter.decorators import CatTool, CatHook, CatPluginDecorator, CatEndpoint
 from cat.experimental.form import CatForm
 from cat import utils
 from cat.log import log
@@ -60,7 +60,7 @@ class Plugin:
         self._hooks: List[CatHook] = []  # list of plugin hooks
         self._tools: List[CatTool] = []  # list of plugin tools
         self._forms: List[CatForm] = []  # list of plugin forms
-        self._endpoints: List[CustomEndpoint] = [] # list of plugin endpoints
+        self._endpoints: List[CatEndpoint] = [] # list of plugin endpoints
 
         # list of @plugin decorated functions overriding default plugin behaviour
         self._plugin_overrides = {}
@@ -383,7 +383,7 @@ class Plugin:
         f.plugin_id = self._id
         return f
     
-    def _clean_endpoint(self, endpoint: CustomEndpoint):
+    def _clean_endpoint(self, endpoint: CatEndpoint):
         # getmembers returns a tuple
         f = endpoint[1]
         f.plugin_id = self._id
@@ -422,10 +422,10 @@ class Plugin:
         return isinstance(obj, CatPluginDecorator)
 
     # a plugin custom endpoint has to be decorated with @endpoint
-    # (which returns an instance of CustomEndpoint)
+    # (which returns an instance of CatEndpoint)
     @staticmethod
     def _is_custom_endpoint(obj):
-        return isinstance(obj, CustomEndpoint)
+        return isinstance(obj, CatEndpoint)
     
     @property
     def path(self):
