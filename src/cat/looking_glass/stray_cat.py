@@ -228,7 +228,9 @@ class StrayCat:
 
         await self.__send_ws_json(error_message)
 
-
+    
+    # TODOV2: keep .llm sync as it was, for retrocompatibility
+    #           add an async method for the chain with tools
     async def llm(
             self,
             system_prompt: str,
@@ -297,9 +299,11 @@ class StrayCat:
             ] + [m.langchainfy() for m in messages]
         )
         
-        llm_with_tools = self._llm.bind_tools([
-            t.langchainfy() for t in tools
-        ])
+        llm_with_tools = self._llm
+        if hasattr(self._llm, "bind_tools"):
+            llm_with_tools = self._llm.bind_tools([
+                t.langchainfy() for t in tools
+            ])
 
         chain = (
             prompt
