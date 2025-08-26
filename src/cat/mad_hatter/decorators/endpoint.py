@@ -39,7 +39,7 @@ class CatEndpoint:
                 log.warning(f"There is already an active {self.methods} endpoint with path {self.name}")
                 return
 
-        log.info(f"Activating custom endpoint {self.methods} {self.name}")
+        log.debug(f"Activating custom endpoint {self.methods} {self.name}")
         
         plugins_router = APIRouter()
         plugins_router.add_api_route(

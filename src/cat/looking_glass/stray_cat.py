@@ -384,8 +384,6 @@ class StrayCat:
             "before_cat_reads_message", self.chat_request, cat=self
         )
 
-        log.info(self.chat_request)
-
         try:
             # reply with agent
             agent_output: AgentOutput = await MainAgent(self).execute()

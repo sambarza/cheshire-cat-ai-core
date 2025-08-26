@@ -1,6 +1,7 @@
 import os
 import shutil
 import uvicorn
+import debugpy
 
 from cat.env import get_env
 from cat.utils import get_base_path, get_project_path, get_plugins_path
@@ -34,6 +35,10 @@ def main():
                 "plugin.json"
             ]
         }
+
+        # expose port to attach debuggers (only in debug mode)
+        debugpy.listen(("localhost", 5678))
+
     # uvicorn running behind an https proxy
     proxy_pass_config = {}
     if get_env("CCAT_HTTPS_PROXY_MODE") in ("1", "true"):

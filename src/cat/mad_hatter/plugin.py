@@ -261,21 +261,22 @@ class Plugin:
         if os.path.exists(req_file):
             installed_packages = {x.name for x in importlib.metadata.distributions()}
 
+            log.info(f"Checking requirements for plugin {self.id}")
             try:
                 with open(req_file, "r") as read_file:
                     requirements = read_file.readlines()
 
                 for req in requirements:
-                    log.info(f"Installing requirements for plugin {self.id}")
 
                     # get package name
                     package_name = Requirement(req).name
 
                     # check if package is installed
                     if package_name not in installed_packages:
+                        log.debug(f"\t Installing {package_name}")
                         filtered_requirements.append(req)
                     else:
-                        log.debug(f"{package_name} is already installed")
+                        log.debug(f"\t {package_name} is already installed")
 
             except Exception:
                 log.error(f"Error during requirements checks for plugin {self.id}")

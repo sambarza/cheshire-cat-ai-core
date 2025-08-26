@@ -21,10 +21,6 @@ class SimpleAgent(BaseAgent):
             execution_name=f"{self.name.upper()} AGENT"
         )
 
-        from numpy import random
-        if random.random() > 0.5:
-            a = 9/0
-
         if type(llm_out) is str:
             # simple string message
             return AgentOutput(output=llm_out)

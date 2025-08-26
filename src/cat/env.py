@@ -9,7 +9,7 @@ def get_supported_env_variables():
         "CCAT_CORE_USE_SECURE_PROTOCOLS": "",
         "CCAT_API_KEY": "meow",
         "CCAT_DEBUG": "true",
-        "CCAT_LOG_LEVEL": "INFO",
+        "CCAT_LOG_LEVEL": "WARNING",
         "CCAT_CORS_ALLOWED_ORIGINS": None,
         "CCAT_QDRANT_HOST": None, # TODOV2: move Qdrant specifics to qdrant_vector_memory plugin settigns
         "CCAT_QDRANT_PORT": "6333",

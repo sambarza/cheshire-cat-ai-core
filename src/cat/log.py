@@ -230,7 +230,7 @@ class CatLogEngine:
         if(get_env("CCAT_DEBUG") == "true"):
             print("\n")
             print(self.colored_text(f"===== {title} OUTPUT =====", "blue"))
-            if hasattr(langchain_output, 'tool_calls'):
+            if hasattr(langchain_output, 'tool_calls') and len(langchain_output.tool_calls) > 0:
                 for t in langchain_output.tool_calls:
                     print(f"Calling tool {t["name"]} with input {t["args"]}")
             else:
