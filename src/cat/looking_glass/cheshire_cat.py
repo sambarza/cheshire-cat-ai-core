@@ -9,7 +9,6 @@ from cat.protocols.model_context.client import MCPClient, mcp_servers_config
 from cat.factory.llm import LLMDefaultConfig, get_llm_from_name
 from cat.factory.embedder import EmbedderDefaultConfig, get_embedder_from_name
 from cat.memory.long_term_memory import LongTermMemory
-from cat.agents.main_agent import MainAgent
 from cat.log import log
 from cat.mad_hatter.mad_hatter import MadHatter
 from cat.utils import singleton
@@ -73,9 +72,6 @@ class CheshireCat:
 
         # load LLM and embedder
         self.load_natural_language()
-
-        # Main agent instance (for reasoning)
-        self.main_agent = MainAgent()
 
         # Cache for sessions / working memories et al.
         self.cache = CacheManager().cache

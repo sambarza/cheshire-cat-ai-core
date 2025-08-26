@@ -7,7 +7,6 @@ from langchain_core.embeddings import Embeddings
 from cat.looking_glass.cheshire_cat import CheshireCat
 from cat.mad_hatter.mad_hatter import MadHatter
 from cat.memory.long_term_memory import LongTermMemory
-from cat.agents.main_agent import MainAgent
 from cat.factory.defaults import EmbedderDefault
 from cat.factory.defaults import LLMDefault
 
@@ -27,7 +26,6 @@ def test_main_modules_loaded(cheshire_cat):
     )
     # TODOV2: this should be singleton too
     assert isinstance(cheshire_cat.memory, LongTermMemory)
-    assert isinstance(cheshire_cat.main_agent, MainAgent)
     assert isinstance(cheshire_cat._llm, BaseLLM)
     assert isinstance(cheshire_cat.embedder, Embeddings)
 

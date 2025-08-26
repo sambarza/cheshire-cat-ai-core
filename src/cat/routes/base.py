@@ -5,6 +5,7 @@ from importlib import metadata
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
+from cat.protocols.agui import encoder, events
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
 from cat.convo.messages import ChatRequest, ChatResponse
 from cat.utils import BaseModelDict
@@ -39,7 +40,7 @@ async def chat(
     if chat_request.stream:
         async def event_stream():
             async for msg in cat.run(chat_request):
-                yield f"data: {json.dumps(msg)}\n\n"
+                yield f"data: {json.dumps(dict(msg))}\n\n"
 
         return StreamingResponse(event_stream(), media_type="text/event-stream")
     else:

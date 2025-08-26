@@ -2,7 +2,9 @@ import time
 
 from langchain.docstore.document import Document
 
-
+####################################
+# TODOV2: main_agent can be constructed like this: MainAgent(stray)
+#######################################
 
 def test_format_agent_input_on_empty_memory(main_agent, stray):
     # empty memory

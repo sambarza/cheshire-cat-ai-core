@@ -1,10 +1,15 @@
+import time
 import functools
 import inspect
-from typing import Union, Callable, List
+from uuid import uuid4
 from inspect import signature
+from typing import Union, Callable, List, Dict, Any, Literal
 
 from pydantic import ConfigDict
 from langchain_core.tools import StructuredTool
+
+from ag_ui.core.events import EventType # take away after they fix the bug
+from cat.protocols.agui import events
 
 
 # All @tool decorated functions in plugins become a CatTool.
@@ -42,8 +47,57 @@ class CatTool:
     def __repr__(self) -> str:
         return f"CatTool(name={self.name}, return_direct={self.return_direct}, description={self.description})"
 
-    def run(self, input_by_llm: str, cat) -> str:
-        return self.func(input_by_llm, cat=cat)
+    ##################################################
+    ### TODOV2: are these two functions still needed?
+    def run(self, input_by_llm: dict, cat) -> str:
+        """Low level tool function execution, sync."""
+        return self.func(input_by_llm, cat=cat) # TODOV2: should be able to allow multiple arguments tools? Ask Manu
+    
+    async def arun(self, input_by_llm: dict, cat) -> str:
+        """Low level tool function execution, async."""
+        return self.func(input_by_llm, cat=cat) # TODOV2: multiple arguments tool ^
+    ##################################################
+
+    async def execute(self, cat: 'StrayCat', action: 'LLMAction') -> 'LLMAction':
+        """
+        Execute a CatTool with the provided LLMAction.
+        Will store tool output in action.output and emit AGUI events for tool execution.
+
+        Parameters
+        ----------
+        action : LLMAction
+            Object representing the choice of tool made by the LLM
+        cat : StrayCat
+            Session object.
+
+        Returns
+        -------
+        LLMAction
+            Updated LLM action, with valued output.
+        """
+        if action.input is None:
+            action.input = {}
+        tool_output = self.func(
+            **action.input, cat=cat
+        )
+
+        # Emit AGUI events
+        await self.emit_agui_tool_start_events(cat, action)
+
+        # Ensure the output is a string or None, 
+        if (tool_output is not None) and (not isinstance(tool_output, str)):
+            tool_output = str(tool_output)
+
+        # store tool output
+        action.output = tool_output
+
+        # Emit AGUI events
+        await self.emit_agui_tool_end_events(cat, action)
+
+        # TODOV2: should return something analogous to:
+        #   https://modelcontextprotocol.info/specification/2024-11-05/server/tools/#tool-result
+        #   Only supporting text for now
+        return action
     
     def remove_cat_from_args(self, function: Callable) -> Callable:
         """
@@ -93,6 +147,7 @@ class CatTool:
 
         return new_tool
 
+        # In case we may want to avoid importing langchain
         # return {
         #     "name": "multiply",
         #     "description": "Multiply two numbers",
@@ -106,12 +161,43 @@ class CatTool:
         #     }
         # }
 
-    # TODOV2: test support for pydantic2 works in langchain
-    #class Config:
-    #    extra = "allow"
     model_config = ConfigDict(
         extra = "allow"
     )
+
+    async def emit_agui_tool_start_events(self, cat, action):
+        await cat.agui_event(
+            events.ToolCallStartEvent(
+                timestamp=int(time.time()),
+                tool_call_id=str(action.id),
+                tool_call_name=action.name
+            )
+        )
+        await cat.agui_event(
+            events.ToolCallArgsEvent(
+                timestamp=int(time.time()),
+                tool_call_id=str(action.id),
+                delta=str(action.input), # here the protocol assumes tool args are streamed
+                raw_event=action.input
+            )
+        )
+    
+    async def emit_agui_tool_end_events(self, cat, action):
+        await cat.agui_event(
+            events.ToolCallEndEvent(
+                timestamp=int(time.time()),
+                tool_call_id=str(action.id) # may be more than one?
+            )
+        )
+        await cat.agui_event(
+            events.ToolCallResultEvent(
+                type=EventType.TOOL_CALL_RESULT, # bug in the lib, this should not be necessary
+                timestamp=int(time.time()),
+                message_id=str(uuid4()), # shold be the id of the last user message
+                tool_call_id=str(action.id),
+                content=str(action.output)
+            )
+        )
 
 
 # @tool decorator, a modified version of a langchain Tool that also takes a Cat instance as argument
@@ -122,7 +208,7 @@ def tool(
     """
     Make tools out of functions, can be used with or without arguments.
     Requires:
-        - Function must be of type (str, cat) -> str
+        - Function must contain the cat argument -> str
         - Function must have a docstring
     Examples:
         .. code-block:: python

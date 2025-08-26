@@ -16,6 +16,8 @@ async def websocket_endpoint(
 ):
     await websocket.accept()
 
+    # TODOV2: support both legacy {"type": "chat_token", "content": "token"} and AGUI
+
     try:
         while True:
 

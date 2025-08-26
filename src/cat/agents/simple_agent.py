@@ -1,42 +1,48 @@
-from cat.convo.messages import Message
+import time
+from uuid import uuid4
+
 from cat.agents.base_agent import BaseAgent, AgentOutput, LLMAction
 from cat.log import log
 
 class SimpleAgent(BaseAgent):
+    """The default agent being run if no other were selected.
+        Handles one tool call per conversation turn.
+    """
 
     name = "simple"
 
-    async def execute(self, cat) -> AgentOutput:
+    async def execute(self) -> AgentOutput:
 
-        llm_out: Message = await cat.llm(
-            await self.get_system_prompt(cat),
-            messages=cat.chat_request.messages,
-            tools=await self.get_tools(cat), # TODOV2: not sure it is always the case to have cat as an argument
-            stream=cat.chat_request.stream,
-            execution_name="PROMPT"
+        llm_out = await self.cat.llm(
+            await self.get_system_prompt(),
+            messages=self.cat.chat_request.messages,
+            tools=await self.get_tools(),
+            stream=self.cat.chat_request.stream,
+            execution_name=f"{self.name.upper()} AGENT"
         )
 
-        log.warning(llm_out)
+        from numpy import random
+        if random.random() > 0.5:
+            a = 9/0
 
-        agent_out = AgentOutput()
-        if llm_out.content.type == "tool_call":
-            # emit event
-            # run the tool:
-            #   if return_direct, self.cat.send_message
-            #   else:
-            #       append tool output to chat_request.messages
-            #       await self.execute()
-            agent_out.output = "I want to run a tool"
-            agent_out.actions = [
-                LLMAction(
-                    name=llm_out.content.tool_call["name"],
-                    id=llm_out.content.tool_call["id"],
-                    input=llm_out.content.tool_call["args"]["tool_input"],
-                    output="non ancora chiamato"
-                )
-            ] # can be many, and must be converted
-        elif llm_out.content.type == "text":
-            agent_out.output = llm_out.content.text
+        if type(llm_out) is str:
+            # simple string message
+            return AgentOutput(output=llm_out)
+        elif type(llm_out) is LLMAction:
+            # LLM has chosen a tool, run it to get the output
+            for t in await self.get_tools():
+                if t.name == llm_out.name:
+                    # update the action with an output, actually executing the tool
+                    llm_out = await t.execute(self.cat, llm_out)
+                    # TODOV2: update message list with a tool call message
 
-        return agent_out
+            agent_output = AgentOutput(
+                output=llm_out.output,
+                actions=[llm_out]
+            )
+
+            # give back the output
+            return agent_output
+        else:
+            return AgentOutput()
     

@@ -47,7 +47,7 @@
 
 - there is a new decorator (TODO) `@agent` that allows you to define your own agents. When you send a request to the cat, you can ask a reply from a specific agent (more details below). If the agent name is not specified in the request, a default `SimpleAgent` will be used. 
 - you can declare an agent in your plugin using `@agent` and subclassing the `BaseAgent` class, which only requires a method `execute` and a `name` attribute. TODO example.
-- the agent router is name based. You can still define a custom routing agent that can do way more complicated stuff (embedding based routing, LLM base routing, etc.).
+- the agent router is name based. You can still define a custom routing agent that can do way more complicated stuff (embedding based routing, LLM based routing, etc.).
 - So yes, now a plugin can contain one or more agents, and the agents can talk among themselves. I don't recommend such setups in production, but for sure having more agents and having the user decide which one to run, should allow more stable and useful AI apps.
 - Agents can decide whether or not to run hooks, and even create new ones. Just call `cat.mad_hatter.execute_hook("my_hook", default_value, cat)` and everything works as it already worked.
 - TODO: nice utility method `cat.execute_hook("hook_name", default)`.
@@ -72,9 +72,10 @@
   ```python
     ESEMPIO CUSTOM AGENT
   ```
-- so input and output data structure have changed, but by keeping active the core_plugin `legacy_v1` old clients should still work (make a PR if you find bugs)
-- From now on we only support chat models, text only or text plus images. Pure completion models are not supported anymore. If you need to use one, create your own LLM adapter and hook it via `factory_allowed_llms`
+- so input and output data structure have changed, but by keeping active the core_plugin `legacy_v1` old clients should still work (make a PR if you find bugs).
+- From now on we only support chat models, text only or text plus images. Pure completion models are not supported anymore. If you need to use one, create your own LLM adapter and hook it via `factory_allowed_llms`.
 - Embedders are not automatically associated with the chosen LLM vendor. You will need to configure that yourself, The cat will notify you at every message if the embedder is not set.
+- when calling the Cat via websocket and http streaming, all tokens, notifications, agent steps, errors and other lifecycle events (including final response) will be sent following the [AG-UI](https://docs.ag-ui.com/concepts/events) protocol. 
 
 
 ## Folder structure
@@ -111,6 +112,13 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
       return m
   ```
 - `before_agent_starts` hook now has no argument aside `cat`, as all context/agent_input is directly stored and inserted into prompt based on the content of working memory (you can hook this via `agent_prompt_suffix`)
+
+
+## Tools
+
+- From now on we need to talk about internal and external (MCP) tools. Both are automatically converted to `CatTool` and made available to the agents
+- Tools can now accept multiple arguments, thanks to the implemntation provided by Emanuele Morrone (@pingdred)
+- Tool output can be a string, but now we allow also custom data structures and files via CatToolOutput (Yet TODO)
 
 
 ## Auth

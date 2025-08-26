@@ -1,20 +1,22 @@
 
 import asyncio
+import time
+from uuid import uuid4
 from collections.abc import AsyncGenerator
 from typing import Literal, get_args, List, Dict, Union, Any, Callable
 
 from langchain_core.runnables import RunnableConfig, RunnableLambda
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import SystemMessagePromptTemplate
-from langchain_core.output_parsers.string import StrOutputParser
 
+from cat.protocols.agui import events
 from cat.auth.permissions import AuthUserInfo
 from cat.looking_glass.cheshire_cat import CheshireCat
 from cat.looking_glass.callbacks import NewTokenHandler
 from cat.memory.working_memory import WorkingMemory
 from cat.convo.messages import ChatRequest, ChatResponse, Message
 from cat.mad_hatter.decorators import CatTool
-from cat.agents import AgentOutput
+from cat.agents import AgentOutput, LLMAction, MainAgent
 from cat.cache.cache_item import CacheItem
 from cat import utils
 from cat.log import log
@@ -228,6 +230,8 @@ class StrayCat:
 
         await self.__send_ws_json(error_message)
 
+    async def agui_event(self, event: events.BaseEvent):
+        await self.__send_ws_json(dict(event))
     
     # TODOV2: keep .llm sync as it was, for retrocompatibility
     #           add an async method for the chain with tools
@@ -240,7 +244,7 @@ class StrayCat:
             model: str | None = None,  # TODOV2
             stream: bool = False,
             execution_name: str = "prompt"
-        ) -> str:
+        ) -> str | LLMAction:
         """Generate a response using the Large Language Model.
 
         Parameters
@@ -280,7 +284,9 @@ class StrayCat:
         # should we stream the tokens?
         callbacks = []
         if stream:
+            # token handler (will emit token events)
             callbacks.append(NewTokenHandler(self))
+            # TODOV2: tool choice tokens are not streamed
 
         # Add callbacks from plugins
         self.mad_hatter.execute_hook(
@@ -307,18 +313,29 @@ class StrayCat:
 
         chain = (
             prompt
-            | RunnableLambda(lambda x: utils.langchain_log_prompt(x, execution_name))
+            | RunnableLambda(lambda x: log.langchain_log_prompt(x, execution_name))
             | llm_with_tools # TODOV2: make configurable via init_chat_model
-            | RunnableLambda(lambda x: utils.langchain_log_output(x, execution_name))
-            #| StrOutputParser()
+            | RunnableLambda(lambda x: log.langchain_log_output(x, execution_name))
         )
 
-        output = await chain.ainvoke(
+        langchain_msg = await chain.ainvoke(
             prompt_variables,
             config=RunnableConfig(callbacks=callbacks)
-        )
+        )  
 
-        return Message.delangchainfy(output)
+        if hasattr(langchain_msg, "tool_calls") and len(langchain_msg.tool_calls) > 0:
+            
+            langchain_tool_call = langchain_msg.tool_calls[0] # can they be more than one?
+            return LLMAction(
+                id=langchain_tool_call["id"],
+                name=langchain_tool_call["name"],
+                input=langchain_tool_call["args"],
+                output=langchain_msg.content
+            )
+
+        # if no tools involved, just return the string
+        return langchain_msg.content
+        # TODOV2: have a couple of try/except to manage LLM crashes
     
 
     async def __call__(
@@ -371,13 +388,12 @@ class StrayCat:
 
         try:
             # reply with agent
-            agent_output: AgentOutput = await self.main_agent.execute(self)
+            agent_output: AgentOutput = await MainAgent(self).execute()
         except Exception as e:
             log.error(e)
-            await self.send_error(str(e))
-            agent_output = AgentOutput(output="nu lo so")
+            raise e
         
-        # ?????
+        # TODOV2 ChatResponse yet to be defined
         self.chat_response.text = str(agent_output.output)
         self.chat_response.tools = list(agent_output.actions)
 
@@ -386,7 +402,7 @@ class StrayCat:
             "before_cat_sends_message", self.chat_response, cat=self
         )
 
-        # will both call the callback (if any) and return the final reply
+        # Return final reply
         log.info(final_output)
         await self.send_chat_message(final_output)
         return final_output
@@ -394,56 +410,73 @@ class StrayCat:
 
     async def run(
         self,
-        user_message: ChatRequest,
+        request: ChatRequest,
     ) -> AsyncGenerator[Any, None]:
+        """Runs the Cat keeping a queue of its messages in order to stream that or send them via websocket.
+        Emits the main AGUI lifecycle events
+        """
+
+        # unique id for this run
+        run_id = str(uuid4())
+
+        # AGUI event for agent run start
+        yield events.RunStartedEvent(
+            timestamp=int(time.time()),
+            thread_id=request.thread,
+            run_id=run_id
+        )
+
+        # build queue and task
         queue: asyncio.Queue[str | None] = asyncio.Queue()
-
-        async def callback(msg: str) -> None:
-            await queue.put(msg)
-
+        async def callback(msg) -> None:
+            await queue.put(msg) # TODO have a timeout
         async def runner() -> None:
             try:
-                # Assuming self(user_message, callback) is awaitable
-                await self(user_message, callback)  # type: ignore[call-arg]
+                # Main entry point to StrayCat.__call__, contains the main AI flow
+                final_reply = await self(request, callback)
+
+                # AGUI event for agent run finish
+                await callback(
+                    events.RunFinishedEvent(
+                        timestamp=int(time.time()),
+                        thread_id=request.thread,
+                        run_id=run_id,
+                        result=final_reply.model_dump()
+                    )
+                )
             except Exception as e:
-                await queue.put(f"[Error] {e}")
+                await callback(
+                    events.RunErrorEvent(
+                        timestamp=int(time.time()),
+                        message=str(e)
+                        # result= TODOV2 this should be the final response
+                    )
+                )
+                log.error(e)
+                raise e
             finally:
                 await queue.put(None)
 
-        runner_task: asyncio.Task[None] = asyncio.create_task(runner())
-
         try:
+            # run the task
+            runner_task: asyncio.Task[None] = asyncio.create_task(runner())
+
+            # wait for new messages to stream or websocket back to the client
             while True:
-                msg = await queue.get()
+                msg = await queue.get() # TODO have a timeout
                 if msg is None:
                     break
                 yield msg
-        except asyncio.CancelledError:
+        except Exception as e:
             runner_task.cancel()
-            raise
+            yield events.RunErrorEvent(
+                timestamp=int(time.time()),
+                message=str(e)
+                # result= TODOV2 this should be the final response
+            )
+            log.error(e)
+            raise e
 
-    # async def run(self, message, return_message=False):
-    #     try:
-    #         # run main flow
-    #         cat_message = await self.__call__(message)
-    #         # save working memory to cache
-    #         self.update_working_memory_cache()
-
-    #         if return_message:
-    #             # return the message for HTTP usage
-    #             return cat_message
-    #         else:
-    #             # send message back to client via WS
-    #             await self.send_chat_message(cat_message)
-    #     except Exception as e:
-    #         log.error(e)
-    #         if return_message:
-    #             return {"error": str(e)}
-    #         else:
-    #             try:
-    #                 await self.send_error(e)
-    #             except ConnectionClosedOK as ex:
-    #                 log.warning(ex)
 
 
     async def classify(
@@ -612,12 +645,6 @@ Allowed classes are:
         {"num_cats": 44, "rows": 6, "remainder": 0}
         """
         return CheshireCat().mad_hatter
-
-    @property
-    def main_agent(self):
-        """Gives access to the default main agent.
-        """
-        return CheshireCat().main_agent
 
     @property
     def white_rabbit(self):

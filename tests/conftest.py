@@ -154,10 +154,6 @@ def just_installed_plugin(client, admin_headers):
 
     # clean up of zip file and mock_plugin_folder is done for every test automatically (see client fixture)
 
-# fixtures to test the main agent
-@pytest.fixture(scope="function")
-def main_agent(app, async_client):
-    yield app.state.ccat.main_agent  # each test receives as argument the main agent instance
 
 # fixture to have available an instance of StrayCat
 @pytest.fixture(scope="function")

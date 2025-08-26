@@ -11,31 +11,29 @@ class MainAgent(BaseAgent):
     This class routes between sub agents, that in turn use the LLM.
     """
 
-    def agent_router(self, cat) -> BaseAgent:
+    def agent_router(self) -> BaseAgent:
         """Selects which agent to run. At the moment the selected agent is taken directly from chat request.
         If no agent is specified, SimpleAgent will run.
         
         When LLMs will be faster, we may introduce an LLM selection (can also be done via plugin).
         """
 
-        simple_agent = SimpleAgent()
-
-        requested_agent = cat.chat_request.agent
-        available_agents = [
-            simple_agent,
+        requested_agent = self.cat.chat_request.agent
+        available_agent_classes = [
+            SimpleAgent,
         ] # TODOV2: get decorated @agents from plugins
         
         # route through the available agents
-        for a in available_agents:
-            if requested_agent == a.name:
-                return a
+        for A in available_agent_classes:
+            if requested_agent == A.name:
+                return A(self.cat)
         
         # required agent does not exist
         log.warning(f'Agent "{requested_agent}" does not exist. Using "simple" agent.')
-        return simple_agent
+        return SimpleAgent(self.cat)
 
 
-    async def execute(self, cat) -> AgentOutput:
+    async def execute(self) -> AgentOutput:
         """Execute the agents.
 
         Returns
@@ -47,22 +45,22 @@ class MainAgent(BaseAgent):
         # prepare input to be passed to the agent.
         #   Info will be extracted from working memory
         # Note: agent_input works both as a dict and as an object
-        cat.mad_hatter.execute_hook(
-            "before_agent_starts", cat=cat
+        self.cat.mad_hatter.execute_hook(
+            "before_agent_starts", cat=self.cat
         )
 
         # should we run the default agents?
-        agent_fast_reply = cat.mad_hatter.execute_hook(
-            "agent_fast_reply", {}, cat=cat
+        agent_fast_reply = self.cat.mad_hatter.execute_hook(
+            "agent_fast_reply", {}, cat=self.cat
         )
         if isinstance(agent_fast_reply, AgentOutput):
             return agent_fast_reply
         if isinstance(agent_fast_reply, dict) and "output" in agent_fast_reply:
             return AgentOutput(**agent_fast_reply)
         
-        selected_agent = self.agent_router(cat)
+        selected_agent = self.agent_router()
         return await run_sync_or_async(
-            selected_agent.execute, cat
+            selected_agent.execute
         )
         
 

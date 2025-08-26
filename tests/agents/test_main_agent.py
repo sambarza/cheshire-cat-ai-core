@@ -6,11 +6,12 @@ from cat.agents import AgentOutput
 
 
 @pytest.mark.asyncio
-async def test_execute_main_agent(main_agent, stray):
-    assert isinstance(main_agent, MainAgent)
+async def test_execute_main_agent(stray):
+    
+    main_agent = MainAgent(stray)
     
     # empty agent execution
-    out = await main_agent.execute(stray)
+    out = await main_agent.execute()
     assert isinstance(out, AgentOutput)
     assert not out.return_direct
     assert out.intermediate_steps == []

@@ -1,3 +1,4 @@
+
 from typing import List, Tuple, Dict
 from abc import ABC, abstractmethod
 
@@ -39,7 +40,7 @@ class LLMAction(BaseModelDict):
     """
     id: str | None = None
     name: str
-    input: Dict
+    input: Dict | None = None
     output: str | None = None
     return_direct: bool = False
 
@@ -72,25 +73,37 @@ class BaseAgent(ABC):
     # using name, ChatRequest can require a specific agent and agents can trigger sub hooks
     name = "base"
 
-    async def get_system_prompt(self, cat) -> str:
+    def __init__(self, cat):
+        # important so all agents have the session and utilities at disposal
+        # if you subclass and override the constructor, remember to set it or call super()
+        self.cat = cat
+
+    @abstractmethod
+    async def execute(*args, **kwargs) -> AgentOutput:
+        """Main Agent method, must be implemented to subclass BaseAgent"""
+        pass
+
+    async def get_system_prompt(self) -> str:
 
         # obtain prompt parts from plugins
         # TODOV2: give better naming to these hooks
-        prompt_prefix = cat.mad_hatter.execute_hook(
+        prompt_prefix = self.cat.mad_hatter.execute_hook(
             "agent_prompt_prefix",
-            cat.chat_request.instructions,
-            cat=cat
+            self.cat.chat_request.instructions,
+            cat=self.cat
         )
-        prompt_suffix = cat.mad_hatter.execute_hook(
-            "agent_prompt_suffix", "", cat=cat
+        prompt_suffix = self.cat.mad_hatter.execute_hook(
+            "agent_prompt_suffix", "", cat=self.cat
         )
 
         return prompt_prefix + prompt_suffix
 
-    async def get_tools(self, cat) -> List[CatTool]:
+    async def get_tools(self) -> List[CatTool]:
+        """Get both plugins' tools and MCP tools in CatTool format.
+        """
 
-        mcp_tools = [] #await cat.mcp.list_tools()
-        internal_tools = cat.mad_hatter.tools
+        mcp_tools = [] #await self.cat.mcp.list_tools()
+        internal_tools = self.cat.mad_hatter.tools
 
         tools = mcp_tools + internal_tools
         #log.critical(tools)
@@ -99,22 +112,7 @@ class BaseAgent(ABC):
         # TODOV2: run a hook to inspect and select (with dynamic name)
 
         return tools
-    
 
-    # async def get_mcp_resources(self, cat):
-    #     resources = await cat.mcp.list_resources()
-    #     # TODOV2: run a hook to inspect and select
-    #     return resources
-
-    # async def get_mcp_prompts(self, cat):
-    #     prompts = await cat.mcp.list_prompts()
-    #     # TODOV2: run a hook to inspect and select
-    #     return prompts
-
-    #async def human_in_the_loop(cat) -> 
+    #async def human_in_the_loop() -> 
     # TODOV2: deal with tool confirmations or json_schema fills
     #               that required human in the loop
-
-    @abstractmethod
-    async def execute(*args, **kwargs) -> AgentOutput:
-        pass

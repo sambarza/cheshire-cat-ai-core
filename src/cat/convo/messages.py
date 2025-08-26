@@ -37,34 +37,14 @@ class Message(BaseModelDict):
                 "role": self.role,
                 "content": self.content.langchainfy()
             }
-    
-    @staticmethod
-    def delangchainfy(langchain_output):
-        
-        if len(langchain_output.content) > 0:
-            return Message(
-                role="assistant",
-                content=MessageContent(
-                    type="text",
-                    text=langchain_output.content
-                )
-            )
-    
-        if len(langchain_output.tool_calls) > 0:
-            return Message(
-                role="assistant",
-                content=MessageContent(
-                    type="tool_call",
-                    tool_call=langchain_output.tool_calls[0] # can it output more than one?
-                )
-            )
-        
+
 
 class ChatRequest(BaseModelDict):
 
     agent: str = "simple" # name of the agent to run. If None, the default one will be
     model: str = "vendor:model" # e.g. "openai:gpt-5". If None, default LLM will be picked up
     stream: bool = True # whether to stream tokens or not
+    thread: str = "default"
     instructions: str = prompts.MAIN_PROMPT_PREFIX
     mcp_resources: List[str] = [] # should be a list of URIs
     # TODOV2: openai has also `tools` here, in the format { "type": "tool_name" }
