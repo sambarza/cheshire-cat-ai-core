@@ -17,7 +17,7 @@ from ..vector_memory import VectorMemory
 @endpoint.get("/collections", prefix="/memory", tags=["Vector Memory"])
 async def get_collections(
     request: Request,
-    cat: StrayCat = check_permissions(AuthResource.MEMORY, AuthPermission.READ)
+    cat: StrayCat = check_permissions("MEMORY", AuthPermission.READ)
 ) -> Dict:
     """Get list of available collections"""
     
@@ -39,7 +39,7 @@ async def get_collections(
 @endpoint.delete("/collections", prefix="/memory", tags=["Vector Memory"])
 async def wipe_collections(
     request: Request,
-    cat: StrayCat = check_permissions(AuthResource.MEMORY, AuthPermission.DELETE),
+    cat: StrayCat = check_permissions("MEMORY", AuthPermission.DELETE),
 ) -> Dict:
     """Delete and create all collections"""
 
@@ -65,7 +65,7 @@ async def wipe_collections(
 async def wipe_single_collection(
     request: Request,
     collection_id: str,
-    cat: StrayCat = check_permissions(AuthResource.MEMORY, AuthPermission.DELETE),
+    cat: StrayCat = check_permissions("MEMORY", AuthPermission.DELETE),
 ) -> Dict:
     """Delete and recreate a collection"""
 

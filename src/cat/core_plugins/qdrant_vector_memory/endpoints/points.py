@@ -35,7 +35,7 @@ async def search_memory_points(
                         description="Flat dictionary where each key-value pair represents a filter." 
                                     "The memory points returned will match the specified metadata criteria."
                         ),
-    cat: StrayCat = check_permissions(AuthResource.MEMORY, AuthPermission.READ),
+    cat: StrayCat = check_permissions("MEMORY", AuthPermission.READ),
 ) -> Dict:
     """Search k memories similar to given text with specified metadata criteria.
         
@@ -123,7 +123,7 @@ async def create_memory_point(
     request: Request,
     collection_id: str,
     point: MemoryPointBase,
-    cat: StrayCat = check_permissions(AuthResource.MEMORY, AuthPermission.WRITE),
+    cat: StrayCat = check_permissions("MEMORY", AuthPermission.WRITE),
 ) -> MemoryPoint:
     """Create a point in memory"""
 
@@ -175,7 +175,7 @@ async def delete_memory_point_by_id(
     request: Request,
     collection_id: str,
     point_id: str,
-    cat: StrayCat = check_permissions(AuthResource.MEMORY, AuthPermission.DELETE),
+    cat: StrayCat = check_permissions("MEMORY", AuthPermission.DELETE),
 ) -> Dict:
     """Delete a specific point in memory"""
 
@@ -210,7 +210,7 @@ async def delete_memory_points_by_metadata(
     request: Request,
     collection_id: str,
     metadata: Dict = {},
-    cat: StrayCat = check_permissions(AuthResource.MEMORY, AuthPermission.DELETE),
+    cat: StrayCat = check_permissions("MEMORY", AuthPermission.DELETE),
 ) -> Dict:
     """Delete points in memory by filter"""
 
@@ -241,7 +241,7 @@ async def get_points_in_collection(
         default=None,
         description="If provided (or not empty string) - skip points with ids less than given `offset`"
     ),
-    cat: StrayCat = check_permissions(AuthResource.MEMORY, AuthPermission.READ),
+    cat: StrayCat = check_permissions("MEMORY", AuthPermission.READ),
 ) -> Dict:
     """Retrieve all the points from a single collection
 
@@ -335,7 +335,7 @@ async def edit_memory_point(
     collection_id: str,
     point_id: str,
     point: MemoryPointBase,
-    cat: StrayCat = check_permissions(AuthResource.MEMORY, AuthPermission.EDIT),
+    cat: StrayCat = check_permissions("MEMORY", AuthPermission.EDIT),
 ) -> MemoryPoint:
     """Edit a point in memory
 
