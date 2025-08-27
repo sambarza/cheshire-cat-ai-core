@@ -7,9 +7,9 @@ from langchain_core.embeddings import FakeEmbeddings
 
 from cat.env import get_env
 from cat.log import log
-from cat.factory.base import BaseAuthHandler
+from cat.auth.base_auth_handler import BaseAuthHandler
 from cat.auth.permissions import (
-    AuthUserInfo, AuthPermission, AuthResource,get_full_permissions
+    AuthUserInfo, AuthPermission, AuthResource, get_full_permissions
 )
 
 

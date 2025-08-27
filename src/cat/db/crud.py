@@ -3,7 +3,6 @@ from uuid import uuid4
 
 from tinydb import Query
 
-from cat.auth.permissions import get_full_permissions, get_base_permissions
 from cat.db import models
 from cat.db.database import get_db
 

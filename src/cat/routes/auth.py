@@ -60,9 +60,9 @@ async def auth_login_form_post(
 
 @router.get("/available-permissions", response_model=Dict[AuthResource, List[AuthPermission]])
 async def get_available_permissions(
-    cat: StrayCat = check_permissions(AuthResource.USERS, AuthPermission.LIST),
+    cat: StrayCat = check_permissions(AuthResource.AUTH_HANDLER, AuthPermission.LIST),
 ):
-    """Returns all available resources and permissions."""
+    """Returns all available resources and permissions. Can be extended via plugins."""
     return get_full_permissions()
 
 
