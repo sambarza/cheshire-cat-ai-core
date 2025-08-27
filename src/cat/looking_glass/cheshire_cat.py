@@ -125,11 +125,14 @@ class CheshireCat:
 
         if selected_llm is None:
             # Return default LLM
+            # TODOV2: set it with default in the db (also other factories)
+            #           so the endpoint gives always a configuration available
             return LLMDefaultConfig.get_llm_from_config({})
 
         # Get LLM factory class
         selected_llm_class = selected_llm["value"]["name"]
         FactoryClass = get_llm_from_name(selected_llm_class)
+        # TODOV2: lowercase both class
 
         # Obtain configuration and instantiate LLM
         selected_llm_config = crud.get_setting_by_name(name=selected_llm_class)

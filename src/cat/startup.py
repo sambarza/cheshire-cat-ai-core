@@ -12,7 +12,6 @@ from cat.env import get_env
 from cat.routes import (
     base,
     auth,
-    users,
     settings,
     llm,
     embedder,
@@ -84,7 +83,6 @@ if cors_enabled == "true":
 # Add routers to the middleware stack.
 cheshire_cat_api.include_router(base.router, tags=["Home"])
 cheshire_cat_api.include_router(auth.router, tags=["User Auth"], prefix="/auth")
-cheshire_cat_api.include_router(users.router, tags=["Users"], prefix="/users")
 cheshire_cat_api.include_router(settings.router, tags=["Settings"], prefix="/settings")
 cheshire_cat_api.include_router(
     llm.router, tags=["Large Language Model"], prefix="/llm"

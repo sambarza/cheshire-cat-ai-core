@@ -5,6 +5,7 @@ from langchain_ollama import ChatOllama
 
 class CustomOpenAI(ChatOpenAI):
     url: str
+    # key: str TODOV2: much requested
 
     def __init__(self, **kwargs):
         super().__init__(model_kwargs={}, base_url=kwargs["url"], **kwargs)

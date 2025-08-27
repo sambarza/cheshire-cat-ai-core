@@ -134,9 +134,12 @@ Auth system semplifications (TODO review):
 - If you are calling the cat machine-to-machine, use `CCAT_API_KEY`, for both http and ws. Websocket in a machine-to-machine settings supports headers, so you can follow the same schema (query parameter `?token=` is not supported anymore). TODO: still active just for dev v2
 - If you are calling the cat form an unsecure client (a browser), use *only* jwt auth.
 - You need to authenticate also to see `/docs` and there is a little form to do it in the page
-- 
-- TODO users crud
 - it is now possible to have `@endpoint` with custom resource and permissions. They can be defined on the endpoint and must be matched by user permissions (which can be set via AuthHandler or users REST API)
+- A new installation by default only recognizes one superuser with full permissions, with name `admin` and pass `admin`. To change these credentials use env variable `CCAT_ADMIN_CREDENTIALS` in this format:
+  ```bash
+    CCAT_ADMIN_CREDENTIALS=username:password
+  ```
+- Utilities to add and edit users have been eradicated from the framework, due to many complications, niche requests from community, and the half baked solution that resulted in v1. Now AuthHandlers can manage users fully on their own. Support for SSO is rolling out!
 
 
 ## MCP support

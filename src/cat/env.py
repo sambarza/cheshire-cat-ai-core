@@ -4,12 +4,13 @@ import os
 def get_supported_env_variables():
 
     return {
+        "CCAT_ADMIN_CREDENTIALS": "admin:admin",
         "CCAT_CORE_HOST": "localhost",
         "CCAT_CORE_PORT": "1865",
         "CCAT_CORE_USE_SECURE_PROTOCOLS": "",
         "CCAT_API_KEY": "meow",
         "CCAT_DEBUG": "true",
-        "CCAT_LOG_LEVEL": "WARNING",
+        "CCAT_LOG_LEVEL": "INFO",
         "CCAT_CORS_ALLOWED_ORIGINS": None,
         "CCAT_QDRANT_HOST": None, # TODOV2: move Qdrant specifics to qdrant_vector_memory plugin settigns
         "CCAT_QDRANT_PORT": "6333",
@@ -27,7 +28,7 @@ def get_supported_env_variables():
     }
 
 
-def get_env(name):
+def get_env(name) -> str | None:
     """Utility to get an environment variable value. To be used only for supported Cat envs.
     - covers default supported variables and their default value
     - automagically handles legacy env variables missing the prefix "CCAT_"

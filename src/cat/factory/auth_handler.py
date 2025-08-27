@@ -2,13 +2,10 @@ from typing import Type
 from pydantic import BaseModel, ConfigDict
 
 from cat.mad_hatter.mad_hatter import MadHatter
-from cat.factory.custom_auth_handler import (
-    BaseAuthHandler,
-    CoreOnlyAuthHandler,
-)
+from cat.factory.defaults import AuthHandlerDefault, BaseAuthHandler
 
 
-class AuthHandlerConfig(BaseModel):
+class AuthHandlerSettings(BaseModel):
     _pyclass: Type[BaseAuthHandler] = None
 
     @classmethod
@@ -23,8 +20,14 @@ class AuthHandlerConfig(BaseModel):
         return cls._pyclass.default(**config)
 
 
-class CoreOnlyAuthConfig(AuthHandlerConfig):
-    _pyclass: Type = CoreOnlyAuthHandler
+class AuthHandlerDefaultConfig(AuthHandlerSettings):
+
+    # TODOV2: improve this fields inspection with pydantic Field
+    admin_username: str = "admin"
+    admin_password: str = "admin"
+    admin_api_key:  str = "meow"
+
+    _pyclass: Type = AuthHandlerDefault
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -51,7 +54,7 @@ class CoreOnlyAuthConfig(AuthHandlerConfig):
 
 def get_allowed_auth_handler_strategies():
     list_auth_handler_default = [
-        CoreOnlyAuthConfig
+        AuthHandlerDefault
     ]
 
     mad_hatter_instance = MadHatter()

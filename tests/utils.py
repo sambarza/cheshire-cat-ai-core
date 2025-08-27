@@ -80,7 +80,7 @@ def send_http_message(
 
 
 # utility function to communicate with the cat via websocket
-def send_websocket_message(msg, client, user_id="user", query_params=None):
+def send_websocket_message(msg, client, user_id="admin", query_params=None):
     url = f"/ws/{user_id}"
     if query_params:
         url += "?" + urlencode(query_params)

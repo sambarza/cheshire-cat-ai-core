@@ -14,10 +14,6 @@ from cat.routes.static.templates import get_jinja_templates
 
 router = APIRouter()
 
-class UserCredentials(BaseModel):
-    username: str
-    password: str
-
 class JWTResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -43,47 +39,11 @@ async def get_access_token(request, username, password):
 
 
 @router.post("/token")
-async def auth_token(request: Request, credentials: UserCredentials) -> JWTResponse:
-    """Endpoint called from client to get a JWT from local identity provider.
-    This endpoint receives username and password as form-data, validates credentials and issues a JWT.
-    """
-    return await get_access_token(request, credentials.username, credentials.password)
-
-@router.post("/token-form")
 async def login(
     request: Request, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> JWTResponse:
     """Form based version of the /token endpoint, in order to make the openapi login work"""
     return await get_access_token(request, form_data.username, form_data.password)
-
-
-# login HTML form GET
-# TODOV2: delete this endpoint and manage auth from the admin via /auth/token
-@router.get("/login", include_in_schema=False)
-async def auth_login_form_get(
-    request: Request, referer: str = Query(None), retry: int = Query(0)
-):
-    """Core login form"""
-
-    error_message = ""
-    if retry == 1:
-        error_message = "Invalid Credentials"
-
-    if referer is None:
-        referer = "/admin/"
-
-    templates = get_jinja_templates()
-    template_context = {
-        "referer": referer,
-        "error_message": error_message,
-        "show_default_passwords": len(crud.get_users().keys()) == 2,
-    }
-
-    response = templates.TemplateResponse(
-        request=request, name="auth/login.html", context=template_context
-    )
-    response.delete_cookie(key="ccat_user_token")
-    return response
 
 
 # login HTML form POST. Set cookies and redirect to origin page after login

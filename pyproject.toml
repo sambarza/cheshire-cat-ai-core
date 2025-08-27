@@ -41,6 +41,7 @@ dependencies = [
     "asgi-lifespan>=2.1.0",
     "ag-ui-protocol>=0.1.8",
     "debugpy>=1.8.16",
+    "fastapi-sso>=0.18.0",
 ]
 
 [build-system]

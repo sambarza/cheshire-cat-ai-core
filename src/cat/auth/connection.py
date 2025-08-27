@@ -80,7 +80,7 @@ class BaseAuth(ABC):
 
 # necessary for login in the swagger, only http
 bearer_extractor = OAuth2PasswordBearer(
-    tokenUrl="/auth/token-form",
+    tokenUrl="/auth/token",
     refreshUrl=None,
     auto_error=False
 )
