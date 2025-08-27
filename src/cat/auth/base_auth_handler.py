@@ -17,7 +17,7 @@ class BaseAuthHandler(ABC):  # TODOAUTH: pydantic model?
     Base class to build custom Auth systems.
     """
 
-    def authorize_user_from_credential(
+    async def authorize_user_from_credential(
         self,
         protocol: Literal["http", "websocket"],
         credential: str,
@@ -79,7 +79,7 @@ class BaseAuthHandler(ABC):  # TODOAUTH: pydantic model?
         )
     
     @abstractmethod
-    def authorize_user_from_jwt(
+    async def authorize_user_from_jwt(
         self,
         token: str,
         auth_resource: AuthResource,
@@ -89,7 +89,7 @@ class BaseAuthHandler(ABC):  # TODOAUTH: pydantic model?
         pass
 
     @abstractmethod
-    def authorize_user_from_key(
+    async def authorize_user_from_key(
         self,
         protocol: Literal["http", "websocket"],
         user_id: str,

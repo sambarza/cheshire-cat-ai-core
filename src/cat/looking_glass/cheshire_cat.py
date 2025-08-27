@@ -1,12 +1,11 @@
+import sys
+
 from typing import List, Dict
 from typing_extensions import Protocol
 
-from cat.factory.auth_handler import get_auth_handler_from_name
-import cat.factory.auth_handler as auth_handlers
+from cat.factory.factory import Factory
 from cat.db import crud, models
 from cat.protocols.model_context.client import MCPClient, mcp_servers_config
-from cat.factory.llm import LLMDefaultConfig, get_llm_from_name
-from cat.factory.embedder import EmbedderDefaultConfig, get_embedder_from_name
 from cat.memory.long_term_memory import LongTermMemory
 from cat.log import log
 from cat.mad_hatter.mad_hatter import MadHatter
@@ -38,12 +37,11 @@ class CheshireCat:
     Attributes
     ----------
     todo : list
-        Yet to be written.
-
+        Help needed TODO
     """
 
     # will be called at first instantiation in fastapi lifespan
-    def bootstrap(self, fastapi_app):
+    async def bootstrap(self, fastapi_app):
         """Cat initialization.
 
         At init time the Cat executes the bootstrap, loading all main componetns and components added by plugins.
@@ -51,32 +49,41 @@ class CheshireCat:
 
         # bootstrap the Cat! ^._.^
 
-        self.fastapi_app = fastapi_app # reference to the FastAPI object
+        try:
+            self.fastapi_app = fastapi_app # reference to the FastAPI object
 
-        # init MCP client
-        # not sure this is better here or as a wide availbel singleton (like the db)
-        self.mcp = MCPClient(mcp_servers_config)
+            # instantiate MadHatter (loads all plugins' hooks and tools)
+            self.load_mad_hatter()
 
-        # long term memory
-        self.load_memory()
+            # init Factory to create LLMs, Embedders and Auth Handlers from config stored in DB
+            self.factory = Factory()
 
-        # load AuthHandler
-        self.load_auth()
-        
-        # instantiate MadHatter (loads all plugins' hooks and tools)
-        self.load_mad_hatter()
+            # init MCP client
+            # not sure this is better here or as a wide availbel singleton (like the db)
+            self.mcp = MCPClient(mcp_servers_config)
 
-        # allows plugins to do something before cat components are loaded
-        self.mad_hatter.execute_hook("before_cat_bootstrap", cat=self)
+            # load AuthHandler
+            await self.load_auth()
 
-        # load LLM and embedder
-        self.load_natural_language()
+            # long term memory
+            await self.load_memory()
+            
 
-        # Cache for sessions / working memories et al.
-        self.cache = CacheManager().cache
+            # allows plugins to do something before cat components are loaded
+            self.mad_hatter.execute_hook("before_cat_bootstrap", cat=self)
 
-        # allows plugins to do something after the cat bootstrap is complete
-        self.mad_hatter.execute_hook("after_cat_bootstrap", cat=self)
+            # load LLM and embedder
+            await self.load_natural_language()
+
+            # Cache for sessions / working memories et al.
+            self.cache = CacheManager().cache
+
+            # allows plugins to do something after the cat bootstrap is complete
+            self.mad_hatter.execute_hook("after_cat_bootstrap", cat=self)
+        except Exception:
+            log.error("Error during ChehsireCat bootstrap. Exiting.")
+            sys.exit()
+
 
     def load_mad_hatter(self):
         self.mad_hatter = MadHatter()
@@ -84,151 +91,63 @@ class CheshireCat:
         self.mad_hatter.on_finish_plugins_sync_callback = self.on_finish_plugins_sync_callback
         self.on_finish_plugins_sync_callback() # only for the first time called manually
 
-    def load_memory(self):
+
+    async def load_memory(self):
             # TODOV2: LTM should run hooks and should subscribe to embedder and mad_hatter hooks
             self.memory = LongTermMemory()
 
-    def load_natural_language(self):
-        """Load Natural Language related objects.
 
-        The method exposes in the Cat all the NLP related stuff. Specifically, it sets the language models
-        (LLM and Embedder).
+    async def load_natural_language(self):
+        """Load Natural Language related objects: LLM and embedder."""
+        self._llm = await self.load_component_from_factory("llm")
+        self.embedder = await self.load_component_from_factory("embedder")
 
-        Warnings
-        --------
-        When using small Language Models it is suggested to turn off the memories and make the main prompt smaller
-        to prevent them to fail.
 
-        See Also
-        --------
-        agent_prompt_prefix
-        """
-        # LLM and embedder
-        self._llm = self.load_language_model()
-        self.embedder = self.load_language_embedder()
+    async def load_auth(self):
+        """Loads the Auth Handler"""
+        self.auth_handler = await self.load_component_from_factory("auth_handler")
 
-    def load_language_model(self):
-        """Large Language Model (LLM) selection at bootstrap time.
-
-        Returns
-        -------
-        llm : BaseLanguageModel
-            Langchain `BaseLanguageModel` instance of the selected model.
-
-        Notes
-        -----
-        Bootstrapping is the process of loading the main Cat components and plugins.
-        """
         
-        selected_llm = crud.get_setting_by_name(name="llm_selected")
+    async def load_component_from_factory(self, factory_slug):
 
-        if selected_llm is None:
-            # Return default LLM
-            # TODOV2: set it with default in the db (also other factories)
-            #           so the endpoint gives always a configuration available
-            return LLMDefaultConfig.get_llm_from_config({})
-
-        # Get LLM factory class
-        selected_llm_class = selected_llm["value"]["name"]
-        FactoryClass = get_llm_from_name(selected_llm_class)
-        # TODOV2: lowercase both class
-
-        # Obtain configuration and instantiate LLM
-        selected_llm_config = crud.get_setting_by_name(name=selected_llm_class)
-        try:
-            llm = FactoryClass.get_llm_from_config(selected_llm_config["value"])
-            return llm
-        except Exception:
-            log.error("Error during LLM instantiation")
-            return LLMDefaultConfig.get_llm_from_config({})
-
-    def load_language_embedder(self):
-        """Hook into the  embedder selection.
-
-        Allows to modify how the Cat selects the embedder at bootstrap time.
-
-        Parameters
-        ----------
-        cat: CheshireCat
-            Cheshire Cat instance.
-
-        Returns
-        -------
-        embedder : Embeddings
-            Selected embedder model.
-        """
-        # Embedding LLM
-
-        selected_embedder = crud.get_setting_by_name(name="embedder_selected")
-
-        if selected_embedder is None:
-            # return default embedder
-            return EmbedderDefaultConfig.get_embedder_from_config({})
-
-        # Get Embedder factory class
-        selected_embedder_class = selected_embedder["value"]["name"]
-        FactoryClass = get_embedder_from_name(selected_embedder_class)
-
-        # obtain configuration and instantiate Embedder
-        selected_embedder_config = crud.get_setting_by_name(
-            name=selected_embedder_class
+        await self.ensure_default_component_in_db(
+            factory_slug
         )
 
-        try:
-            embedder = FactoryClass.get_embedder_from_config(
-                selected_embedder_config["value"]
-            )
-        except Exception:
-            log.error("Error during Embedder instantiation")
-            return EmbedderDefaultConfig.get_embedder_from_config({})
-        return embedder
+        return await self.factory.instantiate_object_from_slug(
+            factory_slug
+        )
 
-    def load_auth(self):
+    async def ensure_default_component_in_db(self, factory_slug):
 
-        # Custom auth_handler # TODOAUTH: change the name to custom_auth
-        selected_auth_handler = crud.get_setting_by_name(name="auth_handler_selected")
+        default_classes = {
+            "auth_handler": "AuthHandlerDefaultConfig",
+            "llm": "LLMDefaultConfig",
+            "embedder": "EmbedderDefaultConfig",
+        }
 
-        # if no auth_handler is saved, use default one and save to db
-        if selected_auth_handler is None:
+        default_class_name = default_classes[factory_slug]
+
+        # Selected component in DB
+        selected_config = crud.get_setting_by_name(name=f"{factory_slug}_selected")
+
+        # if no component is saved, use default one and save to db
+        if selected_config is None:
             # create the auth settings
             crud.upsert_setting_by_name(
                 models.Setting(
-                    name="CoreOnlyAuthConfig", category="auth_handler_factory", value={}
+                    name=default_class_name,
+                    category=f"{factory_slug}", # was with _factory suffix
+                    value={}
                 )
             )
             crud.upsert_setting_by_name(
                 models.Setting(
-                    name="auth_handler_selected",
-                    category="auth_handler_factory",
-                    value={"name": "CoreOnlyAuthConfig"},
+                    name=f"{factory_slug}_selected",
+                    category=f"{factory_slug}", # was with _factory suffix
+                    value={"name": default_class_name},
                 )
             )
-
-            # reload from db
-            selected_auth_handler = crud.get_setting_by_name(
-                name="auth_handler_selected"
-            )
-
-        # get AuthHandler factory class
-        selected_auth_handler_class = selected_auth_handler["value"]["name"]
-        FactoryClass = get_auth_handler_from_name(selected_auth_handler_class)
-
-        # obtain configuration and instantiate AuthHandler
-        selected_auth_handler_config = crud.get_setting_by_name(
-            name=selected_auth_handler_class
-        )
-        try:
-            auth_handler = FactoryClass.get_auth_handler_from_config(
-                selected_auth_handler_config["value"]
-            )
-        except Exception:
-            log.error("Error during AuthHandler instantiation")
-
-            auth_handler = (
-                auth_handlers.AuthHandlerDefaultConfig.get_auth_handler_from_config({})
-            )
-
-        self.auth_handler = auth_handler
 
 
     def build_embedded_procedures_hashes(self, embedded_procedures):

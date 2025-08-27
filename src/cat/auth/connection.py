@@ -54,7 +54,7 @@ class BaseAuth(ABC):
         protocol = connection.scope.get('type')
         
         ah = connection.app.state.ccat.auth_handler
-        user: AuthUserInfo = ah.authorize_user_from_credential(
+        user: AuthUserInfo = await ah.authorize_user_from_credential(
             protocol, credential, self.resource, self.permission, user_id
         )
         if user:

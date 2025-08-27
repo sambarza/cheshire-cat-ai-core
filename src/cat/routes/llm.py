@@ -3,7 +3,6 @@ from typing import Dict
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
 from fastapi import Request, APIRouter, Body, HTTPException
 
-from cat.factory.llm import get_llms_schemas
 from cat.db import crud, models
 
 
@@ -13,7 +12,7 @@ router = APIRouter()
 LLM_SELECTED_CATEGORY = "llm"
 
 # llm type and config are saved in settings table under this category
-LLM_CATEGORY = "llm_factory"
+LLM_CATEGORY = "llm"
 
 # llm selected configuration is saved under this name
 LLM_SELECTED_NAME = "llm_selected"

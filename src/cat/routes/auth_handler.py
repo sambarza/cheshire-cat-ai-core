@@ -3,14 +3,13 @@ from fastapi import Request, APIRouter, Body, HTTPException
 
 from cat.looking_glass.stray_cat import StrayCat
 from cat.db import crud, models
-from cat.factory.auth_handler import get_auth_handlers_schemas
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
 
 router = APIRouter()
 
 AUTH_HANDLER_SELECTED_NAME = "auth_handler_selected"
 
-AUTH_HANDLER_CATEGORY = "auth_handler_factory"
+AUTH_HANDLER_CATEGORY = "auth_handler"
 
 
 @router.get("/settings")

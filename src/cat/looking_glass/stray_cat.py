@@ -402,6 +402,7 @@ class StrayCat:
 
         # Return final reply
         log.info(final_output)
+
         await self.send_chat_message(final_output)
         return final_output
 
@@ -470,7 +471,6 @@ class StrayCat:
             yield events.RunErrorEvent(
                 timestamp=int(time.time()),
                 message=str(e)
-                # result= TODOV2 this should be the final response
             )
             log.error(e)
             raise e

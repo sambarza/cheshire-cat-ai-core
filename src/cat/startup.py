@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI):
     # - Not using Depends because it only supports callables (not instances)
     # - Starlette allows this: https://www.starlette.io/applications/#storing-state-on-the-app-instance
     ccat = CheshireCat()
-    ccat.bootstrap(app)
+    await ccat.bootstrap(app)
     
     # set reference to the cat in fastapi state
     app.state.ccat = ccat

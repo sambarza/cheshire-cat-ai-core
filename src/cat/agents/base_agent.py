@@ -106,7 +106,6 @@ class BaseAgent(ABC):
         internal_tools = self.cat.mad_hatter.tools
 
         tools = mcp_tools + internal_tools
-        #log.critical(tools)
 
         # TODOV2: conversions? see Emanuele's plugin agent_factory
         # TODOV2: run a hook to inspect and select (with dynamic name)

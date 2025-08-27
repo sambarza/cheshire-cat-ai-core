@@ -1,9 +1,14 @@
 
 import jwt
-from typing import Literal
+from typing import Type, Literal
 
-from langchain_core.language_models.chat_models import BaseChatModel
+from pydantic import BaseModel, ConfigDict
+
+from langchain_core.language_models.chat_models import SimpleChatModel
 from langchain_core.embeddings import FakeEmbeddings
+from langchain_core.messages import BaseMessage
+from langchain_core.runnables import Runnable
+from langchain_core.tools import BaseTool
 
 from cat.env import get_env
 from cat.log import log
@@ -13,7 +18,23 @@ from cat.auth.permissions import (
 )
 
 
-class LLMDefault(BaseChatModel):
+class BaseSettings(BaseModel):
+    _pyclass: Type[BaseAuthHandler]
+
+    # This is related to pydantic, because "model_*" attributes are protected.
+    # We deactivate the protection because langchain relies on several "model_*" named attributes
+    model_config = ConfigDict(protected_namespaces=())
+
+    @classmethod
+    def get_object_from_config(cls, config):
+        if cls._pyclass is None:
+            raise Exception(
+                "Configuration class has self._pyclass==None."
+            )
+        return cls._pyclass.default(**config)
+
+
+class LLMDefault(SimpleChatModel):
     @property
     def _llm_type(self):
         return ""
@@ -23,6 +44,9 @@ class LLMDefault(BaseChatModel):
 
     async def _acall(self, *args, **kwargs):
         return "You did not configure a Language Model. Do it in the settings!"
+    
+    def bind_tools(self, *args, **kwargs):
+        return self
     
 
 class EmbedderDefault(FakeEmbeddings):

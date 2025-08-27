@@ -97,7 +97,8 @@
 - also `cat.llm` is async (dunno, maybe leave it there for retro and have a new `cat.async_llm` but the name sucks). TODO Or maybe use a decorator to make it work both ways
 - `cat.llm` got a deep refactoring and has many options XXXXXX
 - `StrayCat.working_memory.history` is not kept in RAM, as it is passed by the client and easily found in `cat.chat_request.messages`; history construction is delegated to plugins (so you can decide whether to keep it stored client side, cat side - with custom endpoints - or another service side).
-
+- there is no more distinction between
+- A specialized factory is responsible to generate objects for AuthHandler, LLM, Embedder. The factory uses hooks you already had to gather all custom classes from plugins.
 
 ## Hooks
 

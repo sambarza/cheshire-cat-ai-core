@@ -3,7 +3,6 @@ from typing import Dict
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
 from fastapi import Request, APIRouter, Body, HTTPException
 
-from cat.factory.embedder import get_embedders_schemas
 from cat.db import crud, models
 
 
@@ -13,7 +12,7 @@ router = APIRouter()
 EMBEDDER_SELECTED_CATEGORY = "embedder"
 
 # embedder type and config are saved in settings table under this category
-EMBEDDER_CATEGORY = "embedder_factory"
+EMBEDDER_CATEGORY = "embedder"
 
 # embedder selected configuration is saved under this name
 EMBEDDER_SELECTED_NAME = "embedder_selected"
