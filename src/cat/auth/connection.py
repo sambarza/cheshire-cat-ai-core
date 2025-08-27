@@ -14,7 +14,7 @@ from fastapi import (
     Depends
 )
 from fastapi.requests import HTTPConnection
-from fastapi.security.oauth2 import OAuth2PasswordBearer
+from fastapi.security.api_key import APIKeyHeader
 
 from cat.auth.permissions import (
     AuthPermission,
@@ -53,45 +53,40 @@ class BaseAuth(ABC):
         # get protocol from Starlette request
         protocol = connection.scope.get('type')
         
-        auth_handlers = [
-            # try to get user from auth_handler
-            connection.app.state.ccat.custom_auth_handler,
-            # try to get user from local idp
-            connection.app.state.ccat.core_auth_handler,
-        ]
-        for ah in auth_handlers:
-            user: AuthUserInfo = ah.authorize_user_from_credential(
-                protocol, credential, self.resource, self.permission, user_id
-            )
-            if user:
-                # create new StrayCat
-                cat = StrayCat(user)
-                
-                # StrayCat is passed to the endpoint
-                yield cat
+        ah = connection.app.state.ccat.auth_handler
+        user: AuthUserInfo = ah.authorize_user_from_credential(
+            protocol, credential, self.resource, self.permission, user_id
+        )
+        if user:
+            # create new StrayCat
+            cat = StrayCat(user)
+            
+            # StrayCat is passed to the endpoint
+            yield cat
 
-                # save working memory and delete StrayCat after endpoint execution
-                cat.update_working_memory_cache()
-                del cat
-                return
+            # save working memory and delete StrayCat after endpoint execution
+            cat.update_working_memory_cache()
+            del cat
+            return
 
         # if no StrayCat was obtained, raise exception
         self.not_allowed(connection)
 
-# necessary for login in the swagger, only http
-bearer_extractor = OAuth2PasswordBearer(
-    tokenUrl="/auth/token",
-    refreshUrl=None,
-    auto_error=False
-)
 
 class HTTPAuth(BaseAuth):
 
     async def __call__(
         self,
         connection: Request,
-        credential = Depends(bearer_extractor), # this mess for the damn swagger
+        credential = Depends(APIKeyHeader(
+            name="Authorization",
+            description="Insert here your CCAT_API_KEY.",
+            auto_error=False
+        )), # this mess for the damn swagger
     ) -> AsyncGenerator[StrayCat | None, None]:
+
+        if credential is not None:
+            credential = credential.replace("Bearer ", "")
         
         # and that's why I hate async stuff
         async for stray in self.authorize(

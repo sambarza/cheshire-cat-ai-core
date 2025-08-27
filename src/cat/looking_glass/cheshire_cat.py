@@ -2,7 +2,6 @@ from typing import List, Dict
 from typing_extensions import Protocol
 
 from cat.factory.auth_handler import get_auth_handler_from_name
-from cat.factory.custom_auth_handler import CoreAuthHandler
 import cat.factory.auth_handler as auth_handlers
 from cat.db import crud, models
 from cat.protocols.model_context.client import MCPClient, mcp_servers_config
@@ -226,11 +225,10 @@ class CheshireCat:
             log.error("Error during AuthHandler instantiation")
 
             auth_handler = (
-                auth_handlers.CoreOnlyAuthConfig.get_auth_handler_from_config({})
+                auth_handlers.AuthHandlerDefaultConfig.get_auth_handler_from_config({})
             )
 
-        self.custom_auth_handler = auth_handler
-        self.core_auth_handler = CoreAuthHandler()
+        self.auth_handler = auth_handler
 
 
     def build_embedded_procedures_hashes(self, embedded_procedures):

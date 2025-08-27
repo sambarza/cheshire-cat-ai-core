@@ -47,7 +47,7 @@ def test_issue_jwt(client):
     assert is_jwt(received_token)
 
     # is the JWT correct for core auth handler?
-    auth_handler = client.app.state.ccat.core_auth_handler
+    auth_handler = client.app.state.ccat.auth_handler
     user_info = auth_handler.authorize_user_from_jwt(
         received_token, AuthResource.LLM, AuthPermission.WRITE
     )

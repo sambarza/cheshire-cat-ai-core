@@ -4,10 +4,10 @@ import os
 def get_supported_env_variables():
 
     return {
-        "CCAT_ADMIN_CREDENTIALS": "admin:admin",
         "CCAT_CORE_HOST": "localhost",
         "CCAT_CORE_PORT": "1865",
         "CCAT_CORE_USE_SECURE_PROTOCOLS": "",
+        "CCAT_ADMIN_CREDENTIALS": "admin:admin",
         "CCAT_API_KEY": "meow",
         "CCAT_DEBUG": "true",
         "CCAT_LOG_LEVEL": "INFO",

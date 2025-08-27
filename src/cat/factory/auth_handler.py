@@ -22,34 +22,16 @@ class AuthHandlerSettings(BaseModel):
 
 class AuthHandlerDefaultConfig(AuthHandlerSettings):
 
-    # TODOV2: improve this fields inspection with pydantic Field
-    admin_username: str = "admin"
-    admin_password: str = "admin"
-    admin_api_key:  str = "meow"
-
     _pyclass: Type = AuthHandlerDefault
 
     model_config = ConfigDict(
         json_schema_extra={
-            "humanReadableName": "Standalone Core Auth Handler",
-            "description": "Delegate auth to Cat core, without any additional auth systems. "
-            "Do not change this if you don't know what you are doing!",
+            "humanReadableName": "Default Auth Handler",
+            "description": "Auth based on environment variables."
+            "Set CCAT_ADMIN_CREDENTIALS and CCAT_API_KEY in your .env to change them.",
             "link": "",  # TODO link to auth docs
         }
     )
-
-
-# TODOAUTH: have at least another auth_handler class to test
-# class ApiKeyAuthConfig(AuthHandlerConfig):
-#     _pyclass: Type = ApiKeyAuthHandler
-
-#     model_config = ConfigDict(
-#         json_schema_extra={
-#             "humanReadableName": "Api Key Auth Handler",
-#             "description": "Yeeeeah.",
-#             "link": "",
-#         }
-#     )
 
 
 def get_allowed_auth_handler_strategies():

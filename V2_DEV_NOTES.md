@@ -139,6 +139,7 @@ Auth system semplifications (TODO review):
   ```bash
     CCAT_ADMIN_CREDENTIALS=username:password
   ```
+- there is only one given active AuthHandler at any given time :)
 - Utilities to add and edit users have been eradicated from the framework, due to many complications, niche requests from community, and the half baked solution that resulted in v1. Now AuthHandlers can manage users fully on their own. Support for SSO is rolling out!
 
 
