@@ -67,7 +67,7 @@ class Factory:
         schemas = {}
         for config_class in await self.get_allowed_setting_classes(slug):
             schema = config_class.model_json_schema()
-            schema["auhrizatorName"] = schema["title"]
+            # schema["auhrizatorName"] = schema["title"]
             schemas[schema["title"]] = schema
 
         return schemas

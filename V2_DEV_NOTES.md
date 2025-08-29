@@ -1,10 +1,10 @@
 
 # Version 2 dev notes
 
-## Vision
+## Intro
 
 - the good and the bad so far
-- synthesis of many requiests and common issues
+- synthesis of many requests and common issues
 - necessity to make maintaining easier
 - new standards
 
@@ -172,7 +172,8 @@ Auth system semplifications (TODO review):
 - `StrayCat.__call_` should be an async generator using `yield` to send tokens and notifications. Those yielded result are then managed at the transport layer (websocket or http/streaming/sse). Cat internals should know absolutely nothing about network protocols.
 - core plugins cannot really save settings in their own path (package is not editable). Maybe ship core_plugins in standard plugins folder?
 - core tests should only deal with core (also because plugin install dependencies is mocked!!!)
-- allow plugin settings with conditionals and subpages with `if`, `oneOf`, etc.
+- allow plugin settings with conditionals and subpages with json schema primitives `if`, `oneOf`, etc.
+- AG-UI should send `event: {xxx}`, leave `data: {xxx}` for the legacy messaging style 
 
 ## Questions
 
@@ -184,4 +185,6 @@ Auth system semplifications (TODO review):
 - should we ship a small LLM and embedder via llama.cpp or other lightweight runner?
 - as there are docker and pyPI releases, makes no sense to have a `develop` branch
 - move settings out of plugins?
+- should we finally get rid of `BaseModelDict`?
+
 

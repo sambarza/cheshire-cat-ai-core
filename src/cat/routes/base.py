@@ -1,5 +1,6 @@
 
 import json
+import asyncio
 from importlib import metadata
 
 from fastapi import APIRouter
@@ -40,6 +41,7 @@ async def chat(
     if chat_request.stream:
         async def event_stream():
             async for msg in cat.run(chat_request):
+                await asyncio.sleep(0.1) # TODOV2: if I do not wait, some messages are aggregated and sent at once
                 yield f"data: {json.dumps(dict(msg))}\n\n"
 
         return StreamingResponse(event_stream(), media_type="text/event-stream")

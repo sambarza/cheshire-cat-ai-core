@@ -1,69 +1,80 @@
-from typing import Dict
+from typing import Dict, List
+from fastapi import Request, APIRouter, Body, HTTPException
+from pydantic import BaseModel
 
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
-from fastapi import Request, APIRouter, Body, HTTPException
-
 from cat.db import crud, models
+from cat.log import log
 
 
 router = APIRouter()
 
-# general LLM settings are saved in settigns table under this category
-LLM_SELECTED_CATEGORY = "llm"
-
 # llm type and config are saved in settings table under this category
-LLM_CATEGORY = "llm"
+FACTORY_CATEGORY = "llm"
 
 # llm selected configuration is saved under this name
-LLM_SELECTED_NAME = "llm_selected"
+FACTORY_SELECTED_NAME = f"{FACTORY_CATEGORY}_selected"
 
+class FactorySettings(BaseModel):
+    name: str
+    value: dict
+    schema: dict
+
+class FactorySettingsList(BaseModel):
+    settings: List[FactorySettings]
+    selected_configuration: str
 
 # get configured LLMs and configuration schemas
 @router.get("/settings")
-def get_llms_settings(
-    cat=check_permissions(AuthResource.LLM, AuthPermission.LIST),
-) -> Dict:
-    """Get the list of the Large Language Models"""
-    LLM_SCHEMAS = get_llms_schemas()
+async def get_settings(
+    request: Request,
+    cat=check_permissions(AuthResource.LLM, AuthPermission.LIST), # TODOV2: should be dynamic
+) -> FactorySettingsList:
+    """Get the list of the Large Language Models"""  # TODOV2: should be dynamic
+
+    factory = request.app.state.ccat.factory
+    SCHEMAS = await factory.get_schemas(FACTORY_CATEGORY)
 
     # get selected LLM, if any
-    selected = crud.get_setting_by_name(name=LLM_SELECTED_NAME)
+    selected = crud.get_setting_by_name(name=FACTORY_SELECTED_NAME)
     if selected is not None:
         selected = selected["value"]["name"]
 
-    saved_settings = crud.get_settings_by_category(category=LLM_CATEGORY)
+    saved_settings = crud.get_settings_by_category(category=FACTORY_CATEGORY)
     saved_settings = {s["name"]: s for s in saved_settings}
 
     settings = []
-    for class_name, schema in LLM_SCHEMAS.items():
+    for class_name, schema in SCHEMAS.items():
         if class_name in saved_settings:
             saved_setting = saved_settings[class_name]["value"]
         else:
             saved_setting = {}
 
         settings.append(
-            {
-                "name": class_name,
-                "value": saved_setting,
-                "schema": schema,
-            }
+            FactorySettings(
+                name=class_name,
+                value=saved_setting,
+                schema=schema,
+            )
         )
 
-    return {
-        "settings": settings,
-        "selected_configuration": selected,
-    }
+    return FactorySettingsList(
+        settings=settings,
+        selected_configuration=selected,
+    )
 
 
 # get LLM settings and its schema
-@router.get("/settings/{languageModelName}")
+@router.get("/settings/{className}")
 def get_llm_settings(
     request: Request,
-    languageModelName: str,
+    className: str,
     cat=check_permissions(AuthResource.LLM, AuthPermission.READ),
-) -> Dict:
+) -> FactorySettings:
     """Get settings and schema of the specified Large Language Model"""
-    LLM_SCHEMAS = get_llms_schemas()
+    
+    factory = request.app.state.ccat.factory
+    SCHEMAS = factory.get_schemas()
 
     # check that languageModelName is a valid name
     allowed_configurations = list(LLM_SCHEMAS.keys())
@@ -95,7 +106,9 @@ def upsert_llm_setting(
 ) -> Dict:
     """Upsert the Large Language Model setting"""
     
-    LLM_SCHEMAS = get_llms_schemas()
+    factory = request.app.state.ccat.factory
+    LLM_SCHEMAS = factory.get_schemas()
+    
 
     # check that languageModelName is a valid name
     allowed_configurations = list(LLM_SCHEMAS.keys())
@@ -109,12 +122,12 @@ def upsert_llm_setting(
 
     # create the setting and upsert it
     final_setting = crud.upsert_setting_by_name(
-        models.Setting(name=languageModelName, category=LLM_CATEGORY, value=payload)
+        models.Setting(name=languageModelName, category=FACTORY_CATEGORY, value=payload)
     )
 
     crud.upsert_setting_by_name(
         models.Setting(
-            name=LLM_SELECTED_NAME,
+            name=FACTORY_SELECTED_NAME,
             category=LLM_SELECTED_CATEGORY,
             value={"name": languageModelName},
         )
