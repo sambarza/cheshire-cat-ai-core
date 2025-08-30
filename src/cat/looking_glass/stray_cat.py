@@ -568,7 +568,17 @@ Allowed classes are:
         """Instance of langchain `LLM`.
         Only use it if you directly want to deal with langchain, prefer method `cat.llm(prompt)` otherwise.
         """
-        return CheshireCat()._llm
+
+        # TODOV2 flow:
+        # - try first from chat_request
+        # - if not available or None, check DB for the favourite
+        # - if None return default dumb LLM
+        ccat = CheshireCat()
+
+        requested_llm = self.chat_request.model
+        if requested_llm and requested_llm in ccat.llms:
+            return ccat.llms[requested_llm]
+        return ccat.factory.get_default("llm")
 
     @property
     def embedder(self):
@@ -587,7 +597,16 @@ Allowed classes are:
         >>> await cat.embedder.aembed_query("Oh dear!")
         [0.2, 0.02, 0.4, ...]
         """
-        return CheshireCat().embedder
+        
+        # TODOV2 flow:
+        # - check DB for the favourite
+        # - if None return default dumb embedder
+        ccat = CheshireCat()
+
+        requested_embedder = self.chat_request.model # TODOV2: should come from DB options
+        if requested_embedder and requested_embedder in ccat.embedders:
+            return ccat.llms[requested_embedder]
+        return ccat.factory.get_default("embedder")
 
     @property
     def memory(self):

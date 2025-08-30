@@ -46,6 +46,10 @@ def get_base_permissions() -> Dict[AuthResource, List[AuthPermission]]:
         AuthResource.STATUS: [
             AuthPermission.READ
         ],
+        AuthResource.LLM: [
+            AuthPermission.LIST,
+            AuthPermission.READ
+        ],
         AuthResource.CONVERSATION: [
             AuthPermission.WRITE,
             AuthPermission.EDIT,

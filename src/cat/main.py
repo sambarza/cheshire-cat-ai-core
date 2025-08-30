@@ -2,6 +2,7 @@ import os
 import shutil
 import uvicorn
 import debugpy
+from dotenv import load_dotenv
 
 from cat.env import get_env
 from cat.utils import get_base_path, get_project_path, get_plugins_path
@@ -18,6 +19,10 @@ def scaffold():
     
 # RUN!
 def main():
+
+    # load env variables
+    load_dotenv()
+    # TODOV2: make sure this works also when distributed as a package
 
     # scaffold dev project with minimal folders (cat is used as a package)
     scaffold()

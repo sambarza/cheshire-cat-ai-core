@@ -1,30 +1,52 @@
+from langchain_openai import ChatOpenAI
+from pydantic import BaseModel
 
-
-from cat.mad_hatter.decorators import hook
+from cat.mad_hatter.decorators import hook, plugin
 
 from .embedders import configs as embedders_configs
 from .llms import configs as llms_configs
 
 # TODOV2: make discovery automatic by checking class type
 
-@hook
-def factory_allowed_embedders(configs, cat):
+# @hook
+# def factory_allowed_embedders(configs, cat):
     
-    return configs + [
-        embedders_configs.EmbedderQdrantFastEmbedConfig,
-        embedders_configs.EmbedderOllamaConfig,
-        embedders_configs.EmbedderOpenAIConfig,
-        embedders_configs.EmbedderOpenAICompatibleConfig,
-        embedders_configs.EmbedderAzureOpenAIConfig,
-        embedders_configs.EmbedderGeminiChatConfig,
-    ]
+#     return configs + [
+#         embedders_configs.EmbedderQdrantFastEmbedConfig,
+#         embedders_configs.EmbedderOllamaConfig,
+#         embedders_configs.EmbedderOpenAIConfig,
+#         embedders_configs.EmbedderOpenAICompatibleConfig,
+#         embedders_configs.EmbedderAzureOpenAIConfig,
+#         embedders_configs.EmbedderGeminiChatConfig,
+#     ]
+
+
+class OpenAISettings(BaseModel):
+    openai_api_key: str
+    model_name: str = "gpt-4o-mini"
+    temperature: float = 0.5
+    streaming: bool = True
+
+@plugin
+def settings_model():
+    return OpenAISettings 
+
 
 @hook
-def factory_allowed_llms(configs, cat):
-    return configs + [
-        llms_configs.LLMOllamaConfig,
-        llms_configs.LLMOpenAICompatibleConfig,
-        llms_configs.LLMOpenAIChatConfig,
-        llms_configs.LLMGeminiChatConfig,
-        llms_configs.LLMAnthropicChatConfig,
-    ]
+def factory_allowed_llms(models, cat):
+
+    # insert new vendor slug
+    vendor = "openai"
+    
+    # build an object for each model
+    for m in ["gpt-5-nano", "gpt-5-mini", "gpt-5", "gpt-4.1", "gpt-4"]:
+        slug = f"{vendor}:{m}"  # "openai:gpt-5"
+        models[slug] = ChatOpenAI(
+            model = m,
+            api_key = "sk-.....", # TODOV2: load it from plugin settings
+            temperature = 0.2,
+            streaming = True
+        )
+        # TODOV2: not yet loading the settings
+
+    return models

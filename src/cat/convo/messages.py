@@ -41,10 +41,10 @@ class Message(BaseModelDict):
 
 class ChatRequest(BaseModelDict):
 
-    agent: str = "simple" # name of the agent to run. If None, the default one will be
-    model: str = "vendor:model" # e.g. "openai:gpt-5". If None, default LLM will be picked up
-    stream: bool = True # whether to stream tokens or not
     thread: str = "default"
+    agent: str = "default" # name of the agent to run.
+    model: str = "default" # e.g. "openai:gpt-5"
+    stream: bool = True # whether to stream tokens or not
     instructions: str = prompts.MAIN_PROMPT_PREFIX
     mcp_resources: List[str] = [] # should be a list of URIs
     # TODOV2: openai has also `tools` here, in the format { "type": "tool_name" }
@@ -65,3 +65,4 @@ class ChatResponse(BaseModelDict):
     
     user_id: str # TODOV2: do we need the user_id here? Force and test it cannot be changed
     text: str
+    # TODO: should respond with thread, agent, model ids

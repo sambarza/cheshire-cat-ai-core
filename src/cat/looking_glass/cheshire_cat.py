@@ -98,56 +98,14 @@ class CheshireCat:
 
 
     async def load_natural_language(self):
-        """Load Natural Language related objects: LLM and embedder."""
-        self._llm = await self.load_component_from_factory("llm")
-        self.embedder = await self.load_component_from_factory("embedder")
+        """Loads Natural Language related objects: LLMs and embedders."""
+        self.llms = await self.factory.load_objects("llm")
+        self.embedders = await self.factory.load_objects("embedder")
 
 
     async def load_auth(self):
-        """Loads the Auth Handler"""
-        self.auth_handler = await self.load_component_from_factory("auth_handler")
-
-        
-    async def load_component_from_factory(self, factory_slug):
-
-        await self.ensure_default_component_in_db(
-            factory_slug
-        )
-
-        return await self.factory.instantiate_object_from_slug(
-            factory_slug
-        )
-
-    async def ensure_default_component_in_db(self, factory_slug):
-
-        default_classes = {
-            "auth_handler": "AuthHandlerDefaultConfig",
-            "llm": "LLMDefaultConfig",
-            "embedder": "EmbedderDefaultConfig",
-        }
-
-        default_class_name = default_classes[factory_slug]
-
-        # Selected component in DB
-        selected_config = crud.get_setting_by_name(name=f"{factory_slug}_selected")
-
-        # if no component is saved, use default one and save to db
-        if selected_config is None:
-            # create the auth settings
-            crud.upsert_setting_by_name(
-                models.Setting(
-                    name=default_class_name,
-                    category=f"{factory_slug}", # was with _factory suffix
-                    value={}
-                )
-            )
-            crud.upsert_setting_by_name(
-                models.Setting(
-                    name=f"{factory_slug}_selected",
-                    category=f"{factory_slug}", # was with _factory suffix
-                    value={"name": default_class_name},
-                )
-            )
+        """Loads the Auth Handlers"""
+        self.auth_handlers = await self.factory.load_objects("auth_handler")
 
 
     def build_embedded_procedures_hashes(self, embedded_procedures):

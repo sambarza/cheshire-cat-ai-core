@@ -22,6 +22,7 @@ from cat.auth.permissions import (
     AuthUserInfo,
 )
 from cat.looking_glass.stray_cat import StrayCat
+from cat.log import log
 
 
 class BaseAuth(ABC):
@@ -53,21 +54,21 @@ class BaseAuth(ABC):
         # get protocol from Starlette request
         protocol = connection.scope.get('type')
         
-        ah = connection.app.state.ccat.auth_handler
-        user: AuthUserInfo = await ah.authorize_user_from_credential(
-            protocol, credential, self.resource, self.permission, user_id
-        )
-        if user:
-            # create new StrayCat
-            cat = StrayCat(user)
-            
-            # StrayCat is passed to the endpoint
-            yield cat
+        for ah in connection.app.state.ccat.auth_handlers.values():
+            user: AuthUserInfo = await ah.authorize_user_from_credential(
+                protocol, credential, self.resource, self.permission, user_id
+            )
+            if user:
+                # create new StrayCat
+                cat = StrayCat(user)
+                
+                # StrayCat is passed to the endpoint
+                yield cat
 
-            # save working memory and delete StrayCat after endpoint execution
-            cat.update_working_memory_cache()
-            del cat
-            return
+                # save working memory and delete StrayCat after endpoint execution
+                cat.update_working_memory_cache()
+                del cat
+                return
 
         # if no StrayCat was obtained, raise exception
         self.not_allowed(connection)
