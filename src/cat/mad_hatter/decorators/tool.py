@@ -10,11 +10,18 @@ from langchain_core.tools import StructuredTool
 
 from ag_ui.core.events import EventType # take away after they fix the bug
 from cat.protocols.agui import events
+from cat.convo.messages import Message, MessageContent
+from cat.utils import run_sync_or_async
 
 
 # All @tool decorated functions in plugins become a CatTool.
 # The difference between base langchain Tool and CatTool is that CatTool has an instance of the cat as attribute (set by the MadHatter)
 class CatTool:
+
+    model_config = ConfigDict(
+        extra = "allow"
+    )
+
     def __init__(
         self,
         name: str,
@@ -47,57 +54,51 @@ class CatTool:
     def __repr__(self) -> str:
         return f"CatTool(name={self.name}, return_direct={self.return_direct}, description={self.description})"
 
-    ##################################################
-    ### TODOV2: are these two functions still needed?
-    def run(self, input_by_llm: dict, cat) -> str:
-        """Low level tool function execution, sync."""
-        return self.func(input_by_llm, cat=cat) # TODOV2: should be able to allow multiple arguments tools? Ask Manu
-    
-    async def arun(self, input_by_llm: dict, cat) -> str:
-        """Low level tool function execution, async."""
-        return self.func(input_by_llm, cat=cat) # TODOV2: multiple arguments tool ^
-    ##################################################
-
-    async def execute(self, cat: 'StrayCat', action: 'LLMAction') -> 'LLMAction':
+    async def execute(self, cat: 'StrayCat', tool_call) -> Message:
         """
-        Execute a CatTool with the provided LLMAction.
-        Will store tool output in action.output and emit AGUI events for tool execution.
+        Execute a CatTool with the provided tool_call data structure (which is returned by the LLM).
+        Will emit AGUI events for tool execution and return a Message with role="tool".
 
         Parameters
         ----------
-        action : LLMAction
-            Object representing the choice of tool made by the LLM
         cat : StrayCat
             Session object.
+        tool_call : dict
+            Dictionary representing the choice of tool made by the LLM
 
         Returns
         -------
-        LLMAction
-            Updated LLM action, with valued output.
+        Message
+            A Message with role="tool" and the tool output.
         """
-        if action.input is None:
-            action.input = {}
-        tool_output = self.func(
-            **action.input, cat=cat
-        )
 
+        tool_output = await run_sync_or_async(
+            self.func, **tool_call["args"], cat=cat
+        )
+        
         # Emit AGUI events
-        await self.emit_agui_tool_start_events(cat, action)
+        await self.emit_agui_tool_start_events(cat, tool_call)
 
         # Ensure the output is a string or None, 
         if (tool_output is not None) and (not isinstance(tool_output, str)):
             tool_output = str(tool_output)
 
-        # store tool output
-        action.output = tool_output
-
         # Emit AGUI events
-        await self.emit_agui_tool_end_events(cat, action)
+        await self.emit_agui_tool_end_events(cat, tool_call, tool_output)
 
         # TODOV2: should return something analogous to:
         #   https://modelcontextprotocol.info/specification/2024-11-05/server/tools/#tool-result
         #   Only supporting text for now
-        return action
+        return Message(
+            role="tool",
+            content=MessageContent(
+                type="tool",
+                tool={
+                    "in": tool_call,
+                    "out": tool_output
+                }
+            )
+        )
     
     def remove_cat_from_args(self, function: Callable) -> Callable:
         """
@@ -147,46 +148,28 @@ class CatTool:
 
         return new_tool
 
-        # In case we may want to avoid importing langchain
-        # return {
-        #     "name": "multiply",
-        #     "description": "Multiply two numbers",
-        #     "parameters": {
-        #         "type": "object",
-        #         "properties": {
-        #             "a": {"type": "number", "description": "First number"},
-        #             "b": {"type": "number", "description": "Second number"}
-        #         },
-        #         "required": ["a", "b"]
-        #     }
-        # }
-
-    model_config = ConfigDict(
-        extra = "allow"
-    )
-
-    async def emit_agui_tool_start_events(self, cat, action):
+    async def emit_agui_tool_start_events(self, cat, tool_call):
         await cat.agui_event(
             events.ToolCallStartEvent(
                 timestamp=int(time.time()),
-                tool_call_id=str(action.id),
-                tool_call_name=action.name
+                tool_call_id=str(tool_call["id"]),
+                tool_call_name=tool_call["name"]
             )
         )
         await cat.agui_event(
             events.ToolCallArgsEvent(
                 timestamp=int(time.time()),
-                tool_call_id=str(action.id),
-                delta=str(action.input), # here the protocol assumes tool args are streamed
-                raw_event=action.input
+                tool_call_id=str(tool_call["id"]),
+                delta=str(tool_call["args"]), # here the protocol assumes tool args are streamed
+                raw_event=tool_call
             )
         )
     
-    async def emit_agui_tool_end_events(self, cat, action):
+    async def emit_agui_tool_end_events(self, cat, tool_call, tool_output):
         await cat.agui_event(
             events.ToolCallEndEvent(
                 timestamp=int(time.time()),
-                tool_call_id=str(action.id) # may be more than one?
+                tool_call_id=str(tool_call["id"]) # may be more than one?
             )
         )
         await cat.agui_event(
@@ -194,8 +177,8 @@ class CatTool:
                 type=EventType.TOOL_CALL_RESULT, # bug in the lib, this should not be necessary
                 timestamp=int(time.time()),
                 message_id=str(uuid4()), # shold be the id of the last user message
-                tool_call_id=str(action.id),
-                content=str(action.output)
+                tool_call_id=str(tool_call["id"]),
+                content=tool_output
             )
         )
 

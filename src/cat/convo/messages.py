@@ -1,5 +1,12 @@
 from typing import List, Literal
 
+from langchain_core.messages import (
+    HumanMessage,
+    AIMessage,
+    ToolCall,
+    ToolMessage
+)
+
 from cat.looking_glass import prompts
 from cat.utils import BaseModelDict
 
@@ -8,35 +15,68 @@ from cat.utils import BaseModelDict
 class MessageContent(BaseModelDict):
     type: Literal[
         "text", "image", "file",
-        "tool_call", "input_required",
+        "tool", "elicitation",
         "custom"
     ] # TODOV2: to review
     text: str = ""
     image: str | None = None
     file: bytes | None = None # ?
-    tool_call: dict | None = None # Maybe for rich media types, specific objects with mime_type
-    input_required : dict | None = None # json_schema for the input required
+    tool: dict | None = None # output of a tool (not used for tool input, which is stored in assistant message under .tool_calls)
+    elicitation : dict | None = None # json_schema for the input required
     custom: dict | None = None  # perfect for unpredicted creative utilization 
                                 #   (i.e. state deltas, canvas, any json, or rich media)
-
-    def langchainfy(self):
-        if self.type == "text":
-            return self.text
-        # TODOV2: support all the others
+                                #   Maybe for rich media types, specific objects with mime_type
 
 
 class Message(BaseModelDict):
     """Single message exchanged between user and assistant, part of a conversation."""
 
-    role: Literal["user", "assistant"]
+    role: Literal["user", "assistant", "tool"]
     content : MessageContent
 
+    # only populated if the LLM wants to use a tool (role "assistant")
+    # role "tool" is only used for tool output, to update messages list
+    tool_calls : List[dict] = [] 
+
     def langchainfy(self):
-        if self.content.type == "text":
-            return {
-                "role": self.role,
-                "content": self.content.langchainfy()
-            }
+        if self.role == "user":
+            return HumanMessage(
+                content=self.content.text
+            )
+        elif self.role == "assistant":
+            return AIMessage(
+                content=self.content.text,
+                tool_calls=self.tool_calls
+            )
+        elif self.role == "tool":
+            return ToolMessage(
+                content=self.content.tool["out"],
+                tool_call_id=self.content.tool["in"]["id"],
+                name=self.content.tool["in"]["name"]
+            )
+        else:
+            raise Exception
+    
+    @classmethod
+    def from_langchain(cls, langchain_msg):
+        # assuming it is always an AIMessage
+        tool_calls = []
+        text = langchain_msg.content
+        if hasattr(langchain_msg, "tool_calls") \
+            and len(langchain_msg.tool_calls) > 0:
+            
+            tool_calls = langchain_msg.tool_calls
+            # Otherwise empty
+            text = str(langchain_msg.tool_calls)
+            
+        return cls(
+            role="assistant",
+            tool_calls=tool_calls,
+            content=MessageContent(
+                type="text", # assuming LLM output is text only
+                text=text,
+            )
+        )
 
 
 class ChatRequest(BaseModelDict):
@@ -64,5 +104,4 @@ class ChatRequest(BaseModelDict):
 class ChatResponse(BaseModelDict):
     
     user_id: str # TODOV2: do we need the user_id here? Force and test it cannot be changed
-    text: str
-    # TODO: should respond with thread, agent, model ids
+    text: str = ""

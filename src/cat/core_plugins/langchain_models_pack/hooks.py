@@ -2,6 +2,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
 from cat.mad_hatter.decorators import hook, plugin
+from cat.env import get_env
 
 from .embedders import configs as embedders_configs
 from .llms import configs as llms_configs
@@ -23,7 +24,6 @@ from .llms import configs as llms_configs
 
 class OpenAISettings(BaseModel):
     openai_api_key: str
-    model_name: str = "gpt-4o-mini"
     temperature: float = 0.5
     streaming: bool = True
 
@@ -43,7 +43,7 @@ def factory_allowed_llms(models, cat):
         slug = f"{vendor}:{m}"  # "openai:gpt-5"
         models[slug] = ChatOpenAI(
             model = m,
-            api_key = "sk-.....", # TODOV2: load it from plugin settings
+            api_key = get_env("OPENAI_KEY"), # TODOV2: load it from plugin settings
             temperature = 0.2,
             streaming = True
         )

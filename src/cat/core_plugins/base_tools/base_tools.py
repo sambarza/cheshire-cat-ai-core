@@ -18,6 +18,6 @@ def read_working_memory(cat):
 
 
 @tool
-def get_weather(city: str, when: str, cat) -> str:
+async def get_weather(city: str, when: str, cat) -> str:
     """Get the weather for a given city and date."""
     return f"The weather in {city} on {when} is expected to be sunny."

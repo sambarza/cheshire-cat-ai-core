@@ -16,7 +16,6 @@ from cat.looking_glass.callbacks import NewTokenHandler
 from cat.memory.working_memory import WorkingMemory
 from cat.convo.messages import ChatRequest, ChatResponse, Message
 from cat.mad_hatter.decorators import CatTool
-from cat.agents import AgentOutput, LLMAction, MainAgent
 from cat.cache.cache_item import CacheItem
 from cat import utils
 from cat.log import log
@@ -31,7 +30,6 @@ class StrayCat:
     You will be interacting with an instance of this class directly from within your plugins:
 
      - in `@hook`, `@tool` and `@endpoint` decorated functions will be passed as argument `cat` or `stray`
-     - in `@form` decorated classes you can access it via `self.cat`
 
     Parameters
     ----------
@@ -237,7 +235,7 @@ class StrayCat:
     async def agui_event(self, event: events.BaseEvent):
         await self.__send_ws_json(dict(event))
     
-    # TODOV2: keep .llm sync as it was, for retrocompatibility
+    # TODOV2: keep .llm sync as it was, for retrocompatibility (returned a string, also)
     #           add an async method for the chain with tools
     async def llm(
             self,
@@ -248,7 +246,7 @@ class StrayCat:
             model: str | None = None,  # TODOV2
             stream: bool = False,
             execution_name: str = "prompt"
-        ) -> str | LLMAction:
+        ) -> Message: # TODOV2: does not return a string anymore
         """Generate a response using the Large Language Model.
 
         Parameters
@@ -317,7 +315,7 @@ class StrayCat:
 
         chain = (
             prompt
-            | RunnableLambda(lambda x: log.langchain_log_prompt(x, execution_name))
+            | RunnableLambda(lambda x: log.langchain_log_prompt(x, execution_name)) # TODOV2: should be done via langchain handler
             | llm_with_tools # TODOV2: make configurable via init_chat_model
             | RunnableLambda(lambda x: log.langchain_log_output(x, execution_name))
         )
@@ -325,26 +323,57 @@ class StrayCat:
         langchain_msg = await chain.ainvoke(
             prompt_variables,
             config=RunnableConfig(callbacks=callbacks)
-        )  
+        )
 
-        if hasattr(langchain_msg, "tool_calls") and len(langchain_msg.tool_calls) > 0:
-            
-            langchain_tool_call = langchain_msg.tool_calls[0] # can they be more than one?
-            return LLMAction(
-                id=langchain_tool_call["id"],
-                name=langchain_tool_call["name"],
-                input=langchain_tool_call["args"],
-                output=langchain_msg.content
-            )
-
-        # if no tools involved, just return the string
-        return langchain_msg.content
+        return Message.from_langchain(langchain_msg)
         # TODOV2: have a couple of try/except to manage LLM crashes
     
 
+    async def execute_hook(self, hook_name, default_value):
+        return self.mad_hatter.execute_hook( # TODOV2: have hook execution async
+            hook_name,
+            default_value,
+            cat=self
+        )
+
+
+    async def execute_agent(self, slug):
+        try:
+            await CheshireCat().execute_agent(slug, self)
+        except Exception as e:
+            log.error("Could not execute agent {slug}: {e}")
+            raise e
+        
+
+    async def get_system_prompt(self) -> str:
+
+        # obtain prompt parts from plugins
+        # TODOV2: give better naming to these hooks
+        prompt_prefix = await self.execute_hook(
+            "agent_prompt_prefix",
+            self.chat_request.instructions
+        )
+        prompt_suffix = await self.execute_hook("agent_prompt_suffix", "")
+
+        return prompt_prefix + prompt_suffix
+
+
+    async def get_tools(self) -> List[CatTool]:
+        """Get both plugins' tools and MCP tools in CatTool format.
+        """
+
+        mcp_tools = [] #await self.mcp.list_tools()
+        internal_tools = self.mad_hatter.tools
+
+        tools = mcp_tools + internal_tools
+
+        # TODOV2: conversions? see Emanuele's plugin agent_factory
+        return tools
+
+
     async def __call__(
         self,
-        message_request: ChatRequest,
+        chat_request: ChatRequest,
         message_callback: Callable | None = None
     ) -> ChatResponse:
         """Run the conversation turn.
@@ -354,20 +383,24 @@ class StrayCat:
 
         Parameters
         ----------
-        message_request : ChatRequest
-            Dictionary received from the client via http or websocket.
+        chat_request : ChatRequest
+            ChatRequest object received from the client via http or websocket.
+        message_callback : Callable | None
+            A function that will be used to emit messages via http (streaming) or websocket.
+            If None, this method will not emit messages and will only return the final ChatResponse.
 
         Returns
         -------
-        final_output : ChatResponse
+        chat_response : ChatResponse | None
             ChatResponse object, the Cat's answer to be sent back to the client.
+            If message_callback is passed, this method will return None and emit the final response via the message_callback
         """
 
-        # Store message_callback to send intermediate messages back to the client
+        # Store message_callback to send messages back to the client
         self.message_callback = message_callback
 
         # Both request and response are available during the whole flow
-        self.chat_request = message_request
+        self.chat_request = chat_request
         self.chat_response = ChatResponse(
             user_id=self.user_id,
             text="meow"
@@ -388,34 +421,26 @@ class StrayCat:
             "before_cat_reads_message", self.chat_request, cat=self
         )
 
-        try:
-            # reply with agent
-            agent_output: AgentOutput = await MainAgent(self).execute()
-        except Exception as e:
-            log.error(e)
-            raise e
-        
-        # TODOV2 ChatResponse yet to be defined
-        self.chat_response.text = str(agent_output.output)
-        self.chat_response.tools = list(agent_output.actions)
+        # run agent(s). They will populate the ChatResponse
+        requested_agent = self.chat_request.agent
+        await self.execute_agent(requested_agent)
 
-        # run message through plugins
-        final_output = self.mad_hatter.execute_hook(
+        # run final response through plugins
+        self.chat_response = self.mad_hatter.execute_hook(
             "before_cat_sends_message", self.chat_response, cat=self
         )
 
         # Return final reply
-        log.info(final_output)
+        log.info(self.chat_response)
 
-        await self.send_chat_message(final_output)
-        return final_output
+        return self.chat_response
 
 
     async def run(
         self,
         request: ChatRequest,
     ) -> AsyncGenerator[Any, None]:
-        """Runs the Cat keeping a queue of its messages in order to stream that or send them via websocket.
+        """Runs the Cat keeping a queue of its messages in order to stream them or send them via websocket.
         Emits the main AGUI lifecycle events
         """
 
@@ -534,7 +559,7 @@ Allowed classes are:
 
 "{sentence}" -> """
 
-        response = await self.llm(prompt)
+        response = await self.llm(prompt).content.text # TODOV2: not tested
 
         # find the closest match and its score with levenshtein distance
         best_label, score = min(
@@ -572,13 +597,7 @@ Allowed classes are:
         """Instance of langchain `LLM`.
         Only use it if you directly want to deal with langchain, prefer method `cat.llm(prompt)` otherwise.
         """
-
-        # TODOV2 flow:
-        # - try first from chat_request
-        # - if not available or None, check DB for the favourite
-        # - if None return default dumb LLM
         ccat = CheshireCat()
-
         requested_llm = self.chat_request.model
         if requested_llm and requested_llm in ccat.llms:
             return ccat.llms[requested_llm]
@@ -601,12 +620,7 @@ Allowed classes are:
         >>> await cat.embedder.aembed_query("Oh dear!")
         [0.2, 0.02, 0.4, ...]
         """
-        
-        # TODOV2 flow:
-        # - check DB for the favourite
-        # - if None return default dumb embedder
         ccat = CheshireCat()
-
         requested_embedder = self.chat_request.model # TODOV2: should come from DB options
         if requested_embedder and requested_embedder in ccat.embedders:
             return ccat.llms[requested_embedder]
@@ -627,22 +641,6 @@ Allowed classes are:
         TODO examples
         """
         return CheshireCat().memory
-
-    @property
-    def rabbit_hole(self):
-        """Gives access to the `RabbitHole`, to upload documents and URLs into the vector DB.
-
-        Returns
-        -------
-        rabbit_hole : RabbitHole
-            Module to ingest documents and URLs for RAG.
-
-
-        Examples
-        --------
-        >>> cat.rabbit_hole.ingest_file(...)
-        """
-        return CheshireCat().rabbit_hole
 
     @property
     def mad_hatter(self):
@@ -666,25 +664,6 @@ Allowed classes are:
         {"num_cats": 44, "rows": 6, "remainder": 0}
         """
         return CheshireCat().mad_hatter
-
-    @property
-    def white_rabbit(self):
-        """Gives access to `WhiteRabbit`, to schedule repeatable tasks.
-
-        Returns
-        -------
-        white_rabbit : WhiteRabbit
-            Module to manage cron tasks via `APScheduler`.
-
-        Examples
-        --------
-        Send a websocket message after 30 seconds
-        >>> def ring_alarm_api():
-        ...     cat.send_chat_message("It's late!")
-        ...
-        ... cat.white_rabbit.schedule_job(ring_alarm_api, seconds=30)
-        """
-        return CheshireCat().white_rabbit
     
     @property
     def cache(self):

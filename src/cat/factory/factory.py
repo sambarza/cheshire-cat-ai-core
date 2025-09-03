@@ -5,7 +5,7 @@ from cat.mad_hatter.mad_hatter import MadHatter
 from cat.db import crud
 from cat.log import log
 from cat.factory.defaults import (
-    AuthHandlerDefault, LLMDefault, EmbedderDefault
+    AuthHandlerDefault, LLMDefault, EmbedderDefault, AgentDefault
 )
 
 
@@ -14,7 +14,8 @@ class Factory:
     category_defaults = {
         "auth_handler" : AuthHandlerDefault(),
         "llm"          : LLMDefault(),
-        "embedder"     : EmbedderDefault()
+        "embedder"     : EmbedderDefault(),
+        "agent"        : AgentDefault(),
     }
 
 

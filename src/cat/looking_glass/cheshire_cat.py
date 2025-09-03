@@ -62,18 +62,23 @@ class CheshireCat:
             # not sure this is better here or as a wide availbel singleton (like the db)
             self.mcp = MCPClient(mcp_servers_config)
 
-            # load AuthHandler
-            await self.load_auth()
-
-            # long term memory
-            await self.load_memory()
-            
-
             # allows plugins to do something before cat components are loaded
             self.mad_hatter.execute_hook("before_cat_bootstrap", cat=self)
 
+            # load AuthHandlera
+            self.auth_handlers = await self.factory.load_objects("auth_handler")
+
             # load LLM and embedder
-            await self.load_natural_language()
+            self.llms = await self.factory.load_objects("llm")
+            self.embedders = await self.factory.load_objects("embedder")
+            
+            # load Agents
+            self.agents = await self.factory.load_objects("agent")
+
+            # load memory
+            # TODOV2: should also this be a factory (of MCP resource handlers maybe)
+            # TODOV2: LTM should run hooks and should subscribe to embedder and mad_hatter hooks
+            self.memory = LongTermMemory()
 
             # Cache for sessions / working memories et al.
             self.cache = CacheManager().cache
@@ -81,7 +86,7 @@ class CheshireCat:
             # allows plugins to do something after the cat bootstrap is complete
             self.mad_hatter.execute_hook("after_cat_bootstrap", cat=self)
         except Exception:
-            log.error("Error during ChehsireCat bootstrap. Exiting.")
+            log.error("Error during CheshireCat bootstrap. Exiting.")
             sys.exit()
 
 
@@ -91,21 +96,31 @@ class CheshireCat:
         self.mad_hatter.on_finish_plugins_sync_callback = self.on_finish_plugins_sync_callback
         self.on_finish_plugins_sync_callback() # only for the first time called manually
 
+    
+    async def execute_agent(self, slug, cat):
+        """Execute an agent from its slug."""
 
-    async def load_memory(self):
-            # TODOV2: LTM should run hooks and should subscribe to embedder and mad_hatter hooks
-            self.memory = LongTermMemory()
+        # prepare input to be passed to the agent.
+        #   Info will be extracted from working memory
+        # Note: agent_input works both as a dict and as an object
+        # TODOV2: hook before_agent_starts is not active anymore
+        #self.mad_hatter.execute_hook(
+        #    "before_agent_starts", cat=cat
+        #)
 
+        # should we run the agent?
+        # TODOV2: hook agent_fast_reply is not active anymore
+        #agent_fast_reply = self.mad_hatter.execute_hook(
+        #]    "agent_fast_reply", {}, cat=cat
+        #)
 
-    async def load_natural_language(self):
-        """Loads Natural Language related objects: LLMs and embedders."""
-        self.llms = await self.factory.load_objects("llm")
-        self.embedders = await self.factory.load_objects("embedder")
+        if slug not in self.agents.keys():
+            log.warning(f"Agent {slug} not found. Running default agent")
+            selected_agent = self.factory.get_default("agent")
+        else:
+            selected_agent = self.agents[slug]
 
-
-    async def load_auth(self):
-        """Loads the Auth Handlers"""
-        self.auth_handlers = await self.factory.load_objects("auth_handler")
+        await selected_agent.execute(cat)
 
 
     def build_embedded_procedures_hashes(self, embedded_procedures):

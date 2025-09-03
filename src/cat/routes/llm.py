@@ -136,7 +136,7 @@ def upsert_llm_setting(
     status = {"name": languageModelName, "value": final_setting["value"]}
 
     ccat = request.app.state.ccat
-    # reload llm and embedder of the cat
-    ccat.load_natural_language()
+    # reload component
+    ccat.factory.load_objects(FACTORY_CATEGORY)
 
     return status
