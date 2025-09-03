@@ -40,10 +40,14 @@ class StrayCat:
     """
 
     chat_request: ChatRequest | None = None
+    """The ChatRequest object coming from the client, containining the request for this conversation turn."""
+    
     chat_response: ChatResponse | None = None
+    """ChatResponse object that will go out to the client once the conversation turn is finished.
+        It is available since the beginning of the Cat flow."""
 
     working_memory: WorkingMemory
-    """State machine containing the conversation state, acting as a simple dictionary / object.
+    """State machine containing the conversation state, persisted across conversation turns, acting as a simple dictionary / object.
     Can be used in plugins to store and retrieve data to drive the conversation or do anything else.
 
     Examples
