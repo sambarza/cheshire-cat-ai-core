@@ -86,7 +86,7 @@ class ChatRequest(BaseModelDict):
     model: str = "default" # e.g. "openai:gpt-5"
     stream: bool = True # whether to stream tokens or not
     instructions: str = prompts.MAIN_PROMPT_PREFIX
-    mcp_resources: List[str] = [] # should be a list of URIs
+    resources: List[str] = [] # should be a list of URIs
     # TODOV2: openai has also `tools` here, in the format { "type": "tool_name" }
     messages: List[Message] = [
         Message(

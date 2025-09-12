@@ -39,7 +39,7 @@ def factory_allowed_llms(models, cat):
     vendor = "openai"
     
     # build an object for each model
-    for m in ["gpt-5-nano", "gpt-5-mini", "gpt-5", "gpt-4.1", "gpt-4"]:
+    for m in ["gpt-5-nano", "gpt-5-mini", "gpt-5", "gpt-4.1", "gpt-4", "gpt-4o"]:
         slug = f"{vendor}:{m}"  # "openai:gpt-5"
         models[slug] = ChatOpenAI(
             model = m,

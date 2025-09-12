@@ -341,7 +341,7 @@ class StrayCat:
         try:
             await CheshireCat().execute_agent(slug, self)
         except Exception as e:
-            log.error("Could not execute agent {slug}: {e}")
+            log.error(f"Could not execute agent {slug}: {e}")
             raise e
         
 
