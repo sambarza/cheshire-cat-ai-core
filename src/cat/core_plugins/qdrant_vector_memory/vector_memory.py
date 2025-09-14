@@ -71,6 +71,36 @@ def before_cat_sends_message(msg, cat):
     #    doc.metadata,
     #)
 
+def build_embedded_procedures_hashes(self, embedded_procedures):
+    hashes = {}
+    for ep in embedded_procedures:
+        metadata = ep.payload["metadata"]
+        content = ep.payload["page_content"]
+        source = metadata["source"]
+        # there may be legacy points with no trigger_type
+        trigger_type = metadata.get("trigger_type", "unsupported")
+
+        p_hash = f"{source}.{trigger_type}.{content}"
+        hashes[p_hash] = ep.id
+
+    return hashes
+
+
+def build_active_procedures_hashes(self, active_procedures):
+    hashes = {}
+    for ap in active_procedures:
+        for trigger_type, trigger_list in ap.triggers_map.items():
+            for trigger_content in trigger_list:
+                p_hash = f"{ap.name}.{trigger_type}.{trigger_content}"
+                hashes[p_hash] = {
+                    "obj": ap,
+                    "source": ap.name,
+                    "type": ap.procedure_type,
+                    "trigger_type": trigger_type,
+                    "content": trigger_content,
+                }
+    return hashes
+
 # TODOV2: still not attached to core
 def embed_procedures(self):
     # Retrieve from vectorDB all procedural embeddings
