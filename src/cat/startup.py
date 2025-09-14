@@ -16,7 +16,7 @@ from cat.routes import (
     plugins
 )
 from cat.routes.websocket import websocket
-from cat.routes.static import admin, static
+from cat.routes.static import static
 from cat.routes.openapi import get_openapi_configuration_function
 from cat.looking_glass.cheshire_cat import CheshireCat
 
@@ -38,6 +38,7 @@ async def lifespan(app: FastAPI):
     app.state.ccat = ccat
 
     # startup message with admin, public and swagger addresses
+    # TODOV2: only the first 
     log.welcome()
 
     # mcp client requires an async context manager itself
@@ -88,14 +89,6 @@ cheshire_cat_api.include_router(static.router, tags=["Static Files"])
 # mount static files
 # this cannot be done via fastapi.APIrouter:
 # https://github.com/tiangolo/fastapi/discussions/9070
-
-# admin single page app (static build)
-# TODOV2: should it be under static?
-admin.mount(cheshire_cat_api)
-
-# TODOV2: take away
-static.mount(cheshire_cat_api)
-
 
 @cheshire_cat_api.get("/docs", include_in_schema=False)
 async def scalar_docs():

@@ -13,6 +13,12 @@ from .vector_memory_collection import VectorMemoryCollection
 
 @hook
 def after_cat_bootstrap(cat):
+
+    #### TODOV2 #####
+    return
+    ########
+
+
     # Load Memory and add it to CheshireCat core
 
     # Get embedder size (langchain classes do not store it)

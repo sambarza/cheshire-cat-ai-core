@@ -101,6 +101,7 @@ class HTTPAuth(BaseAuth):
         raise HTTPException(status_code=403, detail="Invalid Credentials")
         
 
+# TODOV2: do websockets support headers now?
 class WebsocketAuth(BaseAuth):
 
     async def __call__(
@@ -117,28 +118,3 @@ class WebsocketAuth(BaseAuth):
         
     def not_allowed(self, connection: WebSocket):
         raise WebSocketException(code=1004, reason="Invalid Credentials")
-
-    
-# TODOV2: get rid of this
-class CoreFrontendAuth(BaseAuth):
-
-    async def __call__(
-        self,
-        connection: Request,
-    ) -> AsyncGenerator[StrayCat | None, None]:
-        
-        async for stray in self.authorize(
-            connection,
-            connection.cookies.get("ccat_user_token"),
-            connection.path_params.get("user_id")
-        ):
-            yield stray
-    
-    def not_allowed(self, connection: Request):
-        referer_query = urlencode({"referer": connection.url.path})
-        raise HTTPException(
-            status_code=307,
-            headers={
-                "Location": f"/auth/login?{referer_query}"
-            }
-        )

@@ -29,16 +29,19 @@
 The Cheshire Cat is a framework to build custom AI agents:
 
 - ⚡️ API first, to easily add a conversational layer to your app
-- 💬 Chat via WebSocket and manage your agent with an customizable REST API
-- 🐘 Built-in RAG with Qdrant
+- 💬 Chat via HTTP streaming or WebSocket
+- 🌐 Acts as an MCP client
 - 🚀 Extensible via plugins
-- 🪛 Event callbacks, function calling (tools), conversational forms
-- 🏛 Easy to use admin panel
-- 🌍 Supports any language model via langchain
-- 👥 Multiuser with granular permissions, compatible with any identity provider
+    - Extend endpoints
+    - Custom multiple agents
+    - Event callbacks
+- 📱 Easy to use Web UI supporting the AGUI protocol
+- 🦜 Supports any language model via langchain
+- 👥 Multiuser with granular permissions, SSO/Oauth2 compatible
 - 🐋 100% dockerized
-- 🦄 Active [Discord community](https://discord.gg/bHX5sNFCYU) and easy to understand [docs](https://cheshire-cat-ai.github.io/docs/)
- 
+- 🦄 Active [Discord community](https://discord.gg/bHX5sNFCYU) and clear [docs](https://cheshire-cat-ai.github.io/docs/)
+- (🐘 Built-in RAG with Qdrant) now a plugin
+
 
 
 ## Quickstart
@@ -48,7 +51,7 @@ To make Cheshire Cat run on your machine, you just need [`docker`](https://docs.
 ```bash
 docker run --rm -it -p 1865:80 ghcr.io/cheshire-cat-ai/core:latest
 ```
-- Chat with the Cheshire Cat on [localhost:1865/admin](http://localhost:1865/admin)
+- Chat with the Cheshire Cat on [localhost:1865](http://localhost:1865)
 - Try out the REST API on [localhost:1865/docs](http://localhost:1865/docs)
 
 Enjoy the Cat!  

@@ -43,7 +43,7 @@ class CheshireCat:
     async def bootstrap(self, fastapi_app):
         """Cat initialization.
 
-        At init time the Cat executes the bootstrap, loading all main componetns and components added by plugins.
+        At init time the Cat executes the bootstrap, loading all main components and components added by plugins.
         """
 
         # bootstrap the Cat! ^._.^

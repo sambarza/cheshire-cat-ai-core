@@ -126,8 +126,8 @@ Both `cat.chat_request` and `cat.chat_response` are cleared at each message. Use
 
 Auth system semplifications (TODO review):
 
-- All endpoints, http and websocket, start closed (except `/auth/token`, `/auth/login`, `/static` and `/docs`)
-- You can now login into `/docs` using username and password
+- All endpoints, http and websocket, start closed (except XXXXX)
+- You can now login into `/docs` using `CCAT_API_KEY`
 - The default `CCAT_API_KEY` is `meow`.
 - The default `CCAT_JWT_SECRET` is `meow_jwt`
 - Both the key and the jwt must be sent via header `Authorization: Bearer xxx`.
