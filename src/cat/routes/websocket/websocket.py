@@ -12,7 +12,7 @@ router = APIRouter()
 @router.websocket("/ws/{user_id}") # TODOV2: remove, because the user is taken form the jwt
 async def websocket_endpoint(
     websocket: WebSocket,
-    cat=Depends(WebsocketAuth(AuthResource.CONVERSATION, AuthPermission.WRITE)), # check_permissions only for http
+    cat=Depends(WebsocketAuth(AuthResource.CHAT, AuthPermission.EDIT)), # check_permissions only for http
 ):
     await websocket.accept()
 

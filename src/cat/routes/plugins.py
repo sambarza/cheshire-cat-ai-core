@@ -226,7 +226,7 @@ async def upsert_plugin_settings(
     except ValidationError as e:
         raise HTTPException(
             status_code=400,
-            detail="\n".join(list(map((lambda x: x["msg"]), e.errors()))),
+            detail="\n".join(list(map((lambda x: x["msg"]), e.errors()))), # TODOV2: can be raw JSON
         )
 
     final_settings = plugin.save_settings(payload)

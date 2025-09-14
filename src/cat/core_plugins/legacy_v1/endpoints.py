@@ -13,7 +13,7 @@ class LegacyHTTPUserMessage(BaseModelDict):
 @endpoint.post("/message", prefix="", tags=["Legacy"], response_model=CatMessage)
 async def message_with_cat(
     user_message_json: LegacyHTTPUserMessage,
-    cat=check_permissions(AuthResource.CONVERSATION, AuthPermission.WRITE),
+    cat=check_permissions(AuthResource.CHAT, AuthPermission.EDIT),
 ) -> Dict:
     """Get a response from the Cat"""
 

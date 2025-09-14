@@ -8,11 +8,8 @@ from cat.utils import BaseModelDict
 class AuthResource(str, Enum):
     """Enum of core authorization resources. Can be extended via plugin."""
     STATUS = "STATUS"
-    CONVERSATION = "CONVERSATION"
+    CHAT = "CHAT"
     SETTINGS = "SETTINGS"
-    LLM = "LLM"
-    EMBEDDER = "EMBEDDER"
-    AUTH_HANDLER = "AUTH_HANDLER"
     PLUGINS = "PLUGINS"
     STATIC = "STATIC"
 
@@ -41,25 +38,17 @@ def get_base_permissions() -> Dict[AuthResource, List[AuthPermission]]:
     """
     Returns the default permissions for new users (chat only!).
     """
+
+    all_permissions = [p.name for p in AuthPermission]
+
     # TODOV2: should include plugins defined permissions
     return {
         AuthResource.STATUS: [
-            AuthPermission.READ
-        ],
-        AuthResource.LLM: [
             AuthPermission.LIST,
             AuthPermission.READ
         ],
-        AuthResource.CONVERSATION: [
-            AuthPermission.WRITE,
-            AuthPermission.EDIT,
-            AuthPermission.LIST,
-            AuthPermission.READ,
-            AuthPermission.DELETE
-        ],
-        AuthResource.STATIC: [
-            AuthPermission.READ
-        ],
+        AuthResource.CHAT: all_permissions,
+        AuthResource.STATIC: all_permissions,
     }
 
 
