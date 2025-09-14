@@ -4,7 +4,6 @@ from typing import List, Dict
 from typing_extensions import Protocol
 
 from cat.factory.factory import Factory
-from cat.db import crud, models
 from cat.protocols.model_context.client import MCPClient, mcp_servers_config
 from cat.memory.long_term_memory import LongTermMemory
 from cat.log import log

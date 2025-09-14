@@ -2,8 +2,6 @@
 from typing import Type
 
 from cat.mad_hatter.mad_hatter import MadHatter
-from cat.db import crud
-from cat.log import log
 from cat.factory.defaults import (
     AuthHandlerDefault, LLMDefault, EmbedderDefault, AgentDefault
 )

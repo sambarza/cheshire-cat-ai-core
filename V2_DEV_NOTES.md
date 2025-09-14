@@ -176,7 +176,8 @@ Auth system semplifications (TODO review):
 - core tests should only deal with core (also because plugin install dependencies is mocked!!!)
 - allow plugin settings with conditionals and subpages with json schema primitives `if`, `oneOf`, etc.
 - AG-UI should send `event: {xxx}`, leave `data: {xxx}` for the legacy messaging style 
-- static files ownership in DB table
+- static files ownership in DB table or via route checks, i.e `static/me`
+- intenral user_id, to avoid throwing around email, could be a uuid5 (based on namespace installation_id)
 
 ## Questions
 
