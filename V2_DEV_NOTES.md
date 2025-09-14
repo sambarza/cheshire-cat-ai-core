@@ -158,6 +158,8 @@ Auth system semplifications (TODO review):
 
 ## Others
 
+- all http errors, both the ones coming from the cat and the ones coming from fastAPI validation, return an `HTTPException`
+- statci files are protected
 
 
 
@@ -174,6 +176,7 @@ Auth system semplifications (TODO review):
 - core tests should only deal with core (also because plugin install dependencies is mocked!!!)
 - allow plugin settings with conditionals and subpages with json schema primitives `if`, `oneOf`, etc.
 - AG-UI should send `event: {xxx}`, leave `data: {xxx}` for the legacy messaging style 
+- static files ownership in DB table
 
 ## Questions
 

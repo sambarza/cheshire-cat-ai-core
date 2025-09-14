@@ -79,7 +79,7 @@ if cors_enabled == "true":
 
 # Add routers to the middleware stack.
 cheshire_cat_api.include_router(base.router, tags=["Home"])
-cheshire_cat_api.include_router(auth.router, tags=["User Auth"], prefix="/auth")
+cheshire_cat_api.include_router(auth.router, tags=["Auth"], prefix="/auth")
 cheshire_cat_api.include_router(settings.router, tags=["Settings"], prefix="/settings")
 cheshire_cat_api.include_router(plugins.router, tags=["Plugins"], prefix="/plugins")
 cheshire_cat_api.include_router(websocket.router, tags=["Websocket"])

@@ -11,11 +11,11 @@ router = APIRouter()
 # TODOV2: upload endpoint should just save the file in static folder and delegate parsing to plugins
 # TODOV2: each user should only see his own files
 # TODOV2: maybe a db table for file ownership is due
-@router.get(
-    "/static/{file_path:path}",
+@router.get("/static/{file_path:path}")
+async def serve_static(
+    file_path,
     cat=check_permissions(AuthResource.STATIC, AuthPermission.READ)
-)
-async def serve_static(file_path):
+):
     static_dir = utils.get_static_path()
     full_path = os.path.join(static_dir, file_path)
     if os.path.exists(full_path) and os.path.isfile(full_path):
