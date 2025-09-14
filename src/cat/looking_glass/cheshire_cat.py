@@ -5,7 +5,6 @@ from typing_extensions import Protocol
 
 from cat.factory.factory import Factory
 from cat.protocols.model_context.client import MCPClient, mcp_servers_config
-from cat.memory.long_term_memory import LongTermMemory
 from cat.log import log
 from cat.mad_hatter.mad_hatter import MadHatter
 from cat.utils import singleton
@@ -54,17 +53,16 @@ class CheshireCat:
             # instantiate MadHatter (loads all plugins' hooks and tools)
             self.load_mad_hatter()
 
-            # init Factory to create LLMs, Embedders and Auth Handlers from config stored in DB
+            # init Factory
             self.factory = Factory()
 
             # init MCP client
-            # not sure this is better here or as a wide availbel singleton (like the db)
             self.mcp = MCPClient(mcp_servers_config)
 
             # allows plugins to do something before cat components are loaded
             self.mad_hatter.execute_hook("before_cat_bootstrap", cat=self)
 
-            # load AuthHandlera
+            # load AuthHandlers
             self.auth_handlers = await self.factory.load_objects("auth_handler")
 
             # load LLM and embedder
@@ -73,11 +71,6 @@ class CheshireCat:
             
             # load Agents
             self.agents = await self.factory.load_objects("agent")
-
-            # load memory
-            # TODOV2: should also this be a factory (of MCP resource handlers maybe)
-            # TODOV2: LTM should run hooks and should subscribe to embedder and mad_hatter hooks
-            self.memory = LongTermMemory()
 
             # Cache for sessions / working memories et al.
             self.cache = CacheManager().cache
