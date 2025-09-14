@@ -18,12 +18,12 @@ def test_point_deleted(client):
     # delete point (wrong collection)
     res = client.delete(f"/memory/collections/wrongcollection/points/{memory['id']}")
     assert res.status_code == 400
-    assert res.json()["detail"]["error"] == "Collection does not exist."
+    assert res.json()["detail"] == "Collection does not exist."
 
     # delete point (wrong id)
     res = client.delete("/memory/collections/episodic/points/wrong_id")
     assert res.status_code == 400
-    assert res.json()["detail"]["error"] == "Point does not exist."
+    assert res.json()["detail"] == "Point does not exist."
 
     # delete point (all right)
     res = client.delete(f"/memory/collections/episodic/points/{memory['id']}")
@@ -40,7 +40,7 @@ def test_point_deleted(client):
     # delete again the same point (should not be found)
     res = client.delete(f"/memory/collections/episodic/points/{memory['id']}")
     assert res.status_code == 400
-    assert res.json()["detail"]["error"] == "Point does not exist."
+    assert res.json()["detail"] == "Point does not exist."
 
 
 # test delete points by filter
@@ -118,14 +118,14 @@ def create_point_wrong_collection(client):
         "/memory/collections/wrongcollection/points", json=req_json
     )
     assert res.status_code == 400
-    assert "Collection does not exist" in res.json()["detail"]["error"]
+    assert "Collection does not exist" in res.json()["detail"]
 
     # cannot write procedural point
     res = client.post(
         "/memory/collections/procedural/points", json=req_json
     )
     assert res.status_code == 400
-    assert "Procedural memory is read-only" in res.json()["detail"]["error"]
+    assert "Procedural memory is read-only" in res.json()["detail"]
 
 
 @pytest.mark.parametrize("collection", ["episodic", "declarative"])
@@ -168,14 +168,14 @@ def test_get_collection_points_wrong_collection(client):
         "/memory/collections/unexistent/points",
     )
     assert res.status_code == 400
-    assert "Collection does not exist" in res.json()["detail"]["error"]
+    assert "Collection does not exist" in res.json()["detail"]
 
     # reserved procedural collection
     res = client.get(
         "/memory/collections/procedural/points",
     )
     assert res.status_code == 400
-    assert "Procedural memory is not readable via API" in res.json()["detail"]["error"]
+    assert "Procedural memory is not readable via API" in res.json()["detail"]
 
 @pytest.mark.parametrize("collection", ["episodic", "declarative"])
 def test_get_collection_points(client, patch_time_now, collection):
@@ -302,21 +302,21 @@ def test_edit_point_wrong_collection_and_not_exist(client):
         f"/memory/collections/wrongcollection/points/{point_id}", json=req_json
     )
     assert res.status_code == 400
-    assert "Collection does not exist" in res.json()["detail"]["error"]
+    assert "Collection does not exist" in res.json()["detail"]
 
     # cannot write procedural point
     res = client.put(
         "/memory/collections/procedural/points/{point_id}", json=req_json
     )
     assert res.status_code == 400
-    assert "Procedural memory is read-only" in res.json()["detail"]["error"]
+    assert "Procedural memory is read-only" in res.json()["detail"]
 
     # point do not exist
     res = client.put(
         "/memory/collections/declarative/points/{point_id}", json=req_json
     )
     assert res.status_code == 400
-    assert "Point does not exist." in res.json()["detail"]["error"]
+    assert "Point does not exist." in res.json()["detail"]
 
 
 

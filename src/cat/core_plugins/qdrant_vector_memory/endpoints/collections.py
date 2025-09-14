@@ -74,7 +74,7 @@ async def wipe_single_collection(
     
     if collection_id not in collections:
         raise HTTPException(
-            status_code=400, detail={"error": "Collection does not exist."}
+            status_code=400, detail="Collection does not exist."
         )
 
     to_return = {}

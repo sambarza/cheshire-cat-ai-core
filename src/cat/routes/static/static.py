@@ -18,9 +18,7 @@ async def serve_static(file_path):
     else:
         raise HTTPException(
             status_code=404,
-            detail={
-                "error": "File not found"
-            }
+            detail="File not found"
         )
 
 

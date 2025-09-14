@@ -21,7 +21,7 @@ def test_http_auth(client):
     for headers in wrong_headers:
         status_code, json = http_request(client, headers)
         assert status_code == 403
-        assert json["detail"]["error"] == "Invalid Credentials"
+        assert json["detail"] == "Invalid Credentials"
 
     # allow access if CCAT_API_KEY is right
     headers = {"Authorization": "Bearer meow"}

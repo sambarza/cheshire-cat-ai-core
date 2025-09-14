@@ -34,7 +34,7 @@ def test_get_auth_handler_settings_non_existent(client, admin_headers):
     json = response.json()
 
     assert response.status_code == 400
-    assert f"{non_existent_auth_handler_name} not supported" in json["detail"]["error"]
+    assert f"{non_existent_auth_handler_name} not supported" in json["detail"]
 
 
 # TODOAUTH: have at least another auth_handler class to test
@@ -73,7 +73,7 @@ def test_upsert_auth_handler_settings(client):
     response = client.get("/auth_handler/settings")
     json = response.json()
     assert response.status_code == 403
-    assert response.json()["detail"]["error"] == "Invalid Credentials"
+    assert response.json()["detail"] == "Invalid Credentials"
 
     ## let's use the configured api_key for http
     headers = {

@@ -97,15 +97,6 @@ admin.mount(cheshire_cat_api)
 static.mount(cheshire_cat_api)
 
 
-# error handling
-@cheshire_cat_api.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc):
-    return JSONResponse(
-        status_code=400,
-        content={"error": exc.errors()},
-    )
-
-
 @cheshire_cat_api.get("/docs", include_in_schema=False)
 async def scalar_docs():
     cheshire_cat_api.openapi = get_openapi_configuration_function(cheshire_cat_api)

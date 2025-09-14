@@ -45,9 +45,7 @@ def get_setting(
     if not setting:
         raise HTTPException(
             status_code=404,
-            detail={
-                "error": f"No setting with this id: {settingId}",
-            },
+            detail=f"No setting with this id: {settingId}"
         )
     return {"setting": setting}
 
@@ -65,9 +63,7 @@ def update_setting(
     if not setting:
         raise HTTPException(
             status_code=404,
-            detail={
-                "error": f"No setting with this id: {settingId}",
-            },
+            detail=f"No setting with this id: {settingId}"
         )
 
     # complete the payload with setting_id and updated_at
@@ -92,9 +88,7 @@ def delete_setting(
     if not setting:
         raise HTTPException(
             status_code=404,
-            detail={
-                "error": f"No setting with this id: {settingId}",
-            },
+            detail=f"No setting with this id: {settingId}"
         )
 
     # delete

@@ -130,14 +130,14 @@ async def create_memory_point(
     # do not touch procedural memory
     if collection_id == "procedural":
         raise HTTPException(
-            status_code=400, detail={"error": "Procedural memory is read-only."}
+            status_code=400, detail="Procedural memory is read-only."
         )
 
     vector_memory: VectorMemory = cat.memory.vectors
     collections = list(vector_memory.collections.keys())
     if collection_id not in collections:
         raise HTTPException(
-            status_code=400, detail={"error": "Collection does not exist."}
+            status_code=400, detail="Collection does not exist."
         )
 
     # embed content
@@ -185,7 +185,7 @@ async def delete_memory_point_by_id(
     # check if collection exists
     if collection_id not in collections:
         raise HTTPException(
-            status_code=400, detail={"error": "Collection does not exist."}
+            status_code=400, detail="Collection does not exist."
         )
 
     # check if point exists
@@ -193,7 +193,7 @@ async def delete_memory_point_by_id(
         ids=[point_id],
     )
     if points == []:
-        raise HTTPException(status_code=400, detail={"error": "Point does not exist."})
+        raise HTTPException(status_code=400, detail="Point does not exist.")
 
     # delete point
     vector_memory.collections[collection_id].delete_points([point_id])
@@ -294,9 +294,7 @@ async def get_points_in_collection(
     if collection_id == "procedural":
         raise HTTPException(
             status_code=400,
-            detail={
-                "error": "Procedural memory is not readable via API"
-            }
+            detail="Procedural memory is not readable via API"
         )
 
     # check if collection exists
@@ -304,9 +302,7 @@ async def get_points_in_collection(
     if collection_id not in collections:
         raise HTTPException(
             status_code=400,
-            detail={
-                "error": "Collection does not exist."
-            }
+            detail="Collection does not exist."
         )
     
     # if offset is empty string set to null
@@ -378,21 +374,21 @@ async def edit_memory_point(
     # do not touch procedural memory
     if collection_id == "procedural":
         raise HTTPException(
-            status_code=400, detail={"error": "Procedural memory is read-only."}
+            status_code=400, detail="Procedural memory is read-only."
         )
 
     vector_memory: VectorMemory = cat.memory.vectors
     collections = list(vector_memory.collections.keys())
     if collection_id not in collections:
         raise HTTPException(
-            status_code=400, detail={"error": "Collection does not exist."}
+            status_code=400, detail="Collection does not exist."
         )
 
     #ensure point exist
     points = vector_memory.collections[collection_id].get_points([point_id])
     if points is None or len(points) == 0:
         raise HTTPException(
-            status_code=400, detail={"error": "Point does not exist."}
+            status_code=400, detail="Point does not exist."
         )
 
     # embed content

@@ -33,7 +33,7 @@ def test_get_llm_settings_non_existent(client, admin_headers):
     json = response.json()
 
     assert response.status_code == 400
-    assert f"{non_existent_llm_name} not supported" in json["detail"]["error"]
+    assert f"{non_existent_llm_name} not supported" in json["detail"]
 
 
 def test_get_llm_settings(client, admin_headers):

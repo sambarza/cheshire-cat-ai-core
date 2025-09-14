@@ -98,7 +98,7 @@ class HTTPAuth(BaseAuth):
             yield stray
 
     def not_allowed(self, connection: Request):
-        raise HTTPException(status_code=403, detail={"error": "Invalid Credentials"})
+        raise HTTPException(status_code=403, detail="Invalid Credentials")
         
 
 class WebsocketAuth(BaseAuth):

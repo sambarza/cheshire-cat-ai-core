@@ -110,9 +110,7 @@ async def upload_file(
     if content_type not in admitted_types:
         raise HTTPException(
             status_code=400,
-            detail={
-                "error": f'MIME type {content_type} not supported. Admitted types: {" - ".join(admitted_types)}'
-            },
+            detail=f'MIME type {content_type} not supported. Admitted types: {" - ".join(admitted_types)}'
         )
 
     # upload file to long term memory, in the background
@@ -221,9 +219,7 @@ async def upload_files(
         if content_type not in admitted_types:
             raise HTTPException(
                 status_code=400,
-                detail={
-                    "error": f'MIME type {content_type} not supported. Admitted types: {" - ".join(admitted_types)}'
-                },
+                detail=f'MIME type {content_type} not supported. Admitted types: {" - ".join(admitted_types)}'
             )
 
         # upload file to long term memory, in the background
@@ -299,13 +295,13 @@ async def upload_url(
         else:
             raise HTTPException(
                 status_code=400,
-                detail={"error": "Invalid URL", "url": upload_config.url},
+                detail=f"Invalid URL: {upload_config.url}"
             )
     except httpx.RequestError as _e:
-        log.error(f"Unable to reach the URL {upload_config.url}")
+        log.error(f"Unable to reach URL {upload_config.url}")
         raise HTTPException(
             status_code=400,
-            detail={"error": "Unable to reach the URL", "url": upload_config.url},
+            detail=f"Unable to reach URL {upload_config.url}"
         )
 
 
@@ -324,9 +320,7 @@ async def upload_memory(
     if content_type != "application/json":
         raise HTTPException(
             status_code=400,
-            detail={
-                "error": f"MIME type {content_type} not supported. Admitted types: 'application/json'"
-            },
+            detail=f"MIME type {content_type} not supported. Admitted types: 'application/json'"
         )
 
     # Ingest memories in background and notify client

@@ -99,9 +99,7 @@ async def install_plugin(
     if content_type not in admitted_mime_types:
         raise HTTPException(
             status_code=400,
-            detail={
-                "error": f'MIME type `{file.content_type}` not supported. Admitted types: {", ".join(admitted_mime_types)}'
-            },
+            detail=f'MIME type `{file.content_type}` not supported. Admitted types: {", ".join(admitted_mime_types)}'
         )
 
     log.info(f"Uploading {content_type} plugin {file.filename}")
@@ -131,7 +129,7 @@ async def install_plugin_from_registry(
         cat.mad_hatter.install_plugin(tmp_plugin_path)
     except Exception as e:
         log.error("Could not download plugin form registry")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail=str(e))
 
     return {"url": payload["url"], "info": "Plugin is being installed asynchronously"}
 
@@ -145,7 +143,7 @@ async def toggle_plugin(
 
     # check if plugin exists
     if not cat.mad_hatter.plugin_exists(plugin_id):
-        raise HTTPException(status_code=404, detail={"error": "Plugin not found"})
+        raise HTTPException(status_code=404, detail="Plugin not found")
 
     try:
         # toggle plugin
@@ -153,7 +151,7 @@ async def toggle_plugin(
         return {"info": f"Plugin {plugin_id} toggled"}
     except Exception as e:
         log.error(f"Could not toggle plugin {plugin_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/settings")
@@ -192,13 +190,13 @@ async def get_plugin_settings(
     """Returns the settings of a specific plugin"""
 
     if not cat.mad_hatter.plugin_exists(plugin_id):
-        raise HTTPException(status_code=404, detail={"error": "Plugin not found"})
+        raise HTTPException(status_code=404, detail="Plugin not found")
 
     try:
         settings = cat.mad_hatter.plugins[plugin_id].load_settings()
         schema = cat.mad_hatter.plugins[plugin_id].settings_schema()
     except Exception as e:
-        raise HTTPException(status_code=500, detail={"error": e})
+        raise HTTPException(status_code=500, detail=str(e))
 
     if schema["properties"] == {}:
         schema = {}
@@ -215,7 +213,7 @@ async def upsert_plugin_settings(
     """Updates the settings of a specific plugin"""
 
     if not cat.mad_hatter.plugin_exists(plugin_id):
-        raise HTTPException(status_code=404, detail={"error": "Plugin not found"})
+        raise HTTPException(status_code=404, detail="Plugin not found")
 
     # Get the plugin object
     plugin = cat.mad_hatter.plugins[plugin_id]
@@ -228,7 +226,7 @@ async def upsert_plugin_settings(
     except ValidationError as e:
         raise HTTPException(
             status_code=400,
-            detail={"error": "\n".join(list(map((lambda x: x["msg"]), e.errors())))},
+            detail="\n".join(list(map((lambda x: x["msg"]), e.errors()))),
         )
 
     final_settings = plugin.save_settings(payload)
@@ -244,7 +242,7 @@ async def get_plugin_details(
     """Returns information on a single plugin"""
 
     if not cat.mad_hatter.plugin_exists(plugin_id):
-        raise HTTPException(status_code=404, detail={"error": "Plugin not found"})
+        raise HTTPException(status_code=404, detail="Plugin not found")
 
     active_plugins = cat.mad_hatter.get_active_plugins()
 
@@ -275,4 +273,4 @@ async def delete_plugin(
         cat.mad_hatter.uninstall_plugin(plugin_id)
         return {"deleted": plugin_id}
     except Exception as e:
-        raise HTTPException(status_code=400, detail={"error": str(e)})
+        raise HTTPException(status_code=400, detail=str(e))

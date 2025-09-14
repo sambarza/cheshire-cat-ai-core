@@ -30,7 +30,7 @@ def test_refuse_issue_jwt(client):
     # wrong credentials
     assert res.status_code == 403
     json = res.json()
-    assert json["detail"]["error"] == "Invalid Credentials"
+    assert json["detail"] == "Invalid Credentials"
 
 
 def test_issue_jwt(client):
@@ -81,7 +81,7 @@ def test_issue_jwt_for_new_user(client, admin_headers):
     # because it does not exist
     res = client.post("/auth/token", json=creds)
     assert res.status_code == 403
-    assert res.json()["detail"]["error"] == "Invalid Credentials"
+    assert res.json()["detail"] == "Invalid Credentials"
 
     # let's create the user (using api key)
     res = client.post("/users", headers=admin_headers, json=creds)
@@ -111,7 +111,7 @@ def test_jwt_expiration(client):
     # not allowed
     response = client.get("/status")
     assert response.status_code == 403
-    assert response.json()["detail"]["error"] == "Invalid Credentials"
+    assert response.json()["detail"] == "Invalid Credentials"
 
     # request JWT
     creds = {
@@ -134,7 +134,7 @@ def test_jwt_expiration(client):
     headers = {"Authorization": f"Bearer {token}"}
     response = client.get("/status", headers=headers)
     assert response.status_code == 403
-    assert response.json()["detail"]["error"] == "Invalid Credentials"
+    assert response.json()["detail"] == "Invalid Credentials"
 
     # restore default env
     del os.environ["CCAT_JWT_EXPIRE_MINUTES"]
@@ -146,7 +146,7 @@ def test_jwt_imposes_user_id(client):
     # not allowed
     response = client.get("/status")
     assert response.status_code == 403
-    assert response.json()["detail"]["error"] == "Invalid Credentials"
+    assert response.json()["detail"] == "Invalid Credentials"
 
     # request JWT
     creds = {
