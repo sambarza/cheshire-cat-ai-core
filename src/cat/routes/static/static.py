@@ -4,12 +4,17 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from cat import utils
+from cat.auth.permissions import check_permissions, AuthResource, AuthPermission
 
 router = APIRouter()
 
-
-# TODOV2: should this route be protected?
-@router.get("/static/{file_path:path}")
+# TODOV2: upload endpoint should just save the file in static folder and delegate parsing to plugins
+# TODOV2: each user should only see his own files
+# TODOV2: maybe a db table for file ownership is due
+@router.get(
+    "/static/{file_path:path}",
+    cat=check_permissions(AuthResource.STATIC, AuthPermission.READ)
+)
 async def serve_static(file_path):
     static_dir = utils.get_static_path()
     full_path = os.path.join(static_dir, file_path)
