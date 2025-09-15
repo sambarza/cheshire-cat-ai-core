@@ -60,7 +60,7 @@ class BaseAuth(ABC):
             )
             if user:
                 # create new StrayCat
-                cat = StrayCat(user)
+                cat = StrayCat(user, connection.app.state.ccat)
                 
                 # StrayCat is passed to the endpoint
                 yield cat

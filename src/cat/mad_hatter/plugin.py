@@ -315,17 +315,16 @@ class Plugin:
         plugin_overrides = []
 
         # TODOV2: this for should probably go in mad_hatter
-        for base_path in [utils.get_plugins_path(), utils.get_core_plugins_path()]:
-            if base_path not in sys.path:
-                sys.path.insert(0, base_path)
+        base_path = utils.get_plugins_path()
+        if base_path not in sys.path:
+            sys.path.insert(0, base_path)
         
         for py_file in self.py_files:
 
             # Turn file path in module notation and realtive to plugins folders
-            for base_path in [utils.get_plugins_path(), utils.get_core_plugins_path()]:
-                if py_file.startswith(base_path):
-                    module_rel_path = os.path.relpath(py_file, base_path)
-                    module_name = module_rel_path.replace(".py", "").replace("/", ".")
+            if py_file.startswith(base_path):
+                module_rel_path = os.path.relpath(py_file, base_path)
+                module_name = module_rel_path.replace(".py", "").replace("/", ".")
 
             log.debug(f"Import module {module_name}")
 

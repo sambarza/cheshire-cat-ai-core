@@ -12,6 +12,10 @@ dependencies = [
     "pydantic>=2.11.7",
     "uvicorn[standard]>=0.35.0",
     "fastapi[standard]>=0.115.14",
+    "fastapi-sso>=0.18.0",
+    "sqlalchemy[asyncio]>=2.0.43",
+    "asyncpg>=0.30.0",
+    "aiosqlite>=0.21.0",
     "scalar-fastapi>=1.0.3",
     "websockets>=15.0",
     "PyJWT>=2.8.0",
@@ -20,7 +24,6 @@ dependencies = [
     "langchain-core>=0.3.74",
     "pillow>=11.3.0",
     "loguru>=0.7.2",
-    "tinydb>=4.8.0",
     "python-slugify>=8.0.1",
     "autopep8",
     "pylint",
@@ -36,7 +39,6 @@ dependencies = [
     "asgi-lifespan>=2.1.0",
     "ag-ui-protocol>=0.1.8",
     "debugpy>=1.8.16",
-    "fastapi-sso>=0.18.0",
 ]
 
 [build-system]

@@ -6,23 +6,21 @@ def get_supported_env_variables():
     return {
         "CCAT_CORE_HOST": "localhost",
         "CCAT_CORE_PORT": "1865",
-        "CCAT_CORE_USE_SECURE_PROTOCOLS": "",
+        "CCAT_CORE_USE_SECURE_PROTOCOLS": "", # TODOV2: conflate these 3 envs into one: http://localhost:1865
         "CCAT_ADMIN_CREDENTIALS": "admin:admin",
         "CCAT_API_KEY": "meow",
         "CCAT_DEBUG": "true",
         "CCAT_LOG_LEVEL": "INFO",
         "CCAT_CORS_ALLOWED_ORIGINS": None,
-        "CCAT_QDRANT_HOST": None, # TODOV2: move Qdrant specifics to qdrant_vector_memory plugin settigns
-        "CCAT_QDRANT_PORT": "6333",
-        "CCAT_QDRANT_API_KEY": None,
-        "CCAT_QDRANT_CLIENT_TIMEOUT": None,
-        "CCAT_SAVE_MEMORY_SNAPSHOTS": "false",
+        "CCAT_SQL": "sqlite+aiosqlite:///./data/sqlite/core.db", # TODOV2: db could be encrypted by default # postgresql+asyncpg://user:password@localhost/dbname
         "CCAT_JWT_SECRET": "meow_jwt",
         "CCAT_JWT_ALGORITHM": "HS256",
         "CCAT_JWT_EXPIRE_MINUTES": str(60 * 24),  # JWT expires after 1 day
         "CCAT_HTTPS_PROXY_MODE": "false",
         "CCAT_CORS_FORWARDED_ALLOW_IPS": "*",
         "CCAT_CORS_ENABLED": "true",
+
+        # TODOV2: manage cache via factory
         "CCAT_CACHE_TYPE": "in_memory",
         "CCAT_CACHE_DIR": "/tmp", # TODOV2: will it break on winzozz?
     }

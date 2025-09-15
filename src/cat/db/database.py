@@ -1,18 +1,57 @@
-from tinydb import TinyDB
+import os
+from contextlib import asynccontextmanager
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    create_async_engine,
+    async_sessionmaker
+)
+from sqlalchemy import event
 
-from cat.utils import singleton
-from cat.utils import get_data_path
+from cat.env import get_env
+from cat.log import log
 
+DB_URL = get_env("CCAT_SQL")
 
-@singleton
-class Database:
-    def __init__(self):
-        self.db = TinyDB(self.get_file_name())
+connect_args = {}
+if DB_URL.startswith("sqlite"):
+    connect_args["timeout"] = 10
+    connect_args["check_same_thread"] = False
+if DB_URL.startswith("postgresql"):
+    connect_args["connect_args"] = 10
 
-    def get_file_name(self):
-        tinydb_file = get_data_path() + "/metadata.json"
-        return tinydb_file
+engine = create_async_engine(
+    DB_URL,
+    echo=True,
+    future=True,
+    pool_pre_ping=True,
+    connect_args=connect_args
+)
 
+if DB_URL.startswith("sqlite"):
+    @event.listens_for(engine.sync_engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        # TODOV2: check wich of those are necessary or at least useful
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA synchronous=NORMAL;")
+        cursor.execute("PRAGMA busy_timeout=5000;")
+        cursor.close()
 
-def get_db():
-    return Database().db
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autoflush=False,
+    autocommit=False
+)
+
+@asynccontextmanager
+async def get_session():
+    session = AsyncSessionLocal()
+    try:
+        yield session
+        await session.commit()
+    except Exception as e:
+        await session.rollback()
+        log.error("Error during db session")
+        raise

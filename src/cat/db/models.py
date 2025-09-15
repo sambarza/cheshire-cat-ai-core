@@ -1,25 +1,35 @@
-from datetime import datetime
-from uuid import uuid4
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Union, List
 
+from sqlalchemy.orm import declarative_base, Mapped, mapped_column
+from sqlalchemy import String, JSON, Integer
 
-def generate_uuid():
-    return str(uuid4())
+Base = declarative_base()
 
+class Setting(Base):
+    __tablename__ = "settings"
 
-def generate_timestamp():
-    return int(datetime.now().timestamp())
+    name: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
+    value: Mapped[dict] = mapped_column(JSON, nullable=False)
 
+    @classmethod
+    async def get(cls, name: str, default=None):
+        async with get_session() as session:
+            result = await session.execute(
+                select(cls).where(cls.name == name)
+            )
+            setting = result.scalar_one_or_none()
+            if setting:
+                return setting.value
+            return default
 
-# base class for setting, used to annotate fastAPI endpoints
-class SettingBody(BaseModel):
-    name: str
-    value: Union[Dict, List]
-    category: Optional[str] = None
-
-
-# actual setting class, with additional auto generated id and update time
-class Setting(SettingBody):
-    setting_id: str = Field(default_factory=generate_uuid)
-    updated_at: int = Field(default_factory=generate_timestamp)
+    @classmethod
+    async def set(cls, name: str, value):
+        async with get_session() as session:
+            result = await session.execute(
+                select(cls).where(cls.name == name)
+            )
+            setting = result.scalar_one_or_none()
+            if setting:
+                setting.value = value
+            else:
+                setting = cls(name=name, value=value)
+                session.add(setting)

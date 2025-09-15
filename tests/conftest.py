@@ -12,7 +12,6 @@ from fastapi.testclient import TestClient
 
 from cat.looking_glass.stray_cat import StrayCat
 from cat.auth.permissions import AuthUserInfo
-from cat.mad_hatter.mad_hatter import MadHatter
 from cat.mad_hatter.plugin import Plugin
 import cat.utils
 
@@ -67,12 +66,6 @@ def patches(monkeypatch, tmp_path):
     # installed with mock_plugin, here we uninstall
     #os.system("uv pip uninstall -y pip-install-test")
 
-    # delete all singletons!!!
-    monkeypatch.setattr(
-        cat.utils.singleton,
-        "instances",
-        {}
-    )
 
 ####################################
 # Main fixture for the FastAPI app #
@@ -181,8 +174,8 @@ def patch_time_now(monkeypatch):
 @pytest.fixture(scope="function")
 def mad_hatter_with_mock_plugin(client):  # client here injects the monkeypatched version of the cat
 
-    # each test is given the mad_hatter instance (it's a singleton)
-    mad_hatter = MadHatter()
+    # each test is given the mad_hatter instance
+    mad_hatter = client.app.state.ccat.mad_hatter
 
     # install plugin
     new_plugin_zip_path = create_mock_plugin_zip(flat=True)

@@ -7,7 +7,11 @@ from cat.factory.defaults import (
 )
 
 
+# this class so slim can easily be methods in CheshireCat
 class Factory:
+
+    def __init__(self, mad_hatter):
+        self.mad_hatter = mad_hatter
 
     category_defaults = {
         "auth_handler" : AuthHandlerDefault(),
@@ -23,8 +27,7 @@ class Factory:
         if category not in self.category_defaults.keys():
             raise Exception(f"Category '{category}' is not supported by Factory")
 
-        mad_hatter_instance = MadHatter()
-        objects_dict = mad_hatter_instance.execute_hook(
+        objects_dict = self.mad_hatter_instance.execute_hook(
             f"factory_allowed_{category}s", {}, cat=None
         )
         if len(objects_dict) == 0:

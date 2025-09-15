@@ -3,30 +3,6 @@ from cat.convo.messages import ChatRequest, Message, MessageContent
 from urllib.parse import urlencode
 
 
-def get_core_plugins_ids():
-    return get_core_plugins_info()["ids"]
-
-
-def get_core_plugins_info():
-    return {
-        "ids": {
-            "base_tools",
-            "langchain_models_pack",
-            "legacy_v1",
-            "model_interactions",
-            "rabbit_hole",
-            "qdrant_vector_memory",
-            "white_rabbit",
-            "why"
-        },
-        "hooks": 10,
-        "unique_hooks": 7,
-        "tools": 1,
-        "endpoints": 10,
-        "forms": 0
-    }
-
-
 def get_mock_plugin_info():
     return {
         "id": "mock_plugin",
@@ -35,7 +11,6 @@ def get_mock_plugin_info():
         "forms": 1,
         "endpoints": 7
     }
-
 
 def get_chat_request(msg="meow"):
     return ChatRequest(

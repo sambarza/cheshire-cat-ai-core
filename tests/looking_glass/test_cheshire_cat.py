@@ -11,20 +11,15 @@ from cat.factory.defaults import EmbedderDefault
 from cat.factory.defaults import LLMDefault
 
 
-def get_class_from_decorated_singleton(singleton):
-    return singleton().__class__
-
-
 @pytest.fixture(scope="function")
 def cheshire_cat(client):
-    yield CheshireCat()  # don't panic, it's a singleton
+    yield client.app.state.ccat
 
 
 def test_main_modules_loaded(cheshire_cat):
     assert isinstance(
-        cheshire_cat.mad_hatter, get_class_from_decorated_singleton(MadHatter)
+        cheshire_cat.mad_hatter, MadHatter
     )
-    # TODOV2: this should be singleton too
     assert isinstance(cheshire_cat.memory, LongTermMemory)
     assert isinstance(cheshire_cat._llm, BaseLLM)
     assert isinstance(cheshire_cat.embedder, Embeddings)

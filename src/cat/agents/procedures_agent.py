@@ -64,7 +64,7 @@ class ProceduresAgent(BaseAgent):
     def execute_procedures(self, cat):
 
         # using some hooks
-        mad_hatter = MadHatter()
+        mad_hatter = cat.mad_hatter
 
         # get procedures prompt from plugins
         procedures_prompt_template = mad_hatter.execute_hook(

@@ -8,9 +8,7 @@ from pathlib import Path
 
 from cat.log import log
 import cat.utils as utils
-from cat.utils import singleton
-from cat.db import crud
-from cat.db.models import Setting
+from cat.db import get_session
 from cat.mad_hatter.plugin_extractor import PluginExtractor
 from cat.mad_hatter.plugin import Plugin
 from cat.mad_hatter.decorators.hook import CatHook
@@ -24,7 +22,6 @@ from cat.experimental.form import CatForm
 # - loading
 # - prioritizing
 # - executing
-@singleton
 class MadHatter:
     # loads and execute plugins
     # - enter into the plugin folder and loads everything
@@ -46,15 +43,8 @@ class MadHatter:
         self.forms: List[CatForm] = []  # list of active plugins forms
         self.endpoints: List[CatEndpoint] = []  # list of active plugins endpoints
 
-        # this callback is set from outside to be notified when plugin sync is finished
-        self.on_finish_plugins_sync_callback = lambda: None
 
-        # at first run, core plugins must be active by default
-        self.set_default_active_plugins()
-
-        self.find_plugins()
-
-    def install_plugin(self, package_plugin):
+    async def install_plugin(self, package_plugin):
         # extract zip/tar file into plugin folder
         extractor = PluginExtractor(package_plugin)
         plugin_path = extractor.extract(utils.get_plugins_path())
@@ -69,19 +59,17 @@ class MadHatter:
         self.load_plugin(plugin_path)
 
         # activate it
-        self.toggle_plugin(plugin_id)
+        await self.toggle_plugin(plugin_id)
 
-    def uninstall_plugin(self, plugin_id):
+    async def uninstall_plugin(self, plugin_id):
 
         # plugin exists and it is not a core plugin
         if not self.plugin_exists(plugin_id):
             raise Exception(f"Plugin {plugin_id} is not installed")
-        if utils.get_core_plugins_path() in self.plugins[plugin_id].path:
-            raise Exception("Cannot remove a core plugin. Just deactivate it.")
 
         # deactivate plugin if it is active (will sync cache)
-        if plugin_id in self.get_active_plugins():
-            self.toggle_plugin(plugin_id)
+        if plugin_id in await self.get_active_plugins():
+            await self.toggle_plugin(plugin_id)
 
         # remove plugin from cache
         plugin_path = self.plugins[plugin_id].path
@@ -91,18 +79,17 @@ class MadHatter:
         shutil.rmtree(plugin_path)
 
     # discover all plugins
-    def find_plugins(self):
+    async def find_plugins(self):
         # emptying plugin dictionary, plugins will be discovered from disk
         # and stored in a dictionary plugin_id -> plugin_obj
         self.plugins = {}
 
         # active plugins ids (stored in db)
-        active_plugins = self.get_active_plugins()
+        active_plugins = await self.get_active_plugins()
 
-        # plugins are found in the `cat/core_plugins` and `./plugins` folder
+        # plugins are found in the `./plugins` folder
         # TODOV2: these two attributes are not really necessary, they can maybe be properties
         all_plugin_folders = \
-            glob.glob( f"{utils.get_core_plugins_path()}/*/") + \
             glob.glob( f"{utils.get_plugins_path()}/*/")
 
         log.info("Active Plugins:")
@@ -120,10 +107,10 @@ class MadHatter:
                 except Exception as e:
                     # Couldn't activate the plugin -> Deactivate it
                     if plugin_id in active_plugins:
-                        self.toggle_plugin(plugin_id)
+                        await self.toggle_plugin(plugin_id)
                     raise e
 
-        self.sync_hooks_tools_and_forms()
+        await self.sync_decorated()
 
     def load_plugin(self, plugin_path):
         # Instantiate plugin.
@@ -138,15 +125,15 @@ class MadHatter:
             # Print the error and go on with the others.
             log.error(f"Error while loading plugin from {plugin_path}")
 
-    # Load hooks, tools and forms of the active plugins into MadHatter
-    def sync_hooks_tools_and_forms(self):
+    # Load decorated functions from active plugins into MadHatter
+    async def sync_decorated(self):
         # emptying tools, hooks and forms
         self.hooks = {}
         self.tools = []
         self.forms = []
         self.endpoints = []
 
-        active_plugins = self.get_active_plugins()
+        active_plugins = await self.get_active_plugins()
 
         for _, plugin in self.plugins.items():
             # load hooks, tools, forms and endpoints from active plugins
@@ -169,38 +156,33 @@ class MadHatter:
             self.hooks[hook_name].sort(key=lambda x: x.priority, reverse=True)
 
         # notify sync has finished (the Cat will ensure all tools are embedded in vector memory)
-        self.on_finish_plugins_sync_callback()
+        # TODOV2: use a hook so plugins can update tools embeddings and other post sync operations
+        for endpoint in self.endpoints:
+            if endpoint.plugin_id in await self.get_active_plugins():
+                endpoint.activate(self.fastapi_app)
 
     # check if plugin exists
     def plugin_exists(self, plugin_id) -> bool:
         return plugin_id in self.plugins.keys()
-    
-    def get_core_plugins_ids(self) -> list[str]:
-        path = Path( utils.get_core_plugins_path() )
-        core_plugins = [p.name for p in path.iterdir() if p.is_dir()]
-        return core_plugins
 
-    def set_default_active_plugins(self):
-        # if active plugins are not registerd in db, we set the default ones (cat/core_plugins)
-        active_plugins = crud.get_setting_by_name("active_plugins")
-        if active_plugins is None:
-            self.save_active_plugins_to_db(
-                self.get_core_plugins_ids()
-            )
 
-    def get_active_plugins(self):
-        active_plugins = crud.get_setting_by_name("active_plugins")
+    async def get_active_plugins(self):
+        async with get_session() as session:
+            log.critical("SESSION")
+            active_plugins = await session.execute("SELECT 12") # crud.get_setting_by_name("active_plugins")
+            log.critical(active_plugins)
         return active_plugins["value"]
 
-    def save_active_plugins_to_db(self, active_plugins):
-        new_setting = {"name": "active_plugins", "value": active_plugins}
-        new_setting = Setting(**new_setting)
-        crud.upsert_setting_by_name(new_setting)
+    async def save_active_plugins_to_db(self, active_plugins):
+        async with get_session() as session:
+            new_setting = {"name": "active_plugins", "value": active_plugins}
+            new_setting = Setting(**new_setting)
+        
 
     # activate / deactivate plugin
-    def toggle_plugin(self, plugin_id):
+    async def toggle_plugin(self, plugin_id):
 
-        active_plugins = self.get_active_plugins()
+        active_plugins = await self.get_active_plugins()
 
         if self.plugin_exists(plugin_id):
             plugin_is_active = plugin_id in active_plugins
@@ -230,7 +212,7 @@ class MadHatter:
             self.save_active_plugins_to_db(list(set(active_plugins)))
 
             # update cache and embeddings
-            self.sync_hooks_tools_and_forms()
+            self.sync_decorated()
 
         else:
             raise Exception(f"Plugin {plugin_id} not present in plugins folder")

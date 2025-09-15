@@ -55,10 +55,10 @@
 
 ## Plugins
 
-- Most core functionality has been moved to plugins so it can be easily extended or deactivated. Find them in `cat/core_plugins`. The vision is for a super slim core and more advanced plugins.
+- Most core functionality has been moved to plugins (still to be fixed and published). The vision is for a super slim core and more advanced plugins.
 - There are many changes and most plugins need to be adjusted (will provide a dedicated guide). The old admin still works with v2 via core plugin `legacy_v1`.
 - The cat vector memory can be completely deactivated, or some of it, and can be replaced/extended for example with a graph memory. See plugin `qdrant_vector_memory`
-- Due to difficulties in keeping up with langchain, core only depends on `langchain_core`. All LLM and embedder vendors are now packed in core_plugin `langchain_models_pack` so they are isolated and more easily maintained.
+- Due to difficulties in keeping up with langchain, core only depends on `langchain_core`. All LLM and embedder vendors are now packed in a dedicated `langchain_models_pack` plugin so they are isolated and more easily maintained.
 - plugins can contain tests inside a folder names `tests`. This folder will be ignored by the cat at runtime but tests will be run by `pytest`
 
 
@@ -67,12 +67,12 @@
 - new `/chat` endpoint that supports streaming (GIVE EXAMPLE), accepting `ChatRequest` and returning `ChatResponse` under both http and websocket. You can access this data structures in plugins with `cat.chat_request` and `cat.chat_response`.
 - When a client calls the cat, it can specify which agent to use in `ChatRequest.agent`. Default is `simple`, which is the old one.
 - conversation history endpoints (GET and POST) have been deleted and there is a new CRUD for chat sessions in core plugin `XXXXXXX`. Convo history as a recommended practice, must be passed via ws or http via `ChatRequest.messages` (similar to OpenAI or Ollama).
-- endpoint `/message` has been moved to core_plugin `legacy_v1`, so it is still available. The main http endpoint to chat with the cat is `/chat` and must receive a `ChatRequest` JSON, which is very similar to the format use by all major LLM/assistant vendors. The endpoint supports streaming
+- endpoint `/message` has been moved to plugin `legacy_v1`, so it is still available. The main http endpoint to chat with the cat is `/chat` and must receive a `ChatRequest` JSON, which is very similar to the format use by all major LLM/assistant vendors. The endpoint supports streaming
 - You can define new agents in your plugin subclassing `BaseAgent` and registering it with a hook:
   ```python
     ESEMPIO CUSTOM AGENT
   ```
-- so input and output data structure have changed, but by keeping active the core_plugin `legacy_v1` old clients should still work (make a PR if you find bugs).
+- so input and output data structure have changed, but by keeping active plugin `legacy_v1` old clients should still work (make a PR if you find bugs).
 - From now on we only support chat models, text only or text plus images. Pure completion models are not supported anymore. If you need to use one, create your own LLM adapter and hook it via `factory_allowed_llms`.
 - Embedders are not automatically associated with the chosen LLM vendor. You will need to configure that yourself, The cat will notify you at every message if the embedder is not set.
 - when calling the Cat via websocket and http streaming, all tokens, notifications, agent steps, errors and other lifecycle events (including final response) will be sent following the [AG-UI](https://docs.ag-ui.com/concepts/events) protocol. 
@@ -81,7 +81,7 @@
 ## Folder structure
 
 - `plugins`, `static` and `data` folders live now in the root folder of a project, and are automatically created at first launch. In this way the cat can be used as a simple python package.
-- Core plugins stay inside the package, in `cat/core_plugins` and can be deactivated but not uninstalled (not sure about this).
+- Core plugins are automatically installed at first launch (TODO)
 - For the rest, the python package is absolutely stateless and stores no information whatsoever ( TODO check caches)
 
 
@@ -172,7 +172,6 @@ Auth system semplifications (TODO review):
 - security must be always ON, also on a fresh installation, with a default jwt secret and API key. Pages in `/docs` should allow logging in
 - model selection should be possible to do directly via message, i.e. `"model": "openai:gpt-5" or "ollama:qwen:7b"`. If model is not passed, a default model chosen by admin in the settings will be used. Admin still decides which models are available to end users. Still to determine how to adapt the permissions system to this.
 - `StrayCat.__call_` should be an async generator using `yield` to send tokens and notifications. Those yielded result are then managed at the transport layer (websocket or http/streaming/sse). Cat internals should know absolutely nothing about network protocols.
-- core plugins cannot really save settings in their own path (package is not editable). Maybe ship core_plugins in standard plugins folder?
 - core tests should only deal with core (also because plugin install dependencies is mocked!!!)
 - allow plugin settings with conditionals and subpages with json schema primitives `if`, `oneOf`, etc.
 - AG-UI should send `event: {xxx}`, leave `data: {xxx}` for the legacy messaging style 
@@ -184,7 +183,6 @@ Auth system semplifications (TODO review):
 - should core plugins be shipped in an internal folder in the external plugins?
 - should core plugins hooks have priority 0 so they go first?
 - should all hooks be able to return a ChatResponse and interrupt the flow with the direct final response?
-- should core_plugins be present in `./plugins`
 - new plugins with custom requirements may not work as expected (need a restart).
 - should we ship a small LLM and embedder via llama.cpp or other lightweight runner?
 - as there are docker and pyPI releases, makes no sense to have a `develop` branch

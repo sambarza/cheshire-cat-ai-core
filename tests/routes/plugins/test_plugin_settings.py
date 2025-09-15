@@ -1,6 +1,5 @@
 
 from tests.mocks.mock_plugin.mock_plugin_overrides import MockPluginSettings
-from tests.utils import get_core_plugins_ids
 
 def test_get_plugin_settings_non_existent(client, just_installed_plugin, admin_headers):
     non_existent_plugin = "ghost_plugin"

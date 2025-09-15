@@ -64,12 +64,16 @@ class StrayCat:
 
     def __init__(
         self,
-        user_data: AuthUserInfo
+        user_data: AuthUserInfo,
+        ccat: CheshireCat
     ):
 
         # user data
         self.__user_id = user_data.name # TODOV2: use id
         self.__user_data = user_data
+
+        # pointer to CheshireCat instance
+        self._ccat = ccat
 
         self.chat_request = ChatRequest() # empty, will be set upon message requests
         self.chat_response = ChatResponse(user_id=self.user_id, text="") # empty, will be set upon message requests
@@ -339,7 +343,7 @@ class StrayCat:
 
     async def execute_agent(self, slug):
         try:
-            await CheshireCat().execute_agent(slug, self)
+            await self._ccat.execute_agent(slug, self)
         except Exception as e:
             log.error(f"Could not execute agent {slug}: {e}")
             raise e
@@ -597,7 +601,7 @@ Allowed classes are:
         """Instance of langchain `LLM`.
         Only use it if you directly want to deal with langchain, prefer method `cat.llm(prompt)` otherwise.
         """
-        ccat = CheshireCat()
+        ccat = self._ccat
         requested_llm = self.chat_request.model
         if requested_llm and requested_llm in ccat.llms:
             return ccat.llms[requested_llm]
@@ -620,7 +624,7 @@ Allowed classes are:
         >>> await cat.embedder.aembed_query("Oh dear!")
         [0.2, 0.02, 0.4, ...]
         """
-        ccat = CheshireCat()
+        ccat = self._ccat
         requested_embedder = self.chat_request.model # TODOV2: should come from DB options
         if requested_embedder and requested_embedder in ccat.embedders:
             return ccat.llms[requested_embedder]
@@ -640,7 +644,7 @@ Allowed classes are:
         --------
         TODO examples
         """
-        return CheshireCat().memory
+        return self._ccat.memory
 
     @property
     def mad_hatter(self):
@@ -663,14 +667,14 @@ Allowed classes are:
         >>> cat.mad_hatter.get_plugin().load_settings()
         {"num_cats": 44, "rows": 6, "remainder": 0}
         """
-        return CheshireCat().mad_hatter
+        return self._ccat.mad_hatter
     
     @property
     def cache(self):
         """Gives access to internal cache."""
-        return CheshireCat().cache
+        return self._ccat.cache
     
     @property
     def mcp(self):
         """Gives access to the MCP client."""
-        return CheshireCat().mcp
+        return self._ccat.mcp

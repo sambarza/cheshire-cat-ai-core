@@ -10,8 +10,8 @@ from tests.utils import create_mock_plugin_zip, get_mock_plugin_info
 # this function will be run before each test function
 @pytest.fixture(scope="function")
 def mad_hatter(client):  # client here injects the monkeypatched version of the cat
-    # each test is given the mad_hatter instance (it's a singleton)
-    mad_hatter = MadHatter()
+    # each test is given the mad_hatter instance
+    mad_hatter = client.app.state.ccat.mad_hatter
 
     # install plugin
     new_plugin_zip_path = create_mock_plugin_zip(flat=True)

@@ -22,13 +22,6 @@ def test_get_base_path(client):
     assert utils.get_base_path() == os.getcwd() + "/src/cat"
 
 
-def test_core_plugin_path(client):
-    # core plugins are in "cat/core_plugins/"
-    assert utils.get_core_plugins_path() == os.path.join(
-        utils.get_base_path(), "core_plugins"
-    )
-
-
 def test_get_project_path(client):
     # during tests, project is in a temp folder
     pytest_tmp_folder = utils.get_project_path()

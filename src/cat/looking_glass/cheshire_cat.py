@@ -3,11 +3,12 @@ import sys
 from typing import List, Dict
 from typing_extensions import Protocol
 
+from cat.db.database import engine
+from cat.db.models import Base
 from cat.factory.factory import Factory
 from cat.protocols.model_context.client import MCPClient, mcp_servers_config
 from cat.log import log
 from cat.mad_hatter.mad_hatter import MadHatter
-from cat.utils import singleton
 from cat.cache.cache_manager import CacheManager
 
 
@@ -23,7 +24,6 @@ class Procedure(Protocol):
 
 
 # main class
-@singleton
 class CheshireCat:
     """The Cheshire Cat.
 
@@ -50,11 +50,17 @@ class CheshireCat:
         try:
             self.fastapi_app = fastapi_app # reference to the FastAPI object
 
-            # instantiate MadHatter (loads all plugins' hooks and tools)
-            self.load_mad_hatter()
+            # init core DB
+            async def init_db():
+                async with engine.begin() as conn:
+                    await conn.run_sync(Base.metadata.create_all)
+
+            # instantiate MadHatter (loads all plugins' hooks and tools) and trigger first discovery
+            self.mad_hatter = MadHatter()
+            await self.mad_hatter.find_plugins()
 
             # init Factory
-            self.factory = Factory()
+            self.factory = Factory(self.mad_hatter)
 
             # init MCP client
             self.mcp = MCPClient(mcp_servers_config)
@@ -81,13 +87,6 @@ class CheshireCat:
             log.error("Error during CheshireCat bootstrap. Exiting.")
             sys.exit()
 
-
-    def load_mad_hatter(self):
-        self.mad_hatter = MadHatter()
-        # TODOV2: get rid of this on_finish callback somehow
-        self.mad_hatter.on_finish_plugins_sync_callback = self.on_finish_plugins_sync_callback
-        self.on_finish_plugins_sync_callback() # only for the first time called manually
-
     
     async def execute_agent(self, slug, cat):
         """Execute an agent from its slug."""
@@ -113,15 +112,5 @@ class CheshireCat:
             selected_agent = self.agents[slug]
 
         await selected_agent.execute(cat)
-
-
-    def on_finish_plugins_sync_callback(self):
-        self.activate_endpoints()
-        #self.embed_procedures() # TODOV2: the whole on_finish function should not exist
-
-    def activate_endpoints(self):
-        for endpoint in self.mad_hatter.endpoints:
-            if endpoint.plugin_id in self.mad_hatter.get_active_plugins():
-                endpoint.activate(self.fastapi_app)
 
 

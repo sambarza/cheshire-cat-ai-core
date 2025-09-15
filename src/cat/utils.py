@@ -100,11 +100,6 @@ def get_base_path():
     return os.path.dirname(os.path.abspath(cat.__file__))
 
 
-def get_core_plugins_path():
-    """Core plugins' path, for internal core usage"""
-    return os.path.join(get_base_path(), "core_plugins")
-
-
 def get_project_path():
     """Path to the folder from which the cat was run (contains data, plugins and static folders)"""
     return os.getcwd()

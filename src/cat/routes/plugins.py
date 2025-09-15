@@ -42,7 +42,7 @@ async def get_available_plugins(
         registry_plugins_index[plugin_url] = p
 
     # get active plugins
-    active_plugins = cat.mad_hatter.get_active_plugins()
+    active_plugins = await cat.mad_hatter.get_active_plugins()
 
     # list installed plugins' manifest
     installed_plugins = []
@@ -216,7 +216,7 @@ async def get_plugin_details(
     if not cat.mad_hatter.plugin_exists(plugin_id):
         raise HTTPException(status_code=404, detail="Plugin not found")
 
-    active_plugins = cat.mad_hatter.get_active_plugins()
+    active_plugins = await cat.mad_hatter.get_active_plugins()
 
     plugin = cat.mad_hatter.plugins[plugin_id]
 
