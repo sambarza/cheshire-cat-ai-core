@@ -15,7 +15,7 @@ def test_get_base_url(client):
 
 
 def test_get_static_url(client):
-    assert utils.get_static_url() == "http://localhost:1865/static/"
+    assert utils.get_static_url() == "http://localhost:1865/static"
 
 
 def test_get_base_path(client):

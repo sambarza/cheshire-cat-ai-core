@@ -92,7 +92,7 @@ def get_base_url():
 
 def get_static_url():
     """Static files url."""
-    return get_base_url() + "static/"
+    return get_base_url() + "static"
 
 
 def get_base_path():
