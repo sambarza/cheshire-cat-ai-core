@@ -126,7 +126,7 @@ async def install_plugin_from_registry(
     # download zip from registry
     try:
         tmp_plugin_path = await registry_download_plugin(payload["url"])
-        cat.mad_hatter.install_plugin(tmp_plugin_path)
+        await cat.mad_hatter.install_plugin(tmp_plugin_path)
     except Exception as e:
         log.error("Could not download plugin form registry")
         raise HTTPException(status_code=500, detail=str(e))
@@ -147,7 +147,7 @@ async def toggle_plugin(
 
     try:
         # toggle plugin
-        cat.mad_hatter.toggle_plugin(name)
+        await cat.mad_hatter.toggle_plugin(name)
         return {"info": f"Plugin {name} toggled"}
     except Exception as e:
         log.error(f"Could not toggle plugin {name}")
