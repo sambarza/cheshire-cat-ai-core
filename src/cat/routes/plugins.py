@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 # GET plugins
-@router.get("/")
+@router.get("")
 async def get_available_plugins(
     query: str = None,
     cat=check_permissions(AuthResource.PLUGINS, AuthPermission.LIST),
@@ -152,34 +152,6 @@ async def toggle_plugin(
     except Exception as e:
         log.error(f"Could not toggle plugin {plugin_id}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/settings")
-async def get_plugins_settings(
-    cat=check_permissions(AuthResource.PLUGINS, AuthPermission.READ),
-) -> Dict:
-    """Returns the settings of all the plugins"""
-
-    settings = []
-
-    # plugins are managed by the MadHatter class
-    for plugin in cat.mad_hatter.plugins.values():
-        try:
-            plugin_settings = plugin.load_settings()
-            plugin_schema = plugin.settings_schema()
-            if plugin_schema["properties"] == {}:
-                plugin_schema = {}
-            settings.append(
-                {"name": plugin.id, "value": plugin_settings, "schema": plugin_schema}
-            )
-        except Exception:
-            log.error(
-                f"Error loading plugin {plugin.id} settings. The result will not contain the settings for this plugin."
-            )
-
-    return {
-        "settings": settings,
-    }
 
 
 @router.get("/settings/{plugin_id}")
