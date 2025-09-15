@@ -14,7 +14,7 @@ class Setting(BaseModel):
 
 @router.get("/")
 async def get_settings(
-    cat=check_permissions(AuthResource.SETTINGS, AuthPermission.LIST),
+    cat=check_permissions(AuthResource.SETTING, AuthPermission.LIST),
 )-> List[Setting]:
     """Get the entire list of settings available in the database"""
 
@@ -24,7 +24,7 @@ async def get_settings(
 
 @router.get("/{name}")
 async def get_setting(
-    name: str, cat=check_permissions(AuthResource.SETTINGS, AuthPermission.READ)
+    name: str, cat=check_permissions(AuthResource.SETTING, AuthPermission.READ)
 ) -> Setting:
     """Get the a specific setting from the database"""
 
@@ -42,7 +42,7 @@ async def get_setting(
 async def put_setting(
     name: str,
     value: Any = Body(...),
-    cat=check_permissions(AuthResource.SETTINGS, AuthPermission.WRITE),
+    cat=check_permissions(AuthResource.SETTING, AuthPermission.WRITE),
 ) -> Setting:
     """Upsert a setting in the database."""
     if name == "" or value == "":
@@ -58,7 +58,7 @@ async def put_setting(
 @router.delete("/{name}")
 async def delete_setting(
     name: str,
-    cat=check_permissions(AuthResource.SETTINGS, AuthPermission.DELETE),
+    cat=check_permissions(AuthResource.SETTING, AuthPermission.DELETE),
 ):
     """Delete a specific setting in the database"""
 

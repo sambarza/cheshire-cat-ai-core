@@ -17,13 +17,13 @@ def test_endpoint_prefix():
 
 # from this one on endpoints are secured with permissions checks
 @endpoint.get(path="/crud", prefix="/tests", tags=["Tests"])
-def test_get(cat=check_permissions(AuthResource.PLUGINS, AuthPermission.LIST)):
+def test_get(cat=check_permissions(AuthResource.PLUGIN, AuthPermission.LIST)):
     return {"result":"ok", "user_id":cat.user_id}
 
 @endpoint.post(path="/crud", prefix="/tests", tags=["Tests"])
 def test_post(
     item: Item,
-    cat=check_permissions(AuthResource.PLUGINS, AuthPermission.EDIT)
+    cat=check_permissions(AuthResource.PLUGIN, AuthPermission.EDIT)
 ):
     return {"id": 1, "name": item.name, "description": item.description}
 
@@ -31,14 +31,14 @@ def test_post(
 def test_put(
     item_id: int,
     item: Item,
-    cat=check_permissions("PLUGINS", "WRITE") # string notation
+    cat=check_permissions("PLUGIN", "WRITE") # string notation
 ):
     return {"id": item_id, "name": item.name, "description": item.description}
 
 @endpoint.delete(path="/crud/{item_id}", prefix="/tests", tags=["Tests"]) 
 def test_delete(
     item_id: int,
-    cat=check_permissions("PLUGINS", "DELETE") # string notation
+    cat=check_permissions("PLUGIN", "DELETE") # string notation
 ):
     return {"result": "ok", "deleted_id": item_id}
 

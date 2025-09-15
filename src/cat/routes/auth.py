@@ -21,16 +21,16 @@ async def get_available_permissions(
     return get_full_permissions()
 
 
-@router.get("/auth-handlers")
+@router.get("/handlers")
 async def get_auth_handlers(r: Request) -> List[str]:
     """Returns all available auth handlers for OAuth2. Redirect the user to /auth/login/{auth_handler} to start the Oauth flow."""
     return list(r.app.state.ccat.auth_handlers.keys())
 
 
-@router.get("/auth/login/{auth_handler}")
-async def login(r: Request, auth_handler: str) -> RedirectResponse:
-    if auth_handler not in r.app.state.ccat.auth_handlers.keys():
-        return HTTPException(status_code=404, detail=f"Auth Handler {auth_handler} not found.")
+@router.get("/auth/login/{name}")
+async def login(r: Request, name: str) -> RedirectResponse:
+    if name not in r.app.state.ccat.auth_handlers.keys():
+        return HTTPException(status_code=404, detail=f"Auth Handler {name} not found.")
     
     # start OAuth flow
     return RedirectResponse(

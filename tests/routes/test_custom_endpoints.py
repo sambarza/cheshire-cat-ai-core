@@ -105,7 +105,7 @@ def test_custom_endpoint_security(just_installed_plugin, client):
     assert n_open == 2
     assert n_protected == 5 
 
-@pytest.mark.parametrize("resource", ["PLUGINS", "LLM", "CUSTOMRESOURCE"])
+@pytest.mark.parametrize("resource", ["PLUGIN", "LLM", "CUSTOMRESOURCE"])
 @pytest.mark.parametrize("permission", ["LIST", "DELETE", "CUSTOMPERMISSION"])
 def test_custom_endpoint_permissions(
     resource, permission, client, just_installed_plugin, admin_headers
@@ -135,9 +135,9 @@ def test_custom_endpoint_permissions(
     response = client.get("/custom/endpoint", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     
-    # use custom endpoint requiring PLUGINS LIST)
+    # use custom endpoint requiring PLUGIN LIST)
     response = client.get("/tests/crud", headers={"Authorization": f"Bearer {token}"})
-    if resource == "PLUGINS" and permission == "LIST":
+    if resource == "PLUGIN" and permission == "LIST":
         assert response.status_code == 200
     else:
         assert response.status_code == 403

@@ -19,6 +19,7 @@ def get_supported_env_variables():
         "CCAT_HTTPS_PROXY_MODE": "false",
         "CCAT_CORS_FORWARDED_ALLOW_IPS": "*",
         "CCAT_CORS_ENABLED": "true",
+        "CCAT_TELEMETRY": "true",
 
         # TODOV2: manage cache via factory
         "CCAT_CACHE_TYPE": "in_memory",

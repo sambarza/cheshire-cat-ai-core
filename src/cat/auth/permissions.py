@@ -9,8 +9,8 @@ class AuthResource(str, Enum):
     """Enum of core authorization resources. Can be extended via plugin."""
     STATUS = "STATUS"
     CHAT = "CHAT"
-    SETTINGS = "SETTINGS"
-    PLUGINS = "PLUGINS"
+    SETTING = "SETTING"
+    PLUGIN = "PLUGIN"
     STATIC = "STATIC"
 
 

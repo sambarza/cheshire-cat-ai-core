@@ -40,7 +40,7 @@ async def status(
     )
 
 
-@router.post("/chat")
+@router.post("/chat") # TODOV2: change name
 async def chat(
     chat_request: ChatRequest,
     cat=check_permissions(AuthResource.CHAT, AuthPermission.EDIT),

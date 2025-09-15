@@ -16,7 +16,7 @@ router = APIRouter()
 @router.get("")
 async def get_available_plugins(
     query: str = None,
-    cat=check_permissions(AuthResource.PLUGINS, AuthPermission.LIST),
+    cat=check_permissions(AuthResource.PLUGIN, AuthPermission.LIST),
     # author: str = None, to be activated in case of more granular search
     # tag: str = None, to be activated in case of more granular search
 ) -> Dict:
@@ -90,7 +90,7 @@ async def get_available_plugins(
 @router.post("/upload")
 async def install_plugin(
     file: UploadFile,
-    cat=check_permissions(AuthResource.PLUGINS, AuthPermission.WRITE),
+    cat=check_permissions(AuthResource.PLUGIN, AuthPermission.WRITE),
 ) -> Dict:
     """Install a new plugin from a zip file"""
 
@@ -119,7 +119,7 @@ async def install_plugin(
 @router.post("/upload/registry")
 async def install_plugin_from_registry(
     payload: Dict = Body({"url": "https://github.com/plugin-dev-account/plugin-repo"}),
-    cat=check_permissions(AuthResource.PLUGINS, AuthPermission.WRITE),
+    cat=check_permissions(AuthResource.PLUGIN, AuthPermission.WRITE),
 ) -> Dict:
     """Install a new plugin from registry"""
 
@@ -134,61 +134,61 @@ async def install_plugin_from_registry(
     return {"url": payload["url"], "info": "Plugin is being installed asynchronously"}
 
 
-@router.put("/toggle/{plugin_id}", status_code=200)
+@router.put("/{name}/toggle", status_code=200)
 async def toggle_plugin(
-    plugin_id: str,
-    cat=check_permissions(AuthResource.PLUGINS, AuthPermission.WRITE),
+    name: str,
+    cat=check_permissions(AuthResource.PLUGIN, AuthPermission.WRITE),
 ) -> Dict:
     """Enable or disable a single plugin"""
 
     # check if plugin exists
-    if not cat.mad_hatter.plugin_exists(plugin_id):
+    if not cat.mad_hatter.plugin_exists(name):
         raise HTTPException(status_code=404, detail="Plugin not found")
 
     try:
         # toggle plugin
-        cat.mad_hatter.toggle_plugin(plugin_id)
-        return {"info": f"Plugin {plugin_id} toggled"}
+        cat.mad_hatter.toggle_plugin(name)
+        return {"info": f"Plugin {name} toggled"}
     except Exception as e:
-        log.error(f"Could not toggle plugin {plugin_id}")
+        log.error(f"Could not toggle plugin {name}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/settings/{plugin_id}")
+@router.get("/{name}/settings")
 async def get_plugin_settings(
-    plugin_id: str,
-    cat=check_permissions(AuthResource.PLUGINS, AuthPermission.READ),
+    name: str,
+    cat=check_permissions(AuthResource.PLUGIN, AuthPermission.READ),
 ) -> Dict:
     """Returns the settings of a specific plugin"""
 
-    if not cat.mad_hatter.plugin_exists(plugin_id):
+    if not cat.mad_hatter.plugin_exists(name):
         raise HTTPException(status_code=404, detail="Plugin not found")
 
     try:
-        settings = cat.mad_hatter.plugins[plugin_id].load_settings()
-        schema = cat.mad_hatter.plugins[plugin_id].settings_schema()
+        settings = cat.mad_hatter.plugins[name].load_settings()
+        schema = cat.mad_hatter.plugins[name].settings_schema()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
     if schema["properties"] == {}:
         schema = {}
 
-    return {"name": plugin_id, "value": settings, "schema": schema}
+    return {"name": name, "value": settings, "schema": schema}
 
 
-@router.put("/settings/{plugin_id}")
+@router.put("/{name}/settings")
 async def upsert_plugin_settings(
-    plugin_id: str,
+    name: str,
     payload: Dict = Body({"setting_a": "some value", "setting_b": "another value"}),
-    cat=check_permissions(AuthResource.PLUGINS, AuthPermission.EDIT),
+    cat=check_permissions(AuthResource.PLUGIN, AuthPermission.EDIT),
 ) -> Dict:
     """Updates the settings of a specific plugin"""
 
-    if not cat.mad_hatter.plugin_exists(plugin_id):
+    if not cat.mad_hatter.plugin_exists(name):
         raise HTTPException(status_code=404, detail="Plugin not found")
 
     # Get the plugin object
-    plugin = cat.mad_hatter.plugins[plugin_id]
+    plugin = cat.mad_hatter.plugins[name]
 
     try:
         # Load the plugin settings Pydantic model
@@ -203,26 +203,26 @@ async def upsert_plugin_settings(
 
     final_settings = plugin.save_settings(payload)
 
-    return {"name": plugin_id, "value": final_settings}
+    return {"name": name, "value": final_settings}
 
 
-@router.get("/{plugin_id}")
+@router.get("/{name}")
 async def get_plugin_details(
-    plugin_id: str,
-    cat=check_permissions(AuthResource.PLUGINS, AuthPermission.READ),
+    name: str,
+    cat=check_permissions(AuthResource.PLUGIN, AuthPermission.READ),
 ) -> Dict:
     """Returns information on a single plugin"""
 
-    if not cat.mad_hatter.plugin_exists(plugin_id):
+    if not cat.mad_hatter.plugin_exists(name):
         raise HTTPException(status_code=404, detail="Plugin not found")
 
     active_plugins = await cat.mad_hatter.get_active_plugins()
 
-    plugin = cat.mad_hatter.plugins[plugin_id]
+    plugin = cat.mad_hatter.plugins[name]
 
     # get manifest and active True/False. We make a copy to avoid modifying the original obj
     plugin_info = deepcopy(plugin.manifest)
-    plugin_info["active"] = plugin_id in active_plugins
+    plugin_info["active"] = name in active_plugins
     plugin_info["hooks"] = [
         {"name": hook.name, "priority": hook.priority} for hook in plugin.hooks
     ]
@@ -233,16 +233,16 @@ async def get_plugin_details(
     return {"data": plugin_info}
 
 
-@router.delete("/{plugin_id}")
+@router.delete("/{name}")
 async def delete_plugin(
-    plugin_id: str,
-    cat=check_permissions(AuthResource.PLUGINS, AuthPermission.DELETE),
+    name: str,
+    cat=check_permissions(AuthResource.PLUGIN, AuthPermission.DELETE),
 ) -> Dict:
     """Physically remove plugin."""
 
     try:
         # remove folder, hooks and tools
-        cat.mad_hatter.uninstall_plugin(plugin_id)
-        return {"deleted": plugin_id}
+        cat.mad_hatter.uninstall_plugin(name)
+        return {"deleted": name}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

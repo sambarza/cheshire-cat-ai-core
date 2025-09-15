@@ -1,10 +1,11 @@
 import sys
+from uuid import uuid4
 
 from typing import List, Dict
 from typing_extensions import Protocol
 
 from cat.db.database import engine
-from cat.db.models import Base
+from cat.db.models import Base, Setting
 from cat.factory.factory import Factory
 from cat.protocols.model_context.client import MCPClient, mcp_servers_config
 from cat.log import log
@@ -51,10 +52,9 @@ class CheshireCat:
             self.fastapi_app = fastapi_app # reference to the FastAPI object
 
             # init core DB
-            async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
+            await self.init_db()
 
-            # instantiate MadHatter (loads all plugins' hooks and tools) and trigger first discovery
+            # instantiate MadHatter and trigger first discovery
             self.mad_hatter = MadHatter()
             await self.mad_hatter.find_plugins()
 
@@ -86,6 +86,21 @@ class CheshireCat:
             log.error("Error during CheshireCat bootstrap. Exiting.")
             sys.exit()
 
+    async def init_db(self):
+        """Initialize core DB."""
+
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+        initial_settings = {
+            "active_plugins": [],
+            "installation_id": str(uuid4()),
+        }
+
+        for name, value in initial_settings.items():
+            setting = await Setting.get(name)
+            if setting is None:
+                await Setting.set(name, value)
     
     async def execute_agent(self, slug, cat):
         """Execute an agent from its slug."""

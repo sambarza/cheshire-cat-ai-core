@@ -167,7 +167,7 @@ class MadHatter:
 
 
     async def get_active_plugins(self):
-        active_plugins = await Setting.get("active_plugins", default=[])
+        active_plugins = await Setting.get("active_plugins")
         return active_plugins
 
        

@@ -13,7 +13,8 @@ from cat.routes import (
     base,
     auth,
     settings,
-    plugins
+    plugins,
+    chats
 )
 from cat.routes.websocket import websocket
 from cat.routes.static import static
@@ -81,6 +82,7 @@ if cors_enabled == "true":
 # Add routers to the middleware stack.
 cheshire_cat_api.include_router(base.router, tags=["Home"])
 cheshire_cat_api.include_router(auth.router, tags=["Auth"], prefix="/auth")
+cheshire_cat_api.include_router(chats.router, tags=["Chats"], prefix="/chats")
 cheshire_cat_api.include_router(settings.router, tags=["Settings"], prefix="/settings")
 cheshire_cat_api.include_router(plugins.router, tags=["Plugins"], prefix="/plugins")
 cheshire_cat_api.include_router(websocket.router, tags=["Websocket"])

@@ -1,5 +1,4 @@
 import os
-from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
@@ -46,13 +45,29 @@ AsyncSessionLocal = async_sessionmaker(
     autocommit=False
 )
 
-@asynccontextmanager
+
+# fastAPI dependency
 async def get_session():
-    session = AsyncSessionLocal()
-    try:
-        yield session
-        await session.commit()
-    except Exception as e:
-        await session.rollback()
-        log.error("Error during db session")
-        raise
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception as e:
+            await session.rollback()
+            log.error("Error during db session")
+            raise
+
+
+# decorator for sqlalchemy model classes
+def with_session(func):
+    async def wrapper(*args, **kwargs):
+        async with AsyncSessionLocal() as session:
+            try:
+                result = await func(args[0], session, *args[1:], **kwargs)
+                await session.commit()
+                return result
+            except Exception as e:
+                await session.rollback()
+                log.error("Error during db session")
+                raise
+    return wrapper
