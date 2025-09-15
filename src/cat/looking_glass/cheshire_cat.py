@@ -51,9 +51,8 @@ class CheshireCat:
             self.fastapi_app = fastapi_app # reference to the FastAPI object
 
             # init core DB
-            async def init_db():
-                async with engine.begin() as conn:
-                    await conn.run_sync(Base.metadata.create_all)
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
 
             # instantiate MadHatter (loads all plugins' hooks and tools) and trigger first discovery
             self.mad_hatter = MadHatter()

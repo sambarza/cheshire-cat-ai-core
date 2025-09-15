@@ -81,7 +81,7 @@ class HTTPAuth(BaseAuth):
         connection: Request,
         credential = Depends(APIKeyHeader(
             name="Authorization",
-            description="Insert here your CCAT_API_KEY.",
+            description="Insert here your CCAT_API_KEY. Default is: meow",
             auto_error=False
         )), # this mess for the damn swagger
     ) -> AsyncGenerator[StrayCat | None, None]:

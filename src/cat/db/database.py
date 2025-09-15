@@ -14,6 +14,7 @@ DB_URL = get_env("CCAT_SQL")
 
 connect_args = {}
 if DB_URL.startswith("sqlite"):
+    os.makedirs(os.path.dirname(DB_URL.split("///")[1]), exist_ok=True)
     connect_args["timeout"] = 10
     connect_args["check_same_thread"] = False
 if DB_URL.startswith("postgresql"):

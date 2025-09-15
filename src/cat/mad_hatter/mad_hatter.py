@@ -8,7 +8,7 @@ from pathlib import Path
 
 from cat.log import log
 import cat.utils as utils
-from cat.db import get_session
+from cat.db.models import Setting
 from cat.mad_hatter.plugin_extractor import PluginExtractor
 from cat.mad_hatter.plugin import Plugin
 from cat.mad_hatter.decorators.hook import CatHook
@@ -167,18 +167,10 @@ class MadHatter:
 
 
     async def get_active_plugins(self):
-        async with get_session() as session:
-            log.critical("SESSION")
-            active_plugins = await session.execute("SELECT 12") # crud.get_setting_by_name("active_plugins")
-            log.critical(active_plugins)
-        return active_plugins["value"]
+        active_plugins = await Setting.get("active_plugins", default=[])
+        return active_plugins
 
-    async def save_active_plugins_to_db(self, active_plugins):
-        async with get_session() as session:
-            new_setting = {"name": "active_plugins", "value": active_plugins}
-            new_setting = Setting(**new_setting)
-        
-
+       
     # activate / deactivate plugin
     async def toggle_plugin(self, plugin_id):
 
@@ -209,7 +201,7 @@ class MadHatter:
                 active_plugins.append(plugin_id)
 
             # update DB with list of active plugins, delete duplicate plugins
-            self.save_active_plugins_to_db(list(set(active_plugins)))
+            await Setting.set("active_plugins", list(set(active_plugins)))
 
             # update cache and embeddings
             self.sync_decorated()

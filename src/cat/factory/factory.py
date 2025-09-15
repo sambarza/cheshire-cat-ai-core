@@ -27,7 +27,7 @@ class Factory:
         if category not in self.category_defaults.keys():
             raise Exception(f"Category '{category}' is not supported by Factory")
 
-        objects_dict = self.mad_hatter_instance.execute_hook(
+        objects_dict = self.mad_hatter.execute_hook(
             f"factory_allowed_{category}s", {}, cat=None
         )
         if len(objects_dict) == 0:
