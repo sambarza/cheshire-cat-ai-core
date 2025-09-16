@@ -19,21 +19,13 @@ class BaseAuthHandler(ABC):  # TODOAUTH: pydantic model?
 
     async def authorize_user_from_credential(
         self,
-        protocol: Literal["http", "websocket"],
         credential: str,
         auth_resource: AuthResource,
         auth_permission: AuthPermission,
-        # when there is no JWT, user id is passed via `user_id: xxx` header or via websocket path
-        # with JWT, the user id is in the token and has priority
-        user_id: str
     ) -> AuthUserInfo | None:
 
         if credential is None:
             return None
-
-        # no user_id header,
-        if user_id is None:
-            user_id = get_env("CCAT_ADMIN_CREDENTIALS").split(":")[0]
 
         if self.is_jwt(credential):
             # JSON Web Token auth
@@ -43,7 +35,7 @@ class BaseAuthHandler(ABC):  # TODOAUTH: pydantic model?
         else:
             # API_KEY auth
             return self.authorize_user_from_key(
-                protocol, user_id, credential, auth_resource, auth_permission
+                credential, auth_resource, auth_permission
             )
         
     def is_jwt(self, token: str) -> bool:
@@ -63,7 +55,6 @@ class BaseAuthHandler(ABC):  # TODOAUTH: pydantic model?
         # using seconds for easier testing
         expire_delta_in_seconds = float(get_env("CCAT_JWT_EXPIRE_MINUTES")) * 60
         expires = datetime.now(utc) + timedelta(seconds=expire_delta_in_seconds)
-        # TODOAUTH: add issuer and redirect_uri (and verify them when a token is validated)
 
         jwt_content = {
             "sub": user.id,                      # Subject (the user ID)
@@ -85,17 +76,13 @@ class BaseAuthHandler(ABC):  # TODOAUTH: pydantic model?
         auth_resource: AuthResource,
         auth_permission: AuthPermission
     ) -> AuthUserInfo | None:
-        # will raise: NotImplementedError
         pass
 
     @abstractmethod
     async def authorize_user_from_key(
         self,
-        protocol: Literal["http", "websocket"],
-        user_id: str,
         api_key: str,
         auth_resource: AuthResource,
         auth_permission: AuthPermission
     ) -> AuthUserInfo | None:
-        # will raise: NotImplementedError
         pass

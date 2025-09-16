@@ -47,16 +47,12 @@ class BaseAuth(ABC):
     async def authorize(
         self,
         connection: HTTPConnection,
-        credential: str | None,
-        user_id: str | None
+        credential: str | None
     ) -> AsyncGenerator[StrayCat | None, None]:
-        
-        # get protocol from Starlette request
-        protocol = connection.scope.get('type')
         
         for ah in connection.app.state.ccat.auth_handlers.values():
             user: AuthUserInfo = await ah.authorize_user_from_credential(
-                protocol, credential, self.resource, self.permission, user_id
+                credential, self.resource, self.permission
             )
             if user:
                 # create new StrayCat
@@ -71,7 +67,7 @@ class BaseAuth(ABC):
                 return
 
         # if no StrayCat was obtained, raise exception
-        self.not_allowed(connection)
+        self.not_allowed()
 
 
 class HTTPAuth(BaseAuth):
@@ -89,15 +85,10 @@ class HTTPAuth(BaseAuth):
         if credential is not None:
             credential = credential.replace("Bearer ", "")
         
-        # and that's why I hate async stuff
-        async for stray in self.authorize(
-            connection,
-            credential,
-            connection.headers.get("user_id")
-        ):
+        async for stray in self.authorize(connection, credential):
             yield stray
 
-    def not_allowed(self, connection: Request):
+    def not_allowed(self):
         raise HTTPException(status_code=403, detail="Invalid Credentials")
         
 
@@ -111,10 +102,9 @@ class WebsocketAuth(BaseAuth):
         
         async for stray in self.authorize(
             connection,
-            connection.query_params.get("token"),
-            connection.path_params.get("user_id")
+            connection.query_params.get("token")
         ):
             yield stray
         
-    def not_allowed(self, connection: WebSocket):
+    def not_allowed(self):
         raise WebSocketException(code=1004, reason="Invalid Credentials")

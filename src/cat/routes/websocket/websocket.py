@@ -9,14 +9,11 @@ router = APIRouter()
 
 
 @router.websocket("/ws")
-@router.websocket("/ws/{user_id}") # TODOV2: remove, because the user is taken form the jwt
 async def websocket_endpoint(
     websocket: WebSocket,
-    cat=Depends(WebsocketAuth(AuthResource.CHAT, AuthPermission.EDIT)), # check_permissions only for http
+    cat=Depends(WebsocketAuth(AuthResource.CHAT, AuthPermission.EDIT))
 ):
     await websocket.accept()
-
-    # TODOV2: support both legacy {"type": "chat_token", "content": "token"} and AGUI
 
     try:
         while True:

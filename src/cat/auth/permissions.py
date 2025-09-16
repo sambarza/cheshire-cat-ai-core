@@ -87,8 +87,7 @@ class AuthUserInfo(BaseModelDict):
     Core will use this object to retrieve or create a StrayCat (session)
     """
 
-    # TODOAUTH: id & username can be confused when is time to retrieve or create a StrayCat
-    # (id should be used)
+    # Best practice is to have a human readbale name and a uuid5 as id
     id: str
     name: str
 

@@ -28,9 +28,9 @@ def get_supported_env_variables():
 
 
 def get_env(name) -> str | None:
-    """Utility to get an environment variable value. To be used only for supported Cat envs.
-    - covers default supported variables and their default value
-    - automagically handles legacy env variables missing the prefix "CCAT_"
+    """
+    Utility to get an environment variable value. To be used only for supported Cat envs.
+    Covers default supported variables and their default value
     """
 
     cat_default_env_variables = get_supported_env_variables()

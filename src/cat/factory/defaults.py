@@ -1,6 +1,6 @@
 
 import jwt
-from typing import Literal
+from uuid import uuid5, NAMESPACE_DNS
 
 from langchain_core.language_models.chat_models import SimpleChatModel
 from langchain_core.embeddings import FakeEmbeddings
@@ -15,6 +15,8 @@ from cat.auth.permissions import (
 
 
 class LLMDefault(SimpleChatModel):
+    """Defaul LLM, replying a constant string. Used before a proper one is added."""
+
     @property
     def _llm_type(self):
         return ""
@@ -30,15 +32,21 @@ class LLMDefault(SimpleChatModel):
     
 
 class EmbedderDefault(FakeEmbeddings):
+    """Defaul embedder, spits out random vectors. Used before a proper one is added."""
+
     def __init__(self, *args, **kwargs):
         kwargs["size"] = 128
         super().__init__(*args, **kwargs)
 
 
 class AuthHandlerDefault(BaseAuthHandler):
-        
+    """Defaul auth handler, based on environment variables."""
+
     def authorize_user_from_jwt(
-        self, token: str, auth_resource: AuthResource, auth_permission: AuthPermission
+        self,
+        token: str,
+        auth_resource: AuthResource,
+        auth_permission: AuthPermission
     ) -> AuthUserInfo | None:
         try:
             # decode token
@@ -56,29 +64,24 @@ class AuthHandlerDefault(BaseAuthHandler):
 
         except Exception:
             log.warning("Could not auth user from JWT")
-
-        # do not pass
-        return None
+        # if nothing is returned, request shall not pass
 
     def authorize_user_from_key(
             self,
-            protocol: Literal["http", "websocket"],
-            user_id: str,
-            api_key: str,
+            key: str,
             auth_resource: AuthResource,
             auth_permission: AuthPermission,
     ) -> AuthUserInfo | None: 
 
         # allow access with full permissions
-        if api_key == get_env("CCAT_API_KEY"):
+        if key == get_env("CCAT_API_KEY"):
+            username = get_env("CCAT_ADMIN_CREDENTIALS").split(":")[0]
             return AuthUserInfo(
-                id=user_id,
-                name=user_id,
+                id=str(uuid5(NAMESPACE_DNS, username)),
+                name=username,
                 permissions=get_full_permissions()
             )
-
-        # No match -> deny access
-        return None
+        # if nothing is returned, request shall not pass
     
 
 class AgentDefault:

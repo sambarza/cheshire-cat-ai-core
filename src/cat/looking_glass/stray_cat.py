@@ -69,7 +69,7 @@ class StrayCat:
     ):
 
         # user data
-        self.__user_id = user_data.name # TODOV2: use id
+        self.__user_id = user_data.id
         self.__user_data = user_data
 
         # pointer to CheshireCat instance
@@ -608,7 +608,7 @@ Allowed classes are:
         return ccat.factory.get_default("llm")
 
     @property
-    def embedder(self):
+    def _embedder(self):
         """Langchain `Embeddings` object.
 
         Returns
@@ -629,22 +629,6 @@ Allowed classes are:
         if requested_embedder and requested_embedder in ccat.embedders:
             return ccat.llms[requested_embedder]
         return ccat.factory.get_default("embedder")
-
-    @property
-    def memory(self):
-        """Gives access to the long term memory, containing vector DB collections (episodic, declarative, procedural).
-
-        Returns
-        -------
-        memory : LongTermMemory
-            Long term memory of the Cat.
-
-
-        Examples
-        --------
-        TODO examples
-        """
-        return self._ccat.memory
 
     @property
     def mad_hatter(self):

@@ -15,7 +15,7 @@ class SettingUpdate(BaseModel):
     value: Any
 
 
-@router.get("/")
+@router.get("")
 async def get_settings(
     cat=check_permissions(AuthResource.SETTING, AuthPermission.LIST),
 )-> List[Setting]:
