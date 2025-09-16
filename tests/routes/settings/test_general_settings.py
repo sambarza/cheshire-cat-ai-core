@@ -1,4 +1,4 @@
-# TODO: test general settings endpoints ( /settings CRUD )
+# TODOV2: test general settings endpoints ( /settings CRUD )
 
 
 def test_get_setting():

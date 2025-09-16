@@ -13,8 +13,8 @@ def test_http_auth(client):
     wrong_headers = [
         {}, # no header
         { "Authorization": "" },
-        { "Authorization": "meow" }, # no Bearer prefix
-        { "Authorization": "Bearer wrong" }, # wrong key
+        { "Authorization": "wrong" },
+        { "Authorization": "Bearer wrong" }
     ]
 
     # all the previous headers result in a 403
@@ -47,6 +47,8 @@ def test_ws_auth(client):
     # allow access if CCAT_API_KEY is right
     query_params = {"token": "meow"}
     res = send_websocket_message(mex, client, query_params=query_params)
+    print("AAAAAAAAAAAAAAAAAAAaa")
+    print(str(e_info.type.__name__))
     assert "You did not configure" in res["content"]
 
 
@@ -55,11 +57,9 @@ def test_all_core_endpoints_secured(client):
 
     open_endpoints = [
         "/openapi.json",
-        "/auth/login",
-        "/auth/token",
-        "/auth/token-form",
         "/docs",
-        "/docs/oauth2-redirect" # TODO: can this endpoint be avoided? it's added by OAuth scheme for the swagger
+        "/auth/handlers",
+        "/auth/login/{name}",
     ]
 
     # test all endpoints are secured
@@ -70,23 +70,19 @@ def test_all_core_endpoints_secured(client):
             with pytest.raises(Exception) as e_info:
                 send_websocket_message("Where do I go?", client)
                 assert str(e_info.type.__name__) == "WebSocketDisconnect"
-        # static admin files (redirect to login)
+        # static admin files (redirect to login) # TODOV2: admin is no more there
         elif "/admin" in endpoint.path:
             response = client.get(endpoint.path, follow_redirects=False)
             assert response.status_code == 307            
         # static files http endpoints (open)
         # TODOV2 static routes should be closed also
-        elif "/static" in endpoint.path \
-                or "/core-static" in endpoint.path:
+        elif "/core-static" in endpoint.path:
             response = client.get(endpoint.path)
             assert response.status_code in {200, 404}
         # REST API http endpoints
         else:    
             for verb in endpoint.methods:
                 response = client.request(verb, endpoint.path)
-
-                from cat.log import log
-                log.warning(endpoint.path)
 
                 if endpoint.path in open_endpoints:
                     assert response.status_code in {200, 400}

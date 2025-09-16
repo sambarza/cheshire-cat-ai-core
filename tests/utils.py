@@ -56,7 +56,7 @@ def send_http_message(
 
 # utility function to communicate with the cat via websocket
 def send_websocket_message(msg, client, user_id="admin", query_params=None):
-    url = f"/ws/{user_id}"
+    url = "/ws"
     if query_params:
         url += "?" + urlencode(query_params)
 
@@ -108,9 +108,3 @@ def create_mock_plugin_zip(flat: bool):
         base_dir=base_dir,
     )
 
-
-def create_new_user(client, admin_headers):
-    new_user = {"username": "Alice", "password": "wandering_in_wonderland"}
-    response = client.post("/users", headers=admin_headers, json=new_user)
-    assert response.status_code == 200
-    return response.json()
