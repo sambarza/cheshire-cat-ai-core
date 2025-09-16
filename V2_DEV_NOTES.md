@@ -76,6 +76,9 @@
 - From now on we only support chat models, text only or text plus images. Pure completion models are not supported anymore. If you need to use one, create your own LLM adapter and hook it via `factory_allowed_llms`.
 - Embedders are not automatically associated with the chosen LLM vendor. You will need to configure that yourself, The cat will notify you at every message if the embedder is not set.
 - when calling the Cat via websocket and http streaming, all tokens, notifications, agent steps, errors and other lifecycle events (including final response) will be sent following the [AG-UI](https://docs.ag-ui.com/concepts/events) protocol. 
+- Settings, Plugins, Auth and Static endpoints have been refined and typed
+  - details for each TODO
+- new `chats` endpoints
 
 
 ## Folder structure

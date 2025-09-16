@@ -1,4 +1,3 @@
-from tests.utils import get_core_plugins_ids
 
 def test_list_plugins(client, admin_headers):
     response = client.get("/plugins", headers=admin_headers)
@@ -14,7 +13,7 @@ def test_list_plugins(client, admin_headers):
 
     # installed plugins
     for p in json["installed"]:
-        assert p["id"] in get_core_plugins_ids()
+        assert p["id"] in ["da_sistemare"]
         assert isinstance(p["active"], bool)
         assert p["active"]
 
