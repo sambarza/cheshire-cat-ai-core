@@ -12,6 +12,7 @@ from packaging.requirements import Requirement
 
 from cat.mad_hatter.decorators import CatTool, CatHook, CatPluginDecorator, CatEndpoint
 from cat.experimental.form import CatForm
+from cat.mad_hatter.plugin_manifest import PluginManifest
 from cat import utils
 from cat.log import log
 
@@ -52,7 +53,7 @@ class Plugin:
         self._id: str = os.path.basename(os.path.normpath(plugin_path))
 
         # plugin manifest (name, decription, thumb, etc.)
-        self._manifest = self._load_manifest()
+        self._manifest: PluginManifest = self._load_manifest()
 
         # list of tools, forms and hooks contained in the plugin.
         #   The MadHatter will cache them for easier access,
@@ -216,12 +217,12 @@ class Plugin:
             )
             return False
 
-    def _load_manifest(self):
+    def _load_manifest(self) -> PluginManifest:
+        
         plugin_json_metadata_file_name = "plugin.json"
         plugin_json_metadata_file_path = os.path.join(
             self._path, plugin_json_metadata_file_name
         )
-        meta = {"id": self._id}
         json_file_data = {}
 
         if os.path.isfile(plugin_json_metadata_file_path):
@@ -230,29 +231,12 @@ class Plugin:
                 json_file_data = json.load(json_file)
                 json_file.close()
             except Exception:
-                log.debug(
+                log.error(
                     f"Loading plugin {self._path} metadata, defaulting to generated values"
                 )
 
-        meta["name"] = json_file_data.get("name", utils.to_camel_case(self._id))
-        meta["description"] = json_file_data.get(
-            "description",
-            (
-                "Description not found for this plugin. "
-                f"Please create a `{plugin_json_metadata_file_name}`"
-                " in the plugin folder."
-            ),
-        )
-        meta["author_name"] = json_file_data.get("author_name", "Unknown author")
-        meta["author_url"] = json_file_data.get("author_url", "")
-        meta["plugin_url"] = json_file_data.get("plugin_url", "")
-        meta["tags"] = json_file_data.get("tags", "unknown")
-        meta["thumb"] = json_file_data.get("thumb", "")
-        meta["version"] = json_file_data.get("version", "0.0.1")
-        meta["min_cat_version"] = json_file_data.get("min_cat_version", "")
-        meta["max_cat_version"] = json_file_data.get("max_cat_version", "")
-
-        return meta
+        json_file_data["id"] = self.id
+        return PluginManifest(**json_file_data)
 
     def _install_requirements(self):
         req_file = os.path.join(self.path, "requirements.txt")
@@ -352,8 +336,8 @@ class Plugin:
 
 
     def plugin_specific_error_message(self):
-        name = self.manifest.get("name")
-        url = self.manifest.get("plugin_url")
+        name = self.manifest.name
+        url = self.manifest.plugin_url
 
         if url:
             return f"To resolve any problem related to {name} plugin, contact the creator using github issue at the link {url}"

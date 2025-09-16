@@ -71,5 +71,3 @@ class PluginExtractor:
     def get_extension(self):
         return self.extension
 
-    def get_plugin_id(self):
-        return self.id

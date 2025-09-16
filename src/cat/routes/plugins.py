@@ -1,13 +1,13 @@
 import aiofiles
 import mimetypes
 from copy import deepcopy
-from typing import Dict
+from typing import Dict, List
+from pydantic import BaseModel, ValidationError
 from fastapi import Body, APIRouter, HTTPException, UploadFile
 from cat.log import log
 from cat.mad_hatter.registry import registry_search_plugins, registry_download_plugin
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
-
-from pydantic import ValidationError
+from cat.mad_hatter.plugin_manifest import PluginManifest
 
 router = APIRouter()
 
@@ -19,7 +19,7 @@ async def get_available_plugins(
     cat=check_permissions(AuthResource.PLUGIN, AuthPermission.LIST),
     # author: str = None, to be activated in case of more granular search
     # tag: str = None, to be activated in case of more granular search
-) -> Dict:
+) -> List[PluginManifest]:
     """List available plugins"""
 
     # retrieve plugins from official repo
@@ -27,19 +27,7 @@ async def get_available_plugins(
     # index registry plugins by url
     registry_plugins_index = {}
     for p in registry_plugins:
-        plugin_url = p.get("plugin_url", None)
-        if plugin_url is None:
-            log.warning(f"Plugin {p.get('name')} has no `plugin_url`. It will be skipped from the registry list.")
-            continue
-        # url = p.get("url", None)
-        # if url and url != plugin_url:
-        #     log.info(f"Plugin {p.get('name')} has `url` {url} different from `plugin_url` {plugin_url}. please check the plugin.")
-        if plugin_url in registry_plugins_index:
-            current = registry_plugins_index[plugin_url]
-            log.warning(f"duplicate plugin_url {plugin_url} found in registry. Plugins {p.get('name')} has same url than {current.get('name')}. Skipping.")
-            continue    
-
-        registry_plugins_index[plugin_url] = p
+        registry_plugins_index[p.id] = p
 
     # get active plugins
     active_plugins = await cat.mad_hatter.get_active_plugins()
@@ -48,50 +36,52 @@ async def get_available_plugins(
     installed_plugins = []
     for p in cat.mad_hatter.plugins.values():
         # get manifest
-        manifest = deepcopy(
+        manifest: PluginManifest = deepcopy(
             p.manifest
         )  # we make a copy to avoid modifying the plugin obj
-        manifest["active"] = (
-            p.id in active_plugins
-        )  # pass along if plugin is active or not
-        manifest["upgrade"] = None
-        manifest["hooks"] = [
-            {"name": hook.name, "priority": hook.priority} for hook in p.hooks
-        ]
-        manifest["tools"] = [{"name": tool.name} for tool in p.tools]
-        manifest["endpoints"] = [{"name": endpoint.name, "tags": endpoint.tags} for endpoint in p.endpoints]
-        manifest["forms"] = [{"name": form.name} for form in p.forms]
+        manifest.local_info["active"] = p.id in active_plugins
 
         # do not show already installed plugins among registry plugins
-        r = registry_plugins_index.pop(manifest["plugin_url"], None)
+        r = registry_plugins_index.pop(manifest.plugin_url, None)
         
+        manifest.local_info["upgrade"] = None
         # filter by query
-        plugin_text = [str(field) for field in manifest.values()]
-        plugin_text = " ".join(plugin_text).lower()
-
+        plugin_text = manifest.model_dump_json()
         if (query is None) or (query.lower() in plugin_text):
             if r is not None:
-                r_version = r.get("version", None)
-                if r_version is not None and r_version != p.manifest.get("version"):
+                if r.version is not None and r.version != p.manifest.version:
                     manifest["upgrade"] = r["version"]
             installed_plugins.append(manifest)
 
-    return {
-        "filters": {
-            "query": query,
-            # "author": author, to be activated in case of more granular search
-            # "tag": tag, to be activated in case of more granular search
-        },
-        "installed": installed_plugins,
-        "registry": list(registry_plugins_index.values()),
-    }
+    return installed_plugins + registry_plugins
 
 
-@router.post("/upload")
+@router.get("/{id}")
+async def get_plugin_details(
+    id: str,
+    cat=check_permissions(AuthResource.PLUGIN, AuthPermission.READ),
+) -> PluginManifest:
+    """Returns information on a single plugin"""
+
+    if not cat.mad_hatter.plugin_exists(id):
+        raise HTTPException(status_code=404, detail="Plugin not found")
+
+    active_plugins = await cat.mad_hatter.get_active_plugins()
+
+    plugin = cat.mad_hatter.plugins[id]
+
+    # get manifest and active True/False. We make a copy to avoid modifying the original obj
+    plugin_info = deepcopy(plugin.manifest)
+    plugin_info.local_info["active"] = id in active_plugins
+
+    return plugin_info
+
+
+@router.post("/zip")
 async def install_plugin(
     file: UploadFile,
     cat=check_permissions(AuthResource.PLUGIN, AuthPermission.WRITE),
-) -> Dict:
+) -> PluginManifest:
     """Install a new plugin from a zip file"""
 
     admitted_mime_types = ["application/zip", "application/x-tar"]
@@ -107,88 +97,86 @@ async def install_plugin(
     async with aiofiles.open(plugin_archive_path, "wb+") as f:
         content = await file.read()
         await f.write(content)
-    cat.mad_hatter.install_plugin(plugin_archive_path)
-
-    return {
-        "filename": file.filename,
-        "content_type": file.content_type,
-        "info": "Plugin is being installed asynchronously",
-    }
+    manifest = await cat.mad_hatter.install_plugin(plugin_archive_path)
+    return manifest
 
 
-@router.post("/upload/registry")
+class PluginRegistryUpload(BaseModel):
+    url: str
+
+@router.post("/registry")
 async def install_plugin_from_registry(
-    payload: Dict = Body({"url": "https://github.com/plugin-dev-account/plugin-repo"}),
+    payload: PluginRegistryUpload,
     cat=check_permissions(AuthResource.PLUGIN, AuthPermission.WRITE),
-) -> Dict:
+) -> PluginManifest:
     """Install a new plugin from registry"""
 
     # download zip from registry
     try:
-        tmp_plugin_path = await registry_download_plugin(payload["url"])
-        await cat.mad_hatter.install_plugin(tmp_plugin_path)
+        tmp_plugin_path = await registry_download_plugin(payload.url)
+        manifest = await cat.mad_hatter.install_plugin(tmp_plugin_path)
     except Exception as e:
         log.error("Could not download plugin form registry")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Could not download plugin form registry")
 
-    return {"url": payload["url"], "info": "Plugin is being installed asynchronously"}
+    return manifest
 
 
-@router.put("/{name}/toggle", status_code=200)
+@router.put("/{id}/toggle", status_code=200)
 async def toggle_plugin(
-    name: str,
+    id: str,
     cat=check_permissions(AuthResource.PLUGIN, AuthPermission.WRITE),
 ) -> Dict:
     """Enable or disable a single plugin"""
 
     # check if plugin exists
-    if not cat.mad_hatter.plugin_exists(name):
+    if not cat.mad_hatter.plugin_exists(id):
         raise HTTPException(status_code=404, detail="Plugin not found")
 
     try:
         # toggle plugin
-        await cat.mad_hatter.toggle_plugin(name)
-        return {"info": f"Plugin {name} toggled"}
+        await cat.mad_hatter.toggle_plugin(id)
+        return {"info": f"Plugin {id} toggled"}
     except Exception as e:
-        log.error(f"Could not toggle plugin {name}")
+        log.error(f"Could not toggle plugin {id}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{name}/settings")
+@router.get("/{id}/settings")
 async def get_plugin_settings(
-    name: str,
+    id: str,
     cat=check_permissions(AuthResource.PLUGIN, AuthPermission.READ),
 ) -> Dict:
     """Returns the settings of a specific plugin"""
 
-    if not cat.mad_hatter.plugin_exists(name):
+    if not cat.mad_hatter.plugin_exists(id):
         raise HTTPException(status_code=404, detail="Plugin not found")
 
     try:
-        settings = cat.mad_hatter.plugins[name].load_settings()
-        schema = cat.mad_hatter.plugins[name].settings_schema()
+        settings = cat.mad_hatter.plugins[id].load_settings()
+        schema = cat.mad_hatter.plugins[id].settings_schema()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
     if schema["properties"] == {}:
         schema = {}
 
-    return {"name": name, "value": settings, "schema": schema}
+    return {"id": id, "value": settings, "schema": schema}
 
 
-@router.put("/{name}/settings")
+@router.put("/{id}/settings")
 async def upsert_plugin_settings(
-    name: str,
+    id: str,
     payload: Dict = Body({"setting_a": "some value", "setting_b": "another value"}),
     cat=check_permissions(AuthResource.PLUGIN, AuthPermission.EDIT),
 ) -> Dict:
     """Updates the settings of a specific plugin"""
 
-    if not cat.mad_hatter.plugin_exists(name):
+    if not cat.mad_hatter.plugin_exists(id):
         raise HTTPException(status_code=404, detail="Plugin not found")
 
     # Get the plugin object
-    plugin = cat.mad_hatter.plugins[name]
+    plugin = cat.mad_hatter.plugins[id]
 
     try:
         # Load the plugin settings Pydantic model
@@ -203,46 +191,19 @@ async def upsert_plugin_settings(
 
     final_settings = plugin.save_settings(payload)
 
-    return {"name": name, "value": final_settings}
+    return {"id": id, "value": final_settings}
 
 
-@router.get("/{name}")
-async def get_plugin_details(
-    name: str,
-    cat=check_permissions(AuthResource.PLUGIN, AuthPermission.READ),
-) -> Dict:
-    """Returns information on a single plugin"""
-
-    if not cat.mad_hatter.plugin_exists(name):
-        raise HTTPException(status_code=404, detail="Plugin not found")
-
-    active_plugins = await cat.mad_hatter.get_active_plugins()
-
-    plugin = cat.mad_hatter.plugins[name]
-
-    # get manifest and active True/False. We make a copy to avoid modifying the original obj
-    plugin_info = deepcopy(plugin.manifest)
-    plugin_info["active"] = name in active_plugins
-    plugin_info["hooks"] = [
-        {"name": hook.name, "priority": hook.priority} for hook in plugin.hooks
-    ]
-    plugin_info["tools"] = [{"name": tool.name} for tool in plugin.tools]
-    plugin_info["forms"] = [{"name": form.name} for form in plugin.forms]
-    plugin_info["endpoints"] = [{"name": endpoint.name, "tags": endpoint.tags} for endpoint in plugin.endpoints]
-
-    return {"data": plugin_info}
-
-
-@router.delete("/{name}")
+@router.delete("/{id}")
 async def delete_plugin(
-    name: str,
+    id: str,
     cat=check_permissions(AuthResource.PLUGIN, AuthPermission.DELETE),
 ) -> Dict:
     """Physically remove plugin."""
 
     try:
         # remove folder, hooks and tools
-        cat.mad_hatter.uninstall_plugin(name)
-        return {"deleted": name}
+        await cat.mad_hatter.uninstall_plugin(id)
+        return {"deleted": id}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

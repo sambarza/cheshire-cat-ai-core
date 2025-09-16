@@ -23,11 +23,7 @@ from cat.experimental.form import CatForm
 # - prioritizing
 # - executing
 class MadHatter:
-    # loads and execute plugins
-    # - enter into the plugin folder and loads everything
-    #   that is decorated or named properly
-    # - orders plugged in hooks by name and priority
-    # - exposes functionality to the cat
+    """Plugin manager"""
 
     def __init__(self):
 
@@ -52,14 +48,18 @@ class MadHatter:
         # remove zip after extraction
         os.remove(package_plugin)
 
-        # get plugin id (will be its folder name)
-        plugin_id = os.path.basename(plugin_path)
-
         # create plugin obj
-        self.load_plugin(plugin_path)
+        try:
+            plugin = Plugin(plugin_path)
+        except Exception as e:
+            log.error("Could not install plugin in {plugin_path}. Removing it.")
+            shutil.rmtree(plugin_path)
+            raise e
 
         # activate it
-        await self.toggle_plugin(plugin_id)
+        self.plugins[plugin.id] = plugin
+        await self.toggle_plugin(plugin.id)
+        return self.plugins[plugin.id].manifest
 
     async def uninstall_plugin(self, plugin_id):
 
@@ -88,7 +88,6 @@ class MadHatter:
         active_plugins = await self.get_active_plugins()
 
         # plugins are found in the `./plugins` folder
-        # TODOV2: these two attributes are not really necessary, they can maybe be properties
         all_plugin_folders = \
             glob.glob( f"{utils.get_plugins_path()}/*/")
 
@@ -97,33 +96,15 @@ class MadHatter:
 
         # discover plugins, folder by folder
         for folder in all_plugin_folders:
-            self.load_plugin(folder)
-
-            plugin_id = os.path.basename(os.path.normpath(folder))
-
-            if plugin_id in active_plugins:
-                try:
-                    self.plugins[plugin_id].activate()
-                except Exception as e:
-                    # Couldn't activate the plugin -> Deactivate it
-                    if plugin_id in active_plugins:
-                        await self.toggle_plugin(plugin_id)
-                    raise e
+            try:
+                plugin = Plugin(folder)
+                self.plugins[plugin.id] = plugin
+                if plugin.id in active_plugins:
+                    plugin.activate()
+            except Exception:
+                log.error(f"Could not load plugin in {folder}")
 
         await self.sync_decorated()
-
-    def load_plugin(self, plugin_path):
-        # Instantiate plugin.
-        #   If the plugin is inactive, only manifest will be loaded
-        #   If active, also settings, tools and hooks
-        try:
-            plugin = Plugin(plugin_path)
-            # if plugin is valid, keep a reference
-            self.plugins[plugin.id] = plugin
-        except Exception:
-            # Something happened while loading the plugin.
-            # Print the error and go on with the others.
-            log.error(f"Error while loading plugin from {plugin_path}")
 
     # Load decorated functions from active plugins into MadHatter
     async def sync_decorated(self):
@@ -156,6 +137,7 @@ class MadHatter:
             self.hooks[hook_name].sort(key=lambda x: x.priority, reverse=True)
 
         # notify sync has finished (the Cat will ensure all tools are embedded in vector memory)
+        # TODOV2: this loop was previously in CheshireCat, needs a reference tot he fastapi app
         # TODOV2: use a hook so plugins can update tools embeddings and other post sync operations
         for endpoint in self.endpoints:
             if endpoint.plugin_id in await self.get_active_plugins():
@@ -165,12 +147,10 @@ class MadHatter:
     def plugin_exists(self, plugin_id) -> bool:
         return plugin_id in self.plugins.keys()
 
-
     async def get_active_plugins(self):
         active_plugins = await Setting.get("active_plugins")
         return active_plugins
 
-       
     # activate / deactivate plugin
     async def toggle_plugin(self, plugin_id):
 
@@ -203,8 +183,8 @@ class MadHatter:
             # update DB with list of active plugins, delete duplicate plugins
             await Setting.set("active_plugins", list(set(active_plugins)))
 
-            # update cache and embeddings
-            self.sync_decorated()
+            # update cache
+            await self.sync_decorated()
 
         else:
             raise Exception(f"Plugin {plugin_id} not present in plugins folder")
@@ -263,8 +243,6 @@ class MadHatter:
         return tea_cup
 
     # get plugin object (used from within a plugin)
-    # TODO: should we allow to take directly another plugins' obj?
-    # TODO: throw exception if this method is called from outside the plugins folder
     def get_plugin(self):
         # who's calling?
         calling_frame = inspect.currentframe().f_back
