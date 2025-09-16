@@ -11,6 +11,9 @@ class Setting(BaseModel):
     name: str
     value: Any
 
+class SettingUpdate(BaseModel):
+    value: Any
+
 
 @router.get("/")
 async def get_settings(
@@ -38,21 +41,44 @@ async def get_setting(
     return Setting(name=name, value=setting_value)
 
 
-@router.put("/{name}")
-async def put_setting(
-    name: str,
-    value: Any = Body(...),
+@router.post("")
+async def new_setting(
+    setting: Setting = Body(...),
     cat=check_permissions(AuthResource.SETTING, AuthPermission.WRITE),
 ) -> Setting:
-    """Upsert a setting in the database."""
-    if name == "" or value == "":
+    """Create new setting in the database."""
+    if setting.name == "" or setting.value == "":
         raise HTTPException(
             status_code=400,
-            detail=f"name or value ar None"
+            detail=f"name or value are None"
         )
 
-    await models.Setting.set(name, value)
-    return Setting(name=name, value=value)
+    await models.Setting.set(setting.name, setting.value)
+    return setting
+
+
+@router.put("/{name}")
+async def edit_setting(
+    name: str,
+    setting: SettingUpdate = Body(...),
+    cat=check_permissions(AuthResource.SETTING, AuthPermission.EDIT),
+) -> Setting:
+    """Update a setting in the database."""
+    if name == "" or setting.value == "":
+        raise HTTPException(
+            status_code=400,
+            detail=f"name or value are None"
+        )
+    
+    prev_value = await models.Setting.get(name)
+    if prev_value is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Not found"
+        )
+
+    await models.Setting.set(name, setting.value)
+    return Setting(name=name, value=setting.value)
 
 
 @router.delete("/{name}")
@@ -70,5 +96,4 @@ async def delete_setting(
             detail=f"Not found."
         )
 
-    # delete
     await models.Setting.delete(name)
