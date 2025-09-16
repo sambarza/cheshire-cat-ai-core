@@ -27,7 +27,7 @@ class UploadedFileResponse(utils.BaseModelDict):
     url: str
     mime_type: str
 
-@router.post("/upload/")
+@router.post("")
 async def upload_file(
     file: UploadFile = File(...),
     cat=check_permissions(AuthResource.STATIC, AuthPermission.WRITE)
@@ -66,7 +66,7 @@ async def upload_file(
 
 
 
-@router.get("/static")
+@router.get("")
 async def get_static_files(
     cat=check_permissions(AuthResource.STATIC, AuthPermission.LIST)
 ) -> List[str]:
@@ -85,13 +85,13 @@ async def get_static_files(
     return urls
     
 
-@router.get("/static/{file_path:path}")
+@router.get("/{path:path}")
 async def get_static_file(
-    file_path,
+    path,
     cat=check_permissions(AuthResource.STATIC, AuthPermission.READ)
 )-> FileResponse:
     static_dir = utils.get_static_path()
-    full_path = os.path.join(static_dir, file_path)
+    full_path = os.path.join(static_dir, path)
 
     if os.path.exists(full_path) and os.path.isfile(full_path):
         return FileResponse(full_path)

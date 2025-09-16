@@ -85,8 +85,8 @@ cheshire_cat_api.include_router(auth.router, tags=["Auth"], prefix="/auth")
 cheshire_cat_api.include_router(chats.router, tags=["Chats"], prefix="/chats")
 cheshire_cat_api.include_router(settings.router, tags=["Settings"], prefix="/settings")
 cheshire_cat_api.include_router(plugins.router, tags=["Plugins"], prefix="/plugins")
+cheshire_cat_api.include_router(static.router, tags=["Static Files"], prefix="/static")
 cheshire_cat_api.include_router(websocket.router, tags=["Websocket"])
-cheshire_cat_api.include_router(static.router, tags=["Static Files"])
 
 # mount static files
 # this cannot be done via fastapi.APIrouter:

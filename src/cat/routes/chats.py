@@ -34,7 +34,7 @@ async def get_chats(
     cat=check_permissions(AuthResource.CHAT, AuthPermission.LIST),
     db: AsyncSession = Depends(get_session),
 ) -> List[Chat]:
-    """Get chats for a user, optionally filtered by a search term"""
+    """Get chats for a user."""
 
     stmt = select(ChatDB).where(ChatDB.user_id == cat.user_id)
 
