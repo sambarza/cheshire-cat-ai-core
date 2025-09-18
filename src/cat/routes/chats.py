@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
 from uuid import uuid4
 
+from cat.convo.messages import Message, ChatContext
 from cat.db.models import Chat as ChatDB
 from cat.db import get_session
 
@@ -18,9 +19,10 @@ router = APIRouter()
 class Chat(BaseModel):
     id: str
     user_id: str
+    context_id: str
     updated_at: int
-    body: dict
     title: str
+    messages: List[Message]
 
 
 class ChatCreateUpdate(BaseModel):
@@ -40,7 +42,7 @@ async def get_chats(
 
     if query:
         # no vectors like in the 90s
-        stmt = stmt.where(func.lower(func.cast(ChatDB.body, text)).like(f"%{query.lower()}%"))
+        stmt = stmt.where(func.lower(func.cast(ChatDB.body, text)).ilike(f"%{query.lower()}%"))
 
     stmt = stmt.order_by(desc(ChatDB.updated_at)).limit(100)
 

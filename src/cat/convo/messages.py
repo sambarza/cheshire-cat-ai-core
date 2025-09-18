@@ -78,10 +78,12 @@ class Message(BaseModelDict):
             )
         )
 
+class ChatContext(BaseModelDict):
+    instructions: str = prompts.MAIN_PROMPT_PREFIX
+    resources: List[str] = []
 
 class ChatRequest(BaseModelDict):
 
-    thread: str = "default"
     agent: str = "default" # name of the agent to run.
     model: str = "default" # e.g. "openai:gpt-5"
     stream: bool = True # whether to stream tokens or not

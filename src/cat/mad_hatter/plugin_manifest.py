@@ -16,7 +16,7 @@ class PluginManifest(BaseModel):
     author_name: str = "Unknown"
     author_url: str = "Unknown"
     plugin_url: str = "Unknown"
-    min_cat_version: str = None
+    min_cat_version: str = "Unknown"
     max_cat_version: str = "Unknown"
     local_info: Dict = {} # store here installed plugin info
 
