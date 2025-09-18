@@ -81,15 +81,14 @@ class Message(BaseModelDict):
 class ChatContext(BaseModelDict):
     instructions: str = prompts.MAIN_PROMPT_PREFIX
     resources: List[str] = []
+    # TODOV2: should also tools be supported here?
 
 class ChatRequest(BaseModelDict):
 
     agent: str = "default" # name of the agent to run.
     model: str = "default" # e.g. "openai:gpt-5"
     stream: bool = True # whether to stream tokens or not
-    instructions: str = prompts.MAIN_PROMPT_PREFIX
-    resources: List[str] = [] # should be a list of URIs
-    # TODOV2: openai has also `tools` here, in the format { "type": "tool_name" }
+    context: ChatContext = ChatContext()
     messages: List[Message] = [
         Message(
             role="user",
