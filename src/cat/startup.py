@@ -49,14 +49,9 @@ async def lifespan(app: FastAPI):
         yield
 
 
-def custom_generate_unique_id(route: APIRoute):
-    return f"{route.name}"
-
-
 # REST API
 cheshire_cat_api = FastAPI(
     lifespan=lifespan,
-    generate_unique_id_function=custom_generate_unique_id,
     #openapi_url=None,
     docs_url=None,
     redoc_url=None,

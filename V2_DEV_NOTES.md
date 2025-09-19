@@ -180,6 +180,8 @@ Auth system semplifications (TODO review):
 - AG-UI should send `event: {xxx}`, leave `data: {xxx}` for the legacy messaging style 
 - static files ownership in DB table or via route checks, i.e `static/me`
 - intenral user_id, to avoid throwing around email, could be a uuid5 (based on namespace installation_id)
+- some packages used by core occupy a lot of space and do basically nothing (find alts)
+  `du -h .venv/lib/python3.13/site-packages --max-depth=1 | sort -hr`
 
 ## Questions
 
