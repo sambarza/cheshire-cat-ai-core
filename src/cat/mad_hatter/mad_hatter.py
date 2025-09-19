@@ -148,8 +148,8 @@ class MadHatter:
         return plugin_id in self.plugins.keys()
 
     async def get_active_plugins(self):
-        active_plugins = await Setting.get("active_plugins")
-        return active_plugins
+        active_plugins = await Setting.get(name="active_plugins")
+        return active_plugins.value
 
     # activate / deactivate plugin
     async def toggle_plugin(self, plugin_id):

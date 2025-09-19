@@ -4,8 +4,8 @@ from uuid import uuid4
 from typing import List, Dict
 from typing_extensions import Protocol
 
-from cat.db.database import engine
-from cat.db.models import Base, Setting
+from cat.db.database import init_db
+from cat.db.models import Setting
 from cat.factory.factory import Factory
 from cat.protocols.model_context.client import MCPClient, mcp_servers_config
 from cat.log import log
@@ -51,7 +51,7 @@ class CheshireCat:
         try:
             self.fastapi_app = fastapi_app # reference to the FastAPI object
 
-            # init core DB
+            # ensure core DB settings
             await self.init_db()
 
             # instantiate MadHatter and trigger first discovery
@@ -89,18 +89,18 @@ class CheshireCat:
     async def init_db(self):
         """Initialize core DB."""
 
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+        await init_db()
 
         initial_settings = {
             "active_plugins": [],
-            "installation_id": str(uuid4()),
+            "installation_id": [str(uuid4())],
         }
 
         for name, value in initial_settings.items():
-            setting = await Setting.get(name)
+            setting = await Setting.get_or_none(name=name)
             if setting is None:
-                await Setting.set(name, value)
+                setting = Setting(name=name, value=value)
+                await setting.save()
     
     async def execute_agent(self, slug, cat):
         """Execute an agent from its slug."""

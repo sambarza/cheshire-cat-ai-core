@@ -2,114 +2,49 @@ import time
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy.sql import func
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, JSON, BigInteger, ForeignKey, DateTime, select
+from tortoise.models import Model
+from tortoise import fields
 
-from .database import with_session
-
-Base = declarative_base()
-
-class Setting(Base):
-    __tablename__ = "settings"
-
-    name: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
-    value: Mapped[dict] = mapped_column(JSON, nullable=False)
-
-    @classmethod
-    @with_session
-    async def get(cls, session: AsyncSession, name: str, default=None):
-        result = await session.execute(select(cls).where(cls.name == name))
-        setting = result.scalar_one_or_none()
-        if setting:
-            return setting.value
-        return default
-
-    @classmethod
-    @with_session
-    async def get_all(cls, session: AsyncSession):
-        result = await session.execute(select(cls))
-        return result.scalars().all()
-
-    @classmethod
-    @with_session
-    async def set(cls, session: AsyncSession, name: str, value):
-        result = await session.execute(select(cls).where(cls.name == name))
-        setting = result.scalar_one_or_none()
-        if setting:
-            setting.value = value
-        else:
-            setting = cls(name=name, value=value)
-            session.add(setting)
-
-    @classmethod
-    @with_session
-    async def delete(cls, session: AsyncSession, name: str):
-        result = await session.execute(select(cls).where(cls.name == name))
-        setting = result.scalar_one_or_none()
-        if setting:
-            await session.delete(setting)
+class Tournament(Model):
+    # Defining `id` field is optional, it will be defined automatically
+    # if you haven't done it yourself
+    id = fields.IntField(primary_key=True)
+    name = fields.CharField(max_length=255)
 
 
-class ChatDB(Base):
-    __tablename__ = "chats"
+class Event(Model):
+    id = fields.IntField(primary_key=True)
+    name = fields.CharField(max_length=255)
+    # References to other models are defined in format
+    # "{app_name}.{model_name}" - where {app_name} is defined in the tortoise config
+    tournament = fields.ForeignKeyField('models.Tournament', related_name='events')
+    participants = fields.ManyToManyField('models.Team', related_name='events', through='event_team')
+
+
+class Team(Model):
+    id = fields.IntField(pk=True)
+    name = fields.CharField(max_length=1000)
+
+
+class Setting(Model):
+    name = fields.CharField(pk=True, max_length=1000)
+    value = fields.JSONField()
+
+
+class ChatDB(Model):
     
-    # TODOV2: use proper uuid type
-    id: Mapped[str] = mapped_column(
-        String, primary_key=True, default=lambda: str(uuid4()), nullable=False
-    )
-    title: Mapped[str] = mapped_column(
-        Text, nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-        nullable=False
-    )
-    body: Mapped[dict] = mapped_column(
-        JSON, nullable=False
-    )
-    user_id: Mapped[str] = mapped_column(
-        String, index=True, nullable=False
-    )
-    context_id: Mapped[str] = mapped_column(
-        String, ForeignKey("contexts.id"), nullable=False, index=True
-    )
-
-    context = relationship(
-        "ContextDB",
-        back_populates="chats",
-        lazy="selectin"
-    )
+    id = fields.UUIDField(pk=True, default=uuid4)
+    title = fields.CharField(max_length=1000)
+    updated_at = fields.DatetimeField(auto_now=True)
+    body = fields.JSONField()
+    context = fields.ForeignKeyField('models.ContextDB', related_name='chats')
+    user_id = fields.UUIDField()
 
 
-class ContextDB(Base):
-    __tablename__ = "contexts"
+class ContextDB(Model):
 
-    # TODOV2: use proper uuid type
-    id: Mapped[str] = mapped_column(
-        String, primary_key=True, default=lambda: str(uuid4()), nullable=False
-    )
-    title: Mapped[str] = mapped_column(
-        Text, nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-        nullable=False
-    )
-    body: Mapped[dict] = mapped_column(
-        JSON, nullable=False
-    )
-    user_id: Mapped[str] = mapped_column(
-        String, index=True, nullable=False
-    )
-    
-    chats = relationship(
-        "ChatDB",
-        back_populates="context",
-        cascade="all, delete-orphan"
-    )
+    id = fields.UUIDField(pk=True, default=uuid4)
+    title = fields.CharField(max_length=1000)
+    updated_at = fields.DatetimeField(auto_now=True)
+    body = fields.JSONField()
+    user_id = fields.UUIDField()

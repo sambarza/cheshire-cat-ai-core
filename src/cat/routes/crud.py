@@ -1,9 +1,5 @@
-import time
-from typing import List, Optional, Any
+from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends, Body, Query
-from sqlalchemy import select, update, delete, func, text, desc
-from sqlalchemy.orm import joinedload
-from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -11,26 +7,24 @@ from fastapi import APIRouter
 
 from cat.log import log
 from cat.looking_glass.stray_cat import StrayCat
-from cat.db import get_session
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
-from sqlalchemy.inspection import inspect
 
 
 def get_relationships(db_model):
     """
     Return a dict of relationship info for a SQLAlchemy model.
     """
-    mapper = inspect(db_model)
+    #mapper = inspect(db_model)
     relationships = {}
 
-    for rel in mapper.relationships:
-        relationships[rel.key] = {
-            "target": rel.mapper.class_.__name__,
-            "direction": rel.direction.name,
-            "uselist": rel.uselist,
-            "local_cols": [c.name for c in rel.local_columns],
-            "remote_cols": [c.name for c in rel.remote_side],
-        }
+    #for rel in mapper.relationships:
+    #    relationships[rel.key] = {
+    #        "target": rel.mapper.class_.__name__,
+    #        "direction": rel.direction.name,
+    #        "uselist": rel.uselist,
+    #        "local_cols": [c.name for c in rel.local_columns],
+    #        "remote_cols": [c.name for c in rel.remote_side],
+    #    }
 
     return relationships
 
@@ -63,7 +57,6 @@ def create_crud(
         search: Optional[str] = Query(None, description="Search query"),
         # TODOV2: pagination
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.LIST),
-        db: AsyncSession = Depends(get_session),
     ) -> List[SelectSchema]:
 
         stmt = select(DBModel).where(DBModel.user_id == cat.user_id)
@@ -87,7 +80,6 @@ def create_crud(
         id: str,
         expand: str = Query(default=None, description=f"Which relationship to expand. Avilable: {", ".join(list(relationships.keys()))}"),
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.READ),
-        db: AsyncSession = Depends(get_session),
     ) -> SelectSchema:
 
         stmt = select(DBModel).where(DBModel.id == id)
@@ -113,7 +105,6 @@ def create_crud(
     async def create(
         data: CreateSchema = Body(...),
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.WRITE),
-        db: AsyncSession = Depends(get_session),
     ) -> SelectSchema:
         
         if restrict_by_user_id:
@@ -132,7 +123,6 @@ def create_crud(
         id: str,
         data: UpdateSchema = Body(...),
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.EDIT),
-        db: AsyncSession = Depends(get_session),
     ) -> SelectSchema:
 
         stmt = update(DBModel).where(DBModel.id == id)
@@ -155,7 +145,6 @@ def create_crud(
     async def delete(
         id: str,
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.DELETE),
-        db: AsyncSession = Depends(get_session),
     ):
         stmt = select(DBModel).where(DBModel.id == id)
         if restrict_by_user_id:
