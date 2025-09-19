@@ -150,6 +150,11 @@ class MadHatter:
     async def get_active_plugins(self):
         active_plugins = await Setting.get(name="active_plugins")
         return active_plugins.value
+    
+    async def set_active_plugins(active_plugins):
+        ap = Setting.get(name="active_plugins")
+        ap.value = list(set(active_plugins))
+        await ap.save()
 
     # activate / deactivate plugin
     async def toggle_plugin(self, plugin_id):
@@ -181,7 +186,7 @@ class MadHatter:
                 active_plugins.append(plugin_id)
 
             # update DB with list of active plugins, delete duplicate plugins
-            await Setting.set("active_plugins", list(set(active_plugins)))
+            await self.set_active_plugins(active_plugins)
 
             # update cache
             await self.sync_decorated()

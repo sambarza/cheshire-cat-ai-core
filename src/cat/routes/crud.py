@@ -2,6 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends, Body, Query
 from uuid import uuid4
 
+from tortoise.models import Model
 from pydantic import BaseModel
 from fastapi import APIRouter
 
@@ -30,7 +31,7 @@ def get_relationships(db_model):
 
 
 def create_crud(
-    db_model,
+    db_model: Model,
     prefix: str,
     tag: str,
     auth_resource: AuthResource,
@@ -58,20 +59,18 @@ def create_crud(
         # TODOV2: pagination
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.LIST),
     ) -> List[SelectSchema]:
-
-        stmt = select(DBModel).where(DBModel.user_id == cat.user_id)
+        
         if restrict_by_user_id:
-            stmt = stmt.where(DBModel.user_id == cat.user_id)
+            q = DBModel.filter(user_id=cat.user_id)
+        else:
+            q = DBModel.all()
+        objs = await q.order_by("-updated_at").limit(100)
 
-        if search:
+        #if search:
             # TODOV2: DBModel has no .body, find a more general way to search
             # no vectors like in the 90s
-            stmt = stmt.where(func.lower(func.cast(DBModel.body, text)).ilike(f"%{search.lower()}%"))
+        #    stmt = stmt.where(func.lower(func.cast(DBModel.body, text)).ilike(f"%{search.lower()}%"))
 
-        stmt = stmt.order_by(desc(DBModel.updated_at)).limit(100)
-
-        result = await db.execute(stmt)
-        objs = result.scalars().all()
         return objs
 
 
@@ -81,24 +80,15 @@ def create_crud(
         expand: str = Query(default=None, description=f"Which relationship to expand. Avilable: {", ".join(list(relationships.keys()))}"),
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.READ),
     ) -> SelectSchema:
-
-        stmt = select(DBModel).where(DBModel.id == id)
-        # TODOV2: test another user cannot access
+        
         if restrict_by_user_id:
-            stmt = stmt.where(DBModel.user_id == cat.user_id)
-
-        expand_list = expand.split(",") if expand else []
-        for rel in expand_list:
-            if rel in relationships.keys():
-                rel_attr = getattr(DBModel, rel)
-                stmt = stmt.options(joinedload(rel_attr))
-
-        result = await db.execute(stmt)
-        result = result.scalar_one_or_none()
-        if result is None:
+            obj = await DBModel.get_or_none(id=id, user_id=cat.user_id)
+        else:
+            obj = await DBModel.get_or_none(id=id)
+        
+        if obj is None:
             raise HTTPException(status_code=404, detail="Not found.")
-        log.warning("Always expanding :(")
-        return result
+        return obj
 
 
     @router.post("", description=f"Create new {tag}")
@@ -112,9 +102,7 @@ def create_crud(
         else:
             new_obj = DBModel(**data.model_dump())
 
-        db.add(new_obj)
-        await db.flush()
-        await db.refresh(new_obj)
+        await new_obj.save()
         return new_obj
 
 
@@ -125,20 +113,17 @@ def create_crud(
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.EDIT),
     ) -> SelectSchema:
 
-        stmt = update(DBModel).where(DBModel.id == id)
         if restrict_by_user_id:
-            stmt = stmt.where(DBModel.user_id == cat.user_id)
-        
-        stmt = stmt.values(**data.model_dump(exclude_unset=True))\
-            .execution_options(synchronize_session="fetch")
+            obj = await DBModel.get_or_none(id=id, user_id=cat.user_id)
+        else:
+            obj = await DBModel.get_or_none(id=id)
 
-        result = await db.execute(stmt)
-        if result.rowcount == 0:
-            raise HTTPException(status_code=404, detail=f"{tag} not found")
+        if obj is None:
+            raise HTTPException(status_code=404, detail=f"{tag } not found.")
 
-        q = select(DBModel).where(DBModel.id == id)
-        updated_obj = (await db.execute(q)).scalar_one()
-        return updated_obj
+        obj.update_from_dict(data.model_dump())
+        await obj.save()
+        return obj
 
 
     @router.delete("/{id}")
@@ -146,15 +131,16 @@ def create_crud(
         id: str,
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.DELETE),
     ):
-        stmt = select(DBModel).where(DBModel.id == id)
+        
         if restrict_by_user_id:
-            stmt = stmt.where(DBModel.user_id == cat.user_id)
+            obj = await DBModel.get_or_none(id=id, user_id=cat.user_id)
+        else:
+            obj = await DBModel.get_or_none(id=id)
 
-        result = await db.execute(stmt)
-        chat = result.scalar_one_or_none()
-        if chat is None:
+        if obj is None:
             raise HTTPException(status_code=404, detail=f"{tag } not found.")
+                    
+        await obj.delete()
 
-        await db.delete(chat)
 
     return router

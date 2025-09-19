@@ -1,4 +1,5 @@
 from typing import List
+from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -15,10 +16,10 @@ class ChatModelCreateUpdate(BaseModel):
 
 
 class ChatModelSelect(ChatModelCreateUpdate):
-    id: str
+    id: UUID
     title: str
     updated_at: datetime
-    context: None | ChatContext = None
+    #context: None | ChatContext = None
 
 router = create_crud(
     db_model=ChatDB,

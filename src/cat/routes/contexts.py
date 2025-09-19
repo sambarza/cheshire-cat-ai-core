@@ -1,3 +1,4 @@
+from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -7,14 +8,14 @@ from cat.db.models import ContextDB
 from .crud import create_crud
 
 class ContextModelCreateUpdate(BaseModel):
-    title: str
+    title: str = "Context {}"
     body: ChatContext = ChatContext()
 
 class ContextModelSelect(ContextModelCreateUpdate):
-    id: str
+    id: UUID
     title: str
     updated_at: datetime
-    chats: None | list = None
+    #chats: None | list = None
 
 router = create_crud(
     db_model=ContextDB,

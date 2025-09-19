@@ -17,7 +17,8 @@ if DB_URL.startswith("postgresql"):
 async def init_db():
     await Tortoise.init(
         db_url=DB_URL,
-        modules={"models": ["cat.db.models"]}
+        modules={"models": ["cat.db.models"]},
+        
     )
 
     await Tortoise.generate_schemas(safe=True)
