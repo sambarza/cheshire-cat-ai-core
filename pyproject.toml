@@ -38,9 +38,9 @@ dependencies = [
     "fastmcp>=2.11.3",
     "asgi-lifespan>=2.1.0",
     "ag-ui-protocol>=0.1.8",
-    "debugpy>=1.8.16",
-    "fastcrud>=0.16.0",
+    "debugpy>=1.8.16"
 ]
+
 
 [build-system]
 requires = ["hatchling"]

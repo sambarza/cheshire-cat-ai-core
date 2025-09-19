@@ -8,7 +8,6 @@ from uuid import uuid4
 
 from pydantic import BaseModel
 from fastapi import APIRouter
-from fastcrud import crud_router, EndpointCreator
 
 from cat.log import log
 from cat.looking_glass.stray_cat import StrayCat
