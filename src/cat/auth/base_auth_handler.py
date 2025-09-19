@@ -24,9 +24,6 @@ class BaseAuthHandler(ABC):  # TODOAUTH: pydantic model?
         auth_permission: AuthPermission,
     ) -> AuthUserInfo | None:
 
-        if credential is None:
-            return None
-
         if self.is_jwt(credential):
             # JSON Web Token auth
             return self.authorize_user_from_jwt(

@@ -72,6 +72,14 @@ class AuthHandlerDefault(BaseAuthHandler):
             auth_resource: AuthResource,
             auth_permission: AuthPermission,
     ) -> AuthUserInfo | None: 
+        
+        ########## tmp #######
+        return AuthUserInfo(
+                id=str(uuid5(NAMESPACE_DNS, "admin")),
+                name="admin",
+                permissions=get_full_permissions()
+            )
+        ######################
 
         # allow access with full permissions
         if key == get_env("CCAT_API_KEY"):

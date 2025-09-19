@@ -14,13 +14,12 @@ from cat.utils import BaseModelDict
 # TODOV2: maybe there sohuld be a small class for each content type? looks verbose
 class MessageContent(BaseModelDict):
     type: Literal[
-        "text", "image", "file",
+        "text", "image",
         "tool", "elicitation",
         "custom"
     ] # TODOV2: to review
     text: str = ""
     image: str | None = None
-    file: bytes | None = None # ?
     tool: dict | None = None # output of a tool (not used for tool input, which is stored in assistant message under .tool_calls)
     elicitation : dict | None = None # json_schema for the input required
     custom: dict | None = None  # perfect for unpredicted creative utilization 

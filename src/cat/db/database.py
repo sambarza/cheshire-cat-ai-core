@@ -21,7 +21,7 @@ if DB_URL.startswith("postgresql"):
 
 engine = create_async_engine(
     DB_URL,
-    echo=True,
+    echo=False,
     future=True,
     pool_pre_ping=True,
     connect_args=connect_args
@@ -59,6 +59,7 @@ async def get_session():
 
 
 # decorator for sqlalchemy model classes
+# TODOV2: get rid of this
 def with_session(func):
     async def wrapper(*args, **kwargs):
         async with AsyncSessionLocal() as session:

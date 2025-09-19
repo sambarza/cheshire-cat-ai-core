@@ -1,9 +1,11 @@
 import time
+from datetime import datetime
 from uuid import uuid4
 
+from sqlalchemy.sql import func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import declarative_base, Mapped, mapped_column
-from sqlalchemy import String, Text, JSON, BigInteger, select
+from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
+from sqlalchemy import String, Text, JSON, BigInteger, ForeignKey, DateTime, select
 
 from .database import with_session
 
@@ -50,11 +52,64 @@ class Setting(Base):
             await session.delete(setting)
 
 
-class Chat(Base):
+class ChatDB(Base):
     __tablename__ = "chats"
+    
+    # TODOV2: use proper uuid type
+    id: Mapped[str] = mapped_column(
+        String, primary_key=True, default=lambda: str(uuid4()), nullable=False
+    )
+    title: Mapped[str] = mapped_column(
+        Text, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False
+    )
+    body: Mapped[dict] = mapped_column(
+        JSON, nullable=False
+    )
+    user_id: Mapped[str] = mapped_column(
+        String, index=True, nullable=False
+    )
+    context_id: Mapped[str] = mapped_column(
+        String, ForeignKey("contexts.id"), nullable=False, index=True
+    )
 
-    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid4()), nullable=False)
-    user_id: Mapped[str] = mapped_column(String, index=True, nullable=False)
-    updated_at: Mapped[int] = mapped_column(BigInteger, nullable=False, default=lambda: int(time.time()))
-    body: Mapped[dict] = mapped_column(JSON, nullable=False)
-    title: Mapped[str] = mapped_column(Text, nullable=False)
+    context = relationship(
+        "ContextDB",
+        back_populates="chats",
+        lazy="selectin"
+    )
+
+
+class ContextDB(Base):
+    __tablename__ = "contexts"
+
+    # TODOV2: use proper uuid type
+    id: Mapped[str] = mapped_column(
+        String, primary_key=True, default=lambda: str(uuid4()), nullable=False
+    )
+    title: Mapped[str] = mapped_column(
+        Text, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False
+    )
+    body: Mapped[dict] = mapped_column(
+        JSON, nullable=False
+    )
+    user_id: Mapped[str] = mapped_column(
+        String, index=True, nullable=False
+    )
+    
+    chats = relationship(
+        "ChatDB",
+        back_populates="context",
+        cascade="all, delete-orphan"
+    )

@@ -14,7 +14,8 @@ from cat.routes import (
     auth,
     settings,
     plugins,
-    chats
+    chats,
+    contexts
 )
 from cat.routes.websocket import websocket
 from cat.routes.static import static
@@ -79,18 +80,16 @@ if cors_enabled == "true":
         allow_headers=["*"],
     )
 
-# Add routers to the middleware stack.
+# Add routers
 cheshire_cat_api.include_router(base.router, tags=["Home"])
 cheshire_cat_api.include_router(auth.router, tags=["Auth"], prefix="/auth")
-cheshire_cat_api.include_router(chats.router, tags=["Chats"], prefix="/chats")
+cheshire_cat_api.include_router(chats.router)
+cheshire_cat_api.include_router(contexts.router)
 cheshire_cat_api.include_router(settings.router, tags=["Settings"], prefix="/settings")
 cheshire_cat_api.include_router(plugins.router, tags=["Plugins"], prefix="/plugins")
 cheshire_cat_api.include_router(static.router, tags=["Static Files"], prefix="/static")
 cheshire_cat_api.include_router(websocket.router, tags=["Websocket"])
 
-# mount static files
-# this cannot be done via fastapi.APIrouter:
-# https://github.com/tiangolo/fastapi/discussions/9070
 
 @cheshire_cat_api.get("/docs", include_in_schema=False)
 async def scalar_docs():

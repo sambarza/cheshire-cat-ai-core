@@ -450,11 +450,12 @@ class StrayCat:
 
         # unique id for this run
         run_id = str(uuid4())
+        thread_id = str(uuid4()) # TODO: should it be the one in the db? Was request.thread
 
         # AGUI event for agent run start
         yield events.RunStartedEvent(
             timestamp=int(time.time()),
-            thread_id=request.thread,
+            thread_id=thread_id,
             run_id=run_id
         )
 
@@ -471,7 +472,7 @@ class StrayCat:
                 await callback(
                     events.RunFinishedEvent(
                         timestamp=int(time.time()),
-                        thread_id=request.thread,
+                        thread_id=thread_id,
                         run_id=run_id,
                         result=final_reply.model_dump()
                     )
