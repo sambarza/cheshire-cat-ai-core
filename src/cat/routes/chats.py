@@ -12,14 +12,13 @@ from .crud import create_crud
 class ChatModelCreateUpdate(BaseModel):
     title: str
     body: List[Message] = []
-    context_id: str # TODOV2: validate context_id against the DB
+    context_id: UUID # TODOV2: validate context_id against the DB
 
 
 class ChatModelSelect(ChatModelCreateUpdate):
     id: UUID
-    title: str
     updated_at: datetime
-    #context: None | ChatContext = None
+    context: ChatContext
 
 router = create_crud(
     db_model=ChatDB,
