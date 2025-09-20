@@ -1,17 +1,41 @@
-from typing import List, Optional, Dict
-from fastapi import APIRouter, HTTPException, Depends, Body, Query
+from typing import List, Optional, Tuple, Generic, TypeVar
 from uuid import uuid4
 
-from tortoise.models import Model
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
+
 from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Depends, Body, Query
+
+from tortoise.models import Model
+from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 
 from cat.log import log
 from cat.looking_glass.stray_cat import StrayCat
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
 
-# must be called lazily
-def get_related_fields(model: Model):
+def serialize_obj(obj, related_fields: list[str]) -> dict:
+    data = obj.__dict__.copy()
+
+    for field in related_fields:
+        related = getattr(obj, field, None)
+
+        if related is None:
+            data[field] = None
+
+        # reverse FK / M2M → has .related_objects when prefetched
+        elif hasattr(related, "related_objects"):
+            #if related.related_objects is not None:  # prefetched
+            data[field] = [r.__dict__.copy() for r in related.related_objects]
+            #else:  # fallback, triggers queries (avoid if possible)
+            #    data[field] = [r.__dict__.copy() for r in related]
+
+        # forward FK (single related object)
+        else:
+            data[field] = related.__dict__.copy()
+
+    return data
+
+def get_related_fields(model: Model) -> List[str]:
     related = \
         list(model._meta.fk_fields) + list(model._meta.backward_fk_fields)
     return related
@@ -28,9 +52,15 @@ def create_crud(
 ) -> APIRouter:
 
     DBModel = db_model
-    SelectSchema = select_schema
-    CreateSchema = create_schema
-    UpdateSchema = update_schema
+
+    related_fields = get_related_fields(DBModel)
+
+    SelectSchema, CreateSchema, UpdateSchema = \
+        select_schema, create_schema, update_schema
+    
+    class PageSchema(BaseModel):
+        items: List[SelectSchema]
+        cursor: str
     
     router = APIRouter(
         prefix=prefix,
@@ -42,7 +72,7 @@ def create_crud(
         search: Optional[str] = Query(None, description="Search query"),
         # TODOV2: pagination
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.LIST),
-    ) -> List[SelectSchema]:
+    ) -> PageSchema:
         
         if restrict_by_user_id:
             q = DBModel.filter(user_id=cat.user_id)
@@ -54,10 +84,14 @@ def create_crud(
             # TODOV2: DBModel has no .body, find a more general way to search
             # no vectors like in the 90s
         #    stmt = stmt.where(func.lower(func.cast(DBModel.body, text)).ilike(f"%{search.lower()}%"))
-        
-        await DBModel.fetch_for_list(objs, *get_related_fields(DBModel))
+        await DBModel.fetch_for_list(objs, *related_fields)
 
-        return objs
+        return PageSchema(
+            items=[
+                serialize_obj(obj, related_fields) for obj in objs
+            ],
+            cursor=""
+        )
 
 
     @router.get("/{id}", description=f"Get a {tag}")
@@ -71,7 +105,7 @@ def create_crud(
         else:
             q = DBModel.get_or_none(id=id)
         
-        q = q.prefetch_related("context")
+        q = q.prefetch_related(*related_fields)
 
         obj = await q.get_or_none()
         if obj is None:
@@ -92,6 +126,8 @@ def create_crud(
             new_obj = DBModel(**data.model_dump())
 
         await new_obj.save()
+        await DBModel.fetch_related(new_obj, *related_fields)
+
         return new_obj
 
 
@@ -129,7 +165,7 @@ def create_crud(
         if obj is None:
             raise HTTPException(status_code=404, detail=f"{tag } not found.")
                     
-        await obj.delete()
+        await obj.delete() # TODOV2: check effects on relationships
 
 
     return router
