@@ -15,13 +15,6 @@ class Chat(BaseModel):
 class ChatCreateUpdate(Chat):
     context_id: UUID # TODOV2: validate context_id against the DB
 
-class ChatSelectBase(Chat):
-    id: UUID
-    updated_at: datetime
-
-class ChatSelect(ChatSelectBase):
-    context_id: UUID
-
 class RelatedContext(BaseModel):
     id: UUID
     name: str
@@ -29,7 +22,9 @@ class RelatedContext(BaseModel):
     instructions: str
     updated_at: datetime
 
-class ChatSelectExpanded(ChatSelectBase):
+class ChatSelect(Chat):
+    id: UUID
+    updated_at: datetime
     context: RelatedContext
 
 router = create_crud(
@@ -37,7 +32,7 @@ router = create_crud(
     prefix="/chats",
     tag="Chats",
     auth_resource=AuthResource.CHAT,
-    select_schema=ChatSelect | ChatSelectExpanded,
+    select_schema=ChatSelect,
     create_schema=ChatCreateUpdate,
     update_schema=ChatCreateUpdate,
     restrict_by_user_id=True,

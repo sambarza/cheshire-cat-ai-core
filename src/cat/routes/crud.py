@@ -40,7 +40,6 @@ def create_crud(
     @router.get("", description=f"List and search {tag}")
     async def get_list(
         search: Optional[str] = Query(None, description="Search query"),
-        expand: bool = Query(default=True, description="Whether to expand or not related records"),
         # TODOV2: pagination
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.LIST),
     ) -> List[SelectSchema]:
@@ -56,8 +55,7 @@ def create_crud(
             # no vectors like in the 90s
         #    stmt = stmt.where(func.lower(func.cast(DBModel.body, text)).ilike(f"%{search.lower()}%"))
         
-        if expand:
-            await DBModel.fetch_for_list(objs, *get_related_fields(DBModel))
+        await DBModel.fetch_for_list(objs, *get_related_fields(DBModel))
 
         return objs
 
@@ -65,7 +63,6 @@ def create_crud(
     @router.get("/{id}", description=f"Get a {tag}")
     async def get_one(
         id: str,
-        expand: bool = Query(default=True, description="Whether to expand or not related records"),
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.READ),
     ) -> SelectSchema:
         
@@ -74,8 +71,7 @@ def create_crud(
         else:
             q = DBModel.get_or_none(id=id)
         
-        if expand:
-            q = q.prefetch_related("context")
+        q = q.prefetch_related("context")
 
         obj = await q.get_or_none()
         if obj is None:
