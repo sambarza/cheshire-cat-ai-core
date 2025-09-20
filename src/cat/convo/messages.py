@@ -1,5 +1,7 @@
 from typing import List, Literal
 
+from pydantic import BaseModel
+
 from langchain_core.messages import (
     HumanMessage,
     AIMessage,
@@ -8,11 +10,9 @@ from langchain_core.messages import (
 )
 
 from cat.looking_glass import prompts
-from cat.utils import BaseModelDict
-
 
 # TODOV2: maybe there sohuld be a small class for each content type? looks verbose
-class MessageContent(BaseModelDict):
+class MessageContent(BaseModel):
     type: Literal[
         "text", "image",
         "tool", "elicitation",
@@ -27,7 +27,7 @@ class MessageContent(BaseModelDict):
                                 #   Maybe for rich media types, specific objects with mime_type
 
 
-class Message(BaseModelDict):
+class Message(BaseModel):
     """Single message exchanged between user and assistant, part of a conversation."""
 
     role: Literal["user", "assistant", "tool"]
@@ -77,12 +77,12 @@ class Message(BaseModelDict):
             )
         )
 
-class ChatContext(BaseModelDict):
+class ChatContext(BaseModel):
     instructions: str = prompts.MAIN_PROMPT_PREFIX
     resources: List[str] = []
     # TODOV2: should also tools be supported here?
 
-class ChatRequest(BaseModelDict):
+class ChatRequest(BaseModel):
 
     agent: str = "default" # name of the agent to run.
     model: str = "default" # e.g. "openai:gpt-5"
@@ -101,7 +101,7 @@ class ChatRequest(BaseModelDict):
     # TODOV2: should this object be immutable?
 
 
-class ChatResponse(BaseModelDict):
+class ChatResponse(BaseModel):
     
     user_id: str # TODOV2: do we need the user_id here? Force and test it cannot be changed
     text: str = ""

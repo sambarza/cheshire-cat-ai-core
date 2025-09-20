@@ -5,7 +5,7 @@ from typing import List, Dict
 from typing_extensions import Protocol
 
 from cat.db.database import init_db
-from cat.db.models import Setting
+from cat.db.models import SettingDB
 from cat.factory.factory import Factory
 from cat.protocols.model_context.client import MCPClient, mcp_servers_config
 from cat.log import log
@@ -52,7 +52,7 @@ class CheshireCat:
             self.fastapi_app = fastapi_app # reference to the FastAPI object
 
             # ensure core DB settings
-            await self.init_db()
+            await self.populate_db()
 
             # instantiate MadHatter and trigger first discovery
             self.mad_hatter = MadHatter()
@@ -86,10 +86,8 @@ class CheshireCat:
             log.error("Error during CheshireCat bootstrap. Exiting.")
             sys.exit()
 
-    async def init_db(self):
-        """Initialize core DB."""
-
-        await init_db()
+    async def populate_db(self):
+        """Force minimal settings into core DB."""
 
         initial_settings = {
             "active_plugins": [],
@@ -97,9 +95,9 @@ class CheshireCat:
         }
 
         for name, value in initial_settings.items():
-            setting = await Setting.get_or_none(name=name)
+            setting = await SettingDB.get_or_none(name=name)
             if setting is None:
-                setting = Setting(name=name, value=value)
+                setting = SettingDB(name=name, value=value)
                 await setting.save()
     
     async def execute_agent(self, slug, cat):

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Any
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel
@@ -8,26 +8,38 @@ from cat.convo.messages import Message, ChatContext
 from cat.db.models import ChatDB, ContextDB
 from .crud import create_crud
 
+class Chat(BaseModel):
+    name: str = "A Chat"
+    messages: List[Message] = []
 
-class ChatModelCreateUpdate(BaseModel):
-    title: str
-    body: List[Message] = []
+class ChatCreateUpdate(Chat):
     context_id: UUID # TODOV2: validate context_id against the DB
 
-
-class ChatModelSelect(ChatModelCreateUpdate):
+class ChatSelectBase(Chat):
     id: UUID
     updated_at: datetime
-    context: ChatContext
+
+class ChatSelect(ChatSelectBase):
+    context_id: UUID
+
+class RelatedContext(BaseModel):
+    id: UUID
+    name: str
+    resources: List[str]
+    instructions: str
+    updated_at: datetime
+
+class ChatSelectExpanded(ChatSelectBase):
+    context: RelatedContext
 
 router = create_crud(
     db_model=ChatDB,
     prefix="/chats",
     tag="Chats",
     auth_resource=AuthResource.CHAT,
-    select_schema=ChatModelSelect,
-    create_schema=ChatModelCreateUpdate,
-    update_schema=ChatModelCreateUpdate,
+    select_schema=ChatSelect | ChatSelectExpanded,
+    create_schema=ChatCreateUpdate,
+    update_schema=ChatCreateUpdate,
     restrict_by_user_id=True,
 )
 

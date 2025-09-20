@@ -10,6 +10,11 @@ from cat.log import log
 from cat.looking_glass.stray_cat import StrayCat
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
 
+# must be called lazily
+def get_related_fields(model: Model):
+    related = \
+        list(model._meta.fk_fields) + list(model._meta.backward_fk_fields)
+    return related
 
 def create_crud(
     db_model: Model,
@@ -26,16 +31,7 @@ def create_crud(
     SelectSchema = select_schema
     CreateSchema = create_schema
     UpdateSchema = update_schema
-
-    log.critical(DBModel)
-    log.warning(DBModel._meta.backward_fk_fields)
-    log.warning(DBModel._meta.fk_fields)
-
-    related_schemas = \
-        list(DBModel._meta.backward_fk_fields) + \
-        list(DBModel._meta.fk_fields)
-        
-
+    
     router = APIRouter(
         prefix=prefix,
         tags=[tag]
@@ -44,6 +40,7 @@ def create_crud(
     @router.get("", description=f"List and search {tag}")
     async def get_list(
         search: Optional[str] = Query(None, description="Search query"),
+        expand: bool = Query(default=True, description="Whether to expand or not related records"),
         # TODOV2: pagination
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.LIST),
     ) -> List[SelectSchema]:
@@ -58,32 +55,32 @@ def create_crud(
             # TODOV2: DBModel has no .body, find a more general way to search
             # no vectors like in the 90s
         #    stmt = stmt.where(func.lower(func.cast(DBModel.body, text)).ilike(f"%{search.lower()}%"))
+        
+        if expand:
+            await DBModel.fetch_for_list(objs, *get_related_fields(DBModel))
 
-        log.warning(related_schemas)
-        if len(related_schemas) > 0:
-            await DBModel.fetch_for_list(objs, *related_schemas)
-        #log.warning(objs[0].chats)
         return objs
 
 
     @router.get("/{id}", description=f"Get a {tag}")
     async def get_one(
         id: str,
-        #expand: bool = Query(default=None, description="Whether to expand or not related records"),
+        expand: bool = Query(default=True, description="Whether to expand or not related records"),
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.READ),
     ) -> SelectSchema:
         
         if restrict_by_user_id:
-            obj = await DBModel.get_or_none(id=id, user_id=cat.user_id)
+            q = DBModel.get_or_none(id=id, user_id=cat.user_id)
         else:
-            obj = await DBModel.get_or_none(id=id)
+            q = DBModel.get_or_none(id=id)
         
+        if expand:
+            q = q.prefetch_related("context")
+
+        obj = await q.get_or_none()
         if obj is None:
             raise HTTPException(status_code=404, detail="Not found.")
         
-        if len(related_schemas) > 0:
-            await obj.fetch_related(*related_schemas)
-        log.critical(dict(obj))
         return obj
 
 

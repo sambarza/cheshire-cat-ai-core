@@ -1,6 +1,5 @@
 import os
-
-from tortoise import Tortoise, run_async
+from tortoise import Tortoise
 
 from cat.env import get_env
 from cat.log import log
@@ -15,15 +14,11 @@ if DB_URL.startswith("postgresql"):
     pass
 
 async def init_db():
+
     await Tortoise.init(
         db_url=DB_URL,
         modules={"models": ["cat.db.models"]},
         
     )
-
     await Tortoise.generate_schemas(safe=True)
 
-
-# TODOV2: not doing proper cleanup at the moment
-#def connect_db():
-#    run_async(init_db()) # handles also connection closing and cleanup

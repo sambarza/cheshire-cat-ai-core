@@ -1,12 +1,14 @@
 from contextlib import asynccontextmanager
-from scalar_fastapi import get_scalar_api_reference
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from scalar_fastapi import get_scalar_api_reference
+from tortoise import Tortoise
 
+from cat.db.database import init_db
 from cat.log import log
 from cat.env import get_env
 from cat.routes import (
@@ -25,6 +27,9 @@ from cat.looking_glass.cheshire_cat import CheshireCat
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+
+    # init DB
+    await init_db()
 
     #       ^._.^
     #
@@ -47,6 +52,9 @@ async def lifespan(app: FastAPI):
     async with ccat.mcp:
         #await ccat.mcp.list_tools() # force initialization
         yield
+
+    # cleanup
+    await Tortoise.close_connections()
 
 
 # REST API

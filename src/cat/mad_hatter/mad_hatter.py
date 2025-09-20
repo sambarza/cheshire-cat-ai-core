@@ -8,7 +8,7 @@ from pathlib import Path
 
 from cat.log import log
 import cat.utils as utils
-from cat.db.models import Setting
+from cat.db.models import SettingDB
 from cat.mad_hatter.plugin_extractor import PluginExtractor
 from cat.mad_hatter.plugin import Plugin
 from cat.mad_hatter.decorators.hook import CatHook
@@ -148,11 +148,11 @@ class MadHatter:
         return plugin_id in self.plugins.keys()
 
     async def get_active_plugins(self):
-        active_plugins = await Setting.get(name="active_plugins")
+        active_plugins = await SettingDB.get(name="active_plugins")
         return active_plugins.value
     
     async def set_active_plugins(active_plugins):
-        ap = Setting.get(name="active_plugins")
+        ap = SettingDB.get(name="active_plugins")
         ap.value = list(set(active_plugins))
         await ap.save()
 
