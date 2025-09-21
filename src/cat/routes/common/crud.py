@@ -78,7 +78,7 @@ def create_crud(
             q = DBModel.filter(user_id=cat.user_id)
         else:
             q = DBModel.all()
-        objs = await q.order_by("-updated_at").limit(100)
+        objs = await q.order_by("-updated_at").limit(20)
 
         #if search:
             # TODOV2: DBModel has no .body, find a more general way to search

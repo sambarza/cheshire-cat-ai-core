@@ -355,7 +355,7 @@ class StrayCat:
         # TODOV2: give better naming to these hooks
         prompt_prefix = await self.execute_hook(
             "agent_prompt_prefix",
-            self.chat_request.instructions
+            self.chat_request.context.instructions
         )
         prompt_suffix = await self.execute_hook("agent_prompt_suffix", "")
 
