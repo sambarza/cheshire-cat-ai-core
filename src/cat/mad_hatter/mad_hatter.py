@@ -151,8 +151,8 @@ class MadHatter:
         active_plugins = await SettingDB.get(name="active_plugins")
         return active_plugins.value
     
-    async def set_active_plugins(active_plugins):
-        ap = SettingDB.get(name="active_plugins")
+    async def set_active_plugins(self, active_plugins):
+        ap = await SettingDB.get(name="active_plugins")
         ap.value = list(set(active_plugins))
         await ap.save()
 

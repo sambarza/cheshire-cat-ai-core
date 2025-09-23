@@ -247,7 +247,7 @@ class StrayCat:
             prompt_variables: dict = {},
             messages: list[Message] = [],
             tools: list[CatTool] = [],
-            model: str | None = None,  # TODOV2
+            model: str | None = None,  # TODOV2 the default?
             stream: bool = False,
             execution_name: str = "prompt"
         ) -> Message: # TODOV2: does not return a string anymore
@@ -604,6 +604,8 @@ Allowed classes are:
         """
         ccat = self._ccat
         requested_llm = self.chat_request.model
+        log.critical(requested_llm)
+        log.warning(ccat.llms.keys())
         if requested_llm and requested_llm in ccat.llms:
             return ccat.llms[requested_llm]
         return ccat.factory.get_default("llm")
