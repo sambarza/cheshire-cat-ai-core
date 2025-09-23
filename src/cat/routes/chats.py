@@ -1,7 +1,6 @@
 from typing import List
 from uuid import UUID
 from pydantic import BaseModel
-
 from cat.convo.messages import Message
 from cat.auth.permissions import AuthResource
 from cat.db.models import ChatDB

@@ -127,7 +127,6 @@ def create_crud(
 
         await new_obj.save()
         await DBModel.fetch_related(new_obj, *related_fields)
-
         return new_obj
 
 
@@ -148,6 +147,7 @@ def create_crud(
 
         obj.update_from_dict(data.model_dump())
         await obj.save()
+        await DBModel.fetch_related(obj, *related_fields)
         return obj
 
 
