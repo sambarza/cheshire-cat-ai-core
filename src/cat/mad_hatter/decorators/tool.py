@@ -5,8 +5,8 @@ from uuid import uuid4
 from inspect import signature
 from typing import Union, Callable, List, Dict, Any, Literal
 
-from pydantic import ConfigDict
 from langchain_core.tools import StructuredTool
+from fastmcp.tools.tool import FunctionTool, ParsedFunction
 
 from ag_ui.core.events import EventType # take away after they fix the bug
 from cat.protocols.agui import events
@@ -14,45 +14,76 @@ from cat.convo.messages import Message, MessageContent
 from cat.utils import run_sync_or_async
 
 
-# All @tool decorated functions in plugins become a CatTool.
-# The difference between base langchain Tool and CatTool is that CatTool has an instance of the cat as attribute (set by the MadHatter)
 class CatTool:
-
-    model_config = ConfigDict(
-        extra = "allow"
-    )
+    """All @tool decorated functions in plugins and MCP tools become a CatTool."""
 
     def __init__(
         self,
-        name: str,
         func: Callable,
+        name: str,
+        description: str,
+        input_schema: Dict,
+        output_schema: Dict,
+        origin: Literal["plugin", "mcp"],
         return_direct: bool = False,
         examples: List[str] = [],
-    ):  
-        if func.__doc__:
-            description = func.__doc__.strip()
-        else:
-            description = "" # or the function name?
-        
+    ):
         self.func = func
-        self.procedure_type = "tool"
-        self.name = name
-        self.description = description
+        self.name = name 
+        self.description = description 
+        self.input_schema = input_schema 
+        self.output_schema = output_schema
+
         self.return_direct = return_direct
+        self.examples = examples
+        self.origin = origin
+    
+        # will be assigned by MadHatter
+        self.plugin_id = None
 
-        self.triggers_map = {
-            "description": [f"{name}: {description}"],
-            "start_example": examples,
-        }
-        # remove cat argument from signature so it does not end up in prompts
-        self.signature = f"{signature(self.func)}".replace(", cat)", ")")
+    @classmethod
+    def from_decorated_function(
+        cls,
+        func: Callable,
+        return_direct: bool = False,
+        examples: List[str] = []
+    ) -> 'CatTool':
+        
+        parsed_function = ParsedFunction.from_function(
+            func,
+            exclude_args=["cat"], # awesome, will only be used at execution
+            validate=False
+        )
 
-    @property
-    def start_examples(self):
-        return self.triggers_map["start_example"]
+        return cls(
+            func,
+            name = parsed_function.name,
+            description = parsed_function.description,
+            input_schema = parsed_function.input_schema,
+            output_schema = parsed_function.output_schema,
+            return_direct = return_direct,
+            examples = examples,
+            origin = "plugin"
+        )
 
+    @classmethod
+    def from_fastmcp(
+        cls,
+        t: FunctionTool,
+        mcp_client_func: Callable
+    ) -> 'CatTool':
+        
+        return cls(
+            func=mcp_client_func,
+            name=t.name,
+            description=t.description or t.name,
+            input_schema=t.inputSchema,
+            output_schema = t.outputSchema,
+            origin = "mcp"
+        )
+    
     def __repr__(self) -> str:
-        return f"CatTool(name={self.name}, return_direct={self.return_direct}, description={self.description})"
+        return f"CatTool(name={self.name}, input_schema={self.input_schema}, origin={self.origin})"
 
     async def execute(self, cat: 'StrayCat', tool_call) -> Message:
         """
@@ -72,9 +103,14 @@ class CatTool:
             A Message with role="tool" and the tool output.
         """
 
-        tool_output = await run_sync_or_async(
-            self.func, **tool_call["args"], cat=cat
-        )
+        if self.origin == "plugin":
+            # internal tool
+            tool_output = await run_sync_or_async(
+                self.func, **tool_call["args"], cat=cat
+            )
+        elif self.origin == "mcp":
+            # MCP tool
+            tool_output = await self.func(self.name, tool_call["args"])
         
         # Emit AGUI events
         await self.emit_agui_tool_start_events(cat, tool_call)
@@ -100,53 +136,13 @@ class CatTool:
             )
         )
     
-    def remove_cat_from_args(self, function: Callable) -> Callable:
-        """
-        Remove 'cat' and '_' parameters from function signature for LangChain compatibility.
-        
-        Parameters
-        ----------
-        function : Callable
-            The function to modify.
-
-        Returns
-        -------
-        Callable
-            The modified function without 'cat' and '_' parameters.
-        """
-        signature = inspect.signature(function)
-        parameters = list(signature.parameters.values())
-        
-        filtered_parameters = [p for p in parameters if p.name != 'cat' and p.name != '_']
-        new_signature = signature.replace(parameters=filtered_parameters)
-        
-        @functools.wraps(function)
-        def wrapper(*args, **kwargs):
-            if 'cat' in kwargs:
-                del kwargs['cat']
-            return function(*args, **kwargs)
-        
-        wrapper.__signature__ = new_signature
-        return wrapper
-    
     def langchainfy(self):
         """Convert CatTool to a langchain compatible StructuredTool object"""
-
-        if getattr(self, "arg_schema", None) is not None:
-            new_tool = StructuredTool(
-                name=self.name.strip().replace(" ", "_"),
-                description=self.description,
-                func=self.remove_cat_from_args(self.func),
-                args_schema=self.arg_schema,
-            )
-        else:
-            new_tool = StructuredTool.from_function(
-                name=self.name.strip().replace(" ", "_"),
-                description=self.description,
-                func=self.remove_cat_from_args(self.func),
-            )
-
-        return new_tool
+        return StructuredTool(
+            name=self.name.strip().replace(" ", "_"),
+            description=self.description,
+            args_schema=self.input_schema,
+        )
 
     async def emit_agui_tool_start_events(self, cat, tool_call):
         await cat.agui_event(
@@ -183,55 +179,12 @@ class CatTool:
         )
 
 
-# @tool decorator, a modified version of a langchain Tool that also takes a Cat instance as argument
-# adapted from https://github.com/hwchase17/langchain/blob/master/langchain/agents/tools.py
 def tool(
-    *args: Union[str, Callable], return_direct: bool = False, examples: List[str] = []
+    func: Callable, return_direct: bool = False, examples: List[str] = []
 ) -> Callable:
-    """
-    Make tools out of functions, can be used with or without arguments.
-    Requires:
-        - Function must contain the cat argument -> str
-        - Function must have a docstring
-    Examples:
-        .. code-block:: python
-            @tool
-            def search_api(query: str, cat) -> str:
-                # Searches the API for the query.
-                return "https://api.com/search?q=" + query
-            @tool("search", return_direct=True)
-            def search_api(query: str, cat) -> str:
-                # Searches the API for the query.
-                return "https://api.com/search?q=" + query
-    """
+    return CatTool.from_decorated_function(
+        func,
+        return_direct=return_direct,
+        examples=examples
+    )
 
-    def _make_with_name(tool_name: str) -> Callable:
-        def _make_tool(func: Callable[[str], str]) -> CatTool:
-            assert func.__doc__, "Function must have a docstring"
-            tool_ = CatTool(
-                name=tool_name,
-                func=func,
-                return_direct=return_direct,
-                examples=examples,
-            )
-            return tool_
-
-        return _make_tool
-
-    if len(args) == 1 and isinstance(args[0], str):
-        # if the argument is a string, then we use the string as the tool name
-        # Example usage: @tool("search", return_direct=True)
-        return _make_with_name(args[0])
-    elif len(args) == 1 and callable(args[0]):
-        # if the argument is a function, then we use the function name as the tool name
-        # Example usage: @tool
-        return _make_with_name(args[0].__name__)(args[0])
-    elif len(args) == 0:
-        # if there are no arguments, then we use the function name as the tool name
-        # Example usage: @tool(return_direct=True)
-        def _partial(func: Callable[[str], str]) -> CatTool:
-            return _make_with_name(func.__name__)(func)
-
-        return _partial
-    else:
-        raise ValueError("Too many arguments for tool decorator")

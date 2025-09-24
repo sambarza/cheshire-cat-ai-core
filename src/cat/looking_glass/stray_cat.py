@@ -366,13 +366,13 @@ class StrayCat:
         """Get both plugins' tools and MCP tools in CatTool format.
         """
 
-        mcp_tools = [] #await self.mcp.list_tools()
-        internal_tools = self.mad_hatter.tools
+        mcp_tools = await self.mcp.list_tools()
+        mcp_tools = [
+            CatTool.from_fastmcp(t, self._ccat.mcp.call_tool)
+            for t in mcp_tools
+        ]
 
-        tools = mcp_tools + internal_tools
-
-        # TODOV2: conversions? see Emanuele's plugin agent_factory
-        return tools
+        return mcp_tools + self.mad_hatter.tools
 
 
     async def __call__(
@@ -604,8 +604,6 @@ Allowed classes are:
         """
         ccat = self._ccat
         requested_llm = self.chat_request.model
-        log.critical(requested_llm)
-        log.warning(ccat.llms.keys())
         if requested_llm and requested_llm in ccat.llms:
             return ccat.llms[requested_llm]
         return ccat.factory.get_default("llm")

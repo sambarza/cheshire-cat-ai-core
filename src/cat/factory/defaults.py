@@ -96,6 +96,8 @@ class AgentDefault:
 
     async def execute(self, cat):
 
+        log.warning(await cat.get_tools())
+
         for i in range(6): # TODOV2: not sure
             llm_mex: Message = await cat.llm(
                 # delegate prompt construction to plugins
@@ -119,7 +121,7 @@ class AgentDefault:
                 # LLM has chosen to use tools, run them
                 # TODOV2: tools may require explicit user permission
                 # TODOV2: tools may return an artifact or resource
-                # TODOV2: tools should stay in a dictionary
+                # TODOV2: tools should stay in a dictionary by key servername_toolname?
                 for tool_call in llm_mex.tool_calls:
                     for t in await cat.get_tools():
                         if t.name == tool_call["name"]:
