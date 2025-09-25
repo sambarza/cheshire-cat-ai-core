@@ -2,21 +2,20 @@ from typing import List
 from uuid import UUID
 from pydantic import BaseModel
 
-from cat.convo.messages import Message
+from cat.convo.messages import Message, ChatContext
 from cat.auth.permissions import AuthResource
 from cat.db.models import ContextDB
 from .common.crud import create_crud
 from .common.schemas import CRUDSelect, CRUDUpdate
 
-class Chat(CRUDSelect):
+class ChatSelect(CRUDSelect):
     messages: List[Message]
 
-class ContextCreateUpdate(CRUDUpdate):
-    instructions: str = "No instructions"
-    resources: List[str] = []
+class ContextCreateUpdate(CRUDUpdate, ChatContext):
+    pass
 
 class Context(CRUDSelect, ContextCreateUpdate):
-    chats: List[Chat] = []
+    chats: List[ChatSelect] = []
 
 router = create_crud(
     db_model=ContextDB,
