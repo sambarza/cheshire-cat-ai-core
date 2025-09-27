@@ -7,7 +7,7 @@ from langchain_core.embeddings import FakeEmbeddings
 
 from cat.env import get_env
 from cat.log import log
-from cat.convo.messages import Message
+from cat.types.messages import Message
 from cat.auth.base_auth_handler import BaseAuthHandler
 from cat.auth.permissions import (
     AuthUserInfo, AuthPermission, AuthResource, get_full_permissions
@@ -96,16 +96,14 @@ class AgentDefault:
 
     async def execute(self, cat):
 
-        log.warning(await cat.get_tools())
-
         for i in range(6): # TODOV2: not sure
             llm_mex: Message = await cat.llm(
                 # delegate prompt construction to plugins
                 await cat.get_system_prompt(),
                 # pass conversation messages
-                messages=cat.chat_request.messages,
+                messages=cat.chat_request.messages + cat.chat_response.messages,
                 # pass tools (both internal and MCP)
-                tools=await cat.get_tools(),
+                tools=await cat.list_tools(),
                 # whether to stream or not
                 stream=cat.chat_request.stream,
                 # give a name to LLM execution for logging purposes
@@ -113,27 +111,19 @@ class AgentDefault:
                 execution_name="DEFAULT AGENT"
             )
 
+            cat.chat_response.messages.append(llm_mex)
+            
             if len(llm_mex.tool_calls) == 0:
-                # No tool calls, update chat response and exit
-                cat.chat_response.text += f"\n{llm_mex.content.text}"
+                # No tool calls, exit
                 return
             else:
                 # LLM has chosen to use tools, run them
                 # TODOV2: tools may require explicit user permission
-                # TODOV2: tools may return an artifact or resource
-                # TODOV2: tools should stay in a dictionary by key servername_toolname?
+                # TODOV2: tools may return an artifact, resource or elicitation
                 for tool_call in llm_mex.tool_calls:
-                    for t in await cat.get_tools():
-                        if t.name == tool_call["name"]:
-                            # actually executing the tool
-                            tool_message: Message = await t.execute(cat, tool_call)
-                            if t.return_direct:
-                                # tool wants a return_direct, update chat response and get out
-                                cat.chat_response.text += f"\n{tool_message.text}"
-                                # exit agent
-                                return
-                            else:
-                                # append tool request and tool output messages
-                                cat.chat_request.messages.append(llm_mex)
-                                cat.chat_request.messages.append(tool_message)
-                                # loop will go on
+                    # actually executing the tool
+                    tool_message = await cat.call_tool(tool_call)
+                    # append tool request and tool output messages
+                    cat.chat_response.messages.append(tool_message)
+
+                    # if t.return_direct: TODO recover return_direct

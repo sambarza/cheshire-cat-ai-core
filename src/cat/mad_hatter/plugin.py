@@ -28,6 +28,7 @@ class PluginSettingsModel(BaseModel):
 
 
 class Plugin:
+
     def __init__(self, plugin_path: str):
         # does folder exist?
         if not os.path.exists(plugin_path) or not os.path.isdir(plugin_path):
@@ -66,9 +67,6 @@ class Plugin:
         # list of @plugin decorated functions overriding default plugin behaviour
         self._plugin_overrides = {}
 
-        # plugin starts deactivated
-        self._active = False
-
     def activate(self):
         # install plugin requirements on activation
         try:
@@ -86,8 +84,6 @@ class Plugin:
         # Try to create setting.json
         if not os.path.isfile(settings_file_path):
             self._create_settings_from_model()
-
-        self._active = True
 
         # run custom activation from @plugin
         if "activated" in self.overrides:
@@ -114,7 +110,6 @@ class Plugin:
         self._forms = []
         self._deactivate_endpoints()
         self._plugin_overrides = {}
-        self._active = False
 
     # get plugin settings JSON schema
     def settings_schema(self):
@@ -236,6 +231,8 @@ class Plugin:
                 )
 
         json_file_data["id"] = self.id
+        if "name" not in json_file_data:
+            json_file_data["name"] = self.id
         return PluginManifest(**json_file_data)
 
     def _install_requirements(self):
@@ -422,10 +419,6 @@ class Plugin:
     @property
     def manifest(self):
         return self._manifest
-
-    @property
-    def active(self):
-        return self._active
 
     @property
     def hooks(self):

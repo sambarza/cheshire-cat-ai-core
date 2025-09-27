@@ -78,7 +78,6 @@ class MadHatter:
         # remove plugin folder
         shutil.rmtree(plugin_path)
 
-    # discover all plugins
     async def find_plugins(self):
         # emptying plugin dictionary, plugins will be discovered from disk
         # and stored in a dictionary plugin_id -> plugin_obj
@@ -140,8 +139,7 @@ class MadHatter:
         # TODOV2: this loop was previously in CheshireCat, needs a reference tot he fastapi app
         # TODOV2: use a hook so plugins can update tools embeddings and other post sync operations
         for endpoint in self.endpoints:
-            if endpoint.plugin_id in await self.get_active_plugins():
-                endpoint.activate(self.fastapi_app)
+            endpoint.activate(self.fastapi_app)
 
     # check if plugin exists
     def plugin_exists(self, plugin_id) -> bool:
@@ -159,40 +157,41 @@ class MadHatter:
     # activate / deactivate plugin
     async def toggle_plugin(self, plugin_id):
 
-        active_plugins = await self.get_active_plugins()
-
-        if self.plugin_exists(plugin_id):
-            plugin_is_active = plugin_id in active_plugins
-
-            # update list of active plugins
-            if plugin_is_active:
-                log.warning(f"Toggle plugin {plugin_id}: Deactivate")
-
-                # Deactivate the plugin
-                self.plugins[plugin_id].deactivate()
-                # Remove the plugin from the list of active plugins
-                active_plugins.remove(plugin_id)
-            else:
-                log.warning(f"Toggle plugin {plugin_id}: Activate")
-
-                # Activate the plugin
-                try:
-                    self.plugins[plugin_id].activate()
-                except Exception as e:
-                    # Couldn't activate the plugin
-                    raise e
-
-                # Add the plugin in the list of active plugins
-                active_plugins.append(plugin_id)
-
-            # update DB with list of active plugins, delete duplicate plugins
-            await self.set_active_plugins(active_plugins)
-
-            # update cache
-            await self.sync_decorated()
-
-        else:
+        if not self.plugin_exists(plugin_id):
             raise Exception(f"Plugin {plugin_id} not present in plugins folder")
+
+        active_plugins = await self.get_active_plugins()
+        plugin_is_active = plugin_id in active_plugins
+
+        log.warning(active_plugins)
+
+        # update list of active plugins
+        if plugin_is_active:
+            log.warning(f"Toggle plugin {plugin_id}: Deactivate")
+
+            # Deactivate the plugin
+            self.plugins[plugin_id].deactivate()
+            # Remove the plugin from the list of active plugins
+            active_plugins.remove(plugin_id)
+        else:
+            log.warning(f"Toggle plugin {plugin_id}: Activate")
+
+            # Activate the plugin
+            try:
+                self.plugins[plugin_id].activate()
+            except Exception as e:
+                # Couldn't activate the plugin
+                raise e
+
+            # Add the plugin in the list of active plugins
+            active_plugins.append(plugin_id)
+
+        # update DB with list of active plugins, delete duplicate plugins
+        await self.set_active_plugins(active_plugins)
+
+        # update cache
+        await self.sync_decorated()
+
 
     # execute requested hook
     def execute_hook(self, hook_name, *args, cat) -> Any:

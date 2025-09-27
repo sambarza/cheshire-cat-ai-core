@@ -48,11 +48,8 @@ async def lifespan(app: FastAPI):
     # TODOV2: only the first 
     log.welcome()
 
-    # mcp client requires an async context manager itself
-    async with ccat.mcp:
-        #await ccat.mcp.list_tools() # force initialization
-        yield
-
+    yield
+    
     # cleanup
     await Tortoise.close_connections()
 

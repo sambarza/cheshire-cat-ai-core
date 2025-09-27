@@ -1,18 +1,11 @@
 from datetime import datetime
-from fastmcp import FastMCP, Client
-from mcp.types import Tool
+from cachetools import TTLCache
+from fastmcp import FastMCP
+from fastmcp.client import Client, StreamableHttpTransport
+from fastmcp.tools import Tool
+from fastmcp.prompts import Prompt
+from fastmcp.resources import Resource
 
-
-######################
-# TODOV2: must be loaded from DB
-mcp_servers_config = {
-    "mcpServers": {
-        "meta-mcp": {
-            "url": "bzzz"
-        },
-    }
-}
-#######################
 
 # Create in memory server for testing, otherwise tests get slow
 server = FastMCP("TestInMemoryServer")
@@ -38,12 +31,36 @@ def get_resource() -> str:
     return "This is a welcoming resource"
 
 
-mcp_servers_config = server # TODO: hiding the real config for now
-
-
-# using a wrapper class in case adjustments are needed
 class MCPClient(Client):
-    # TODOV2: keep client alive in case of disconnection (encapsulate!)
-    async def list_tools(self) -> list[Tool]:
-        return await super().list_tools()
 
+    def __init__(self, user_id):
+
+        # TODO: get tokens / api keys from DB
+        super().__init__(
+            transport=StreamableHttpTransport(url="http://localhost:8000/mcp")
+        )
+
+        self.cached_tools = None
+        self.cached_resources = None
+        self.cached_prompts = None
+        # TODO: invalidate caches when MCP server notifies (should keep open connection)
+
+    async def list_tools(self):
+        if self.cached_tools:
+            return self.cached_tools
+        async with self:
+            tools = await super().list_tools()
+        
+        self.cached_tools = tools
+        return tools
+
+
+class MCPClients():
+
+    def __init__(self):
+        self.clients = TTLCache(maxsize=100, ttl=60*10)
+    
+    def __getitem__(self, user_id):
+        if user_id not in self.clients:
+            self.clients[user_id] = MCPClient(user_id)
+        return self.clients[user_id]

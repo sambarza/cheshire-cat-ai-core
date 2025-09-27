@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 
 from cat.protocols.agui import encoder, events
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
-from cat.convo.messages import ChatRequest, ChatResponse
+from cat.types.chats import ChatRequest, ChatResponse
 from cat.utils import BaseModelDict
 
 

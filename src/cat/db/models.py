@@ -5,7 +5,7 @@ from uuid import uuid4
 from tortoise import Tortoise, fields
 from tortoise.models import Model
 
-from cat.convo.messages import Message
+from cat.types.messages import Message
 
 # TODOV2: indexes
 

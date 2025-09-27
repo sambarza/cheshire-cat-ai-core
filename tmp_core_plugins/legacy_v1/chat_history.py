@@ -1,6 +1,6 @@
 
 from cat.mad_hatter.decorators import hook
-from cat.convo.messages import ChatRequest, Message, MessageContent
+from cat.types.messages import ChatRequest, Message, MessageContent
 
 from .convo import UserMessage
 

@@ -126,7 +126,7 @@ async def install_plugin_from_registry(
 async def toggle_plugin(
     id: str,
     cat=check_permissions(AuthResource.PLUGIN, AuthPermission.WRITE),
-) -> Dict:
+):
     """Enable or disable a single plugin"""
 
     # check if plugin exists
@@ -136,7 +136,6 @@ async def toggle_plugin(
     try:
         # toggle plugin
         await cat.mad_hatter.toggle_plugin(id)
-        return {"info": f"Plugin {id} toggled"}
     except Exception as e:
         log.error(f"Could not toggle plugin {id}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -204,6 +203,5 @@ async def delete_plugin(
     try:
         # remove folder, hooks and tools
         await cat.mad_hatter.uninstall_plugin(id)
-        return {"deleted": id}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

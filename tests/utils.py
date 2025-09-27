@@ -1,5 +1,5 @@
 import shutil
-from cat.convo.messages import ChatRequest, Message, MessageContent
+from cat.types.messages import ChatRequest, Message, MessageContent
 from urllib.parse import urlencode
 
 

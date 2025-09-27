@@ -10,7 +10,7 @@ from fastmcp.tools.tool import FunctionTool, ParsedFunction
 
 from ag_ui.core.events import EventType # take away after they fix the bug
 from cat.protocols.agui import events
-from cat.convo.messages import Message, MessageContent
+from cat.types.messages import Message, TextContent
 from cat.utils import run_sync_or_async
 
 
@@ -24,7 +24,7 @@ class CatTool:
         description: str,
         input_schema: Dict,
         output_schema: Dict,
-        origin: Literal["plugin", "mcp"],
+        is_internal: bool = True,
         return_direct: bool = False,
         examples: List[str] = [],
     ):
@@ -36,7 +36,7 @@ class CatTool:
 
         self.return_direct = return_direct
         self.examples = examples
-        self.origin = origin
+        self.is_internal = is_internal
     
         # will be assigned by MadHatter
         self.plugin_id = None
@@ -62,8 +62,7 @@ class CatTool:
             input_schema = parsed_function.input_schema,
             output_schema = parsed_function.output_schema,
             return_direct = return_direct,
-            examples = examples,
-            origin = "plugin"
+            examples = examples
         )
 
     @classmethod
@@ -74,16 +73,16 @@ class CatTool:
     ) -> 'CatTool':
         
         return cls(
-            func=mcp_client_func,
-            name=t.name,
-            description=t.description or t.name,
-            input_schema=t.inputSchema,
+            func = mcp_client_func,
+            name = t.name,
+            description = t.description or t.name,
+            input_schema = t.inputSchema,
             output_schema = t.outputSchema,
-            origin = "mcp"
+            is_internal = False
         )
     
     def __repr__(self) -> str:
-        return f"CatTool(name={self.name}, input_schema={self.input_schema}, origin={self.origin})"
+        return f"CatTool(name={self.name}, input_schema={self.input_schema}, internal={self.is_internal})"
 
     async def execute(self, cat: 'StrayCat', tool_call) -> Message:
         """
@@ -103,14 +102,16 @@ class CatTool:
             A Message with role="tool" and the tool output.
         """
 
-        if self.origin == "plugin":
+        if self.is_internal:
             # internal tool
             tool_output = await run_sync_or_async(
                 self.func, **tool_call["args"], cat=cat
             )
-        elif self.origin == "mcp":
+        else:
             # MCP tool
-            tool_output = await self.func(self.name, tool_call["args"])
+            async with cat.mcp:
+                tool_output = await self.func(self.name, tool_call["args"])
+                tool_output = tool_output.content[0].text # TODO: many types here, also embedded resources
         
         # Emit AGUI events
         await self.emit_agui_tool_start_events(cat, tool_call)
@@ -127,7 +128,7 @@ class CatTool:
         #   Only supporting text for now
         return Message(
             role="tool",
-            content=MessageContent(
+            content=TextContent(
                 type="tool",
                 tool={
                     "in": tool_call,

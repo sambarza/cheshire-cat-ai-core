@@ -14,7 +14,8 @@ from cat.auth.permissions import AuthUserInfo
 from cat.looking_glass.cheshire_cat import CheshireCat
 from cat.looking_glass.callbacks import NewTokenHandler
 from cat.memory.working_memory import WorkingMemory
-from cat.convo.messages import ChatRequest, ChatResponse, Message
+from cat.types.chats import ChatRequest, ChatResponse
+from cat.types.messages import Message
 from cat.mad_hatter.decorators import CatTool
 from cat.cache.cache_item import CacheItem
 from cat import utils
@@ -75,9 +76,6 @@ class StrayCat:
         # pointer to CheshireCat instance
         self._ccat = ccat
 
-        self.chat_request = ChatRequest() # empty, will be set upon message requests
-        self.chat_response = ChatResponse(user_id=self.user_id, text="") # empty, will be set upon message requests
-        
         # get working memory from cache or create a new one
         self.load_working_memory_from_cache()
 
@@ -90,16 +88,6 @@ class StrayCat:
         
         if self.message_callback:
             await self.message_callback(data)
-
-
-    async def recall(self, query=None):
-        """Recall long term memories."""
-        await self.memory.recall(cat=self, query=query)
-
-
-    async def store(self, item=None):
-        """Store info in long term memory"""
-        await self.memory.store(cat=self, item=item)
 
 
     def load_working_memory_from_cache(self):
@@ -362,17 +350,31 @@ class StrayCat:
         return prompt_prefix + prompt_suffix
 
 
-    async def get_tools(self) -> List[CatTool]:
-        """Get both plugins' tools and MCP tools in CatTool format.
+    async def list_tools(self) -> List[CatTool]:
+        """
+        Get both plugins' tools and MCP tools in CatTool format.
         """
 
         mcp_tools = await self.mcp.list_tools()
         mcp_tools = [
-            CatTool.from_fastmcp(t, self._ccat.mcp.call_tool)
+            CatTool.from_fastmcp(t, self.mcp.call_tool)
             for t in mcp_tools
         ]
 
         return mcp_tools + self.mad_hatter.tools
+    
+
+    # TODO: should support MCP notation call_tool("name", {a: 32})
+    async def call_tool(self, tool_call, *args, **kwargs): # TODO: annotate CatToolResult?
+        """Call a tool."""
+
+        name = tool_call["name"]
+        for t in await self.list_tools():
+            if t.name == name:
+                return await t.execute(self, tool_call)
+            
+        raise Exception(f"Tool {name} not found")
+            
 
 
     async def __call__(
@@ -406,8 +408,7 @@ class StrayCat:
         # Both request and response are available during the whole flow
         self.chat_request = chat_request
         self.chat_response = ChatResponse(
-            user_id=self.user_id,
-            text="meow"
+            messages=[]
         )
 
         log.info(self.chat_request)
@@ -662,4 +663,4 @@ Allowed classes are:
     @property
     def mcp(self):
         """Gives access to the MCP client."""
-        return self._ccat.mcp
+        return self._ccat.mcp_clients[self.user_id]

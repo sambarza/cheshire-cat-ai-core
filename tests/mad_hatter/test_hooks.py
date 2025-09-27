@@ -2,7 +2,7 @@ import pytest
 
 from cat.mad_hatter.mad_hatter import MadHatter
 from cat.mad_hatter.decorators import CatHook
-from cat.convo.messages import ChatResponse
+from cat.types.messages import ChatResponse
 
 from tests.utils import create_mock_plugin_zip, get_mock_plugin_info
 

@@ -7,7 +7,7 @@ from typing_extensions import Protocol
 from cat.db.database import init_db
 from cat.db.models import SettingDB
 from cat.factory.factory import Factory
-from cat.protocols.model_context.client import MCPClient, mcp_servers_config
+from cat.protocols.model_context.client import MCPClients
 from cat.log import log
 from cat.mad_hatter.mad_hatter import MadHatter
 from cat.cache.cache_manager import CacheManager
@@ -61,8 +61,8 @@ class CheshireCat:
             # init Factory
             self.factory = Factory(self.mad_hatter)
 
-            # init MCP client
-            self.mcp = MCPClient(mcp_servers_config)
+            # init MCP client(s)
+            self.mcp_clients = MCPClients()
 
             # allows plugins to do something before cat components are loaded
             self.mad_hatter.execute_hook("before_cat_bootstrap", cat=self)

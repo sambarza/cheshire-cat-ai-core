@@ -1,13 +1,14 @@
 from typing import List
 from uuid import UUID
 from pydantic import BaseModel
-from cat.convo.messages import Message, ChatContext
+from cat.types.chats import Context
+from cat.types.messages import Message
 from cat.auth.permissions import AuthResource
 from cat.db.models import ChatDB
 from .common.crud import create_crud
 from .common.schemas import CRUDSelect, CRUDUpdate
 
-class ContextSelect(CRUDSelect, ChatContext):
+class ContextSelect(CRUDSelect, Context):
     pass
     
 class ChatCreateUpdate(CRUDUpdate):
