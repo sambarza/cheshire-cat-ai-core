@@ -16,24 +16,6 @@ class BaseAuthHandler(ABC):  # TODOAUTH: pydantic model?
     """
     Base class to build custom Auth systems.
     """
-
-    async def authorize_user_from_credential(
-        self,
-        credential: str,
-        auth_resource: AuthResource,
-        auth_permission: AuthPermission,
-    ) -> AuthUserInfo | None:
-
-        if self.is_jwt(credential):
-            # JSON Web Token auth
-            return self.authorize_user_from_jwt(
-                credential, auth_resource, auth_permission
-            )
-        else:
-            # API_KEY auth
-            return self.authorize_user_from_key(
-                credential, auth_resource, auth_permission
-            )
         
     def is_jwt(self, token: str) -> bool:
         """
@@ -65,6 +47,36 @@ class BaseAuthHandler(ABC):  # TODOAUTH: pydantic model?
             get_env("CCAT_JWT_SECRET"),
             algorithm="HS256",
         )
+    
+    def decode_jwt(self, token) -> dict:
+        try:
+            payload = jwt.decode(
+                token,
+                get_env("CCAT_JWT_SECRET"),
+                algorithms=["HS256"],
+            )
+            return payload
+        except Exception:
+            log.warning("Could not decode JWT")
+            return None
+
+    async def authorize_user_from_credential(
+        self,
+        credential: str,
+        auth_resource: AuthResource,
+        auth_permission: AuthPermission,
+    ) -> AuthUserInfo | None:
+
+        if self.is_jwt(credential):
+            # JSON Web Token auth
+            return self.authorize_user_from_jwt(
+                credential, auth_resource, auth_permission
+            )
+        else:
+            # API_KEY auth
+            return self.authorize_user_from_key(
+                credential, auth_resource, auth_permission
+            )
     
     @abstractmethod
     async def authorize_user_from_jwt(

@@ -48,22 +48,16 @@ class AuthHandlerDefault(BaseAuthHandler):
         auth_resource: AuthResource,
         auth_permission: AuthPermission
     ) -> AuthUserInfo | None:
-        try:
-            # decode token
-            payload = jwt.decode(
-                token,
-                get_env("CCAT_JWT_SECRET"),
-                algorithms=["HS256"],
-            )
+            
+        # decode token
+        payload = self.decode_jwt(token)
 
+        if payload:
             return AuthUserInfo(
                 id=payload["sub"],
                 name=payload["username"],
                 permissions=get_full_permissions()
             )
-
-        except Exception:
-            log.warning("Could not auth user from JWT")
         # if nothing is returned, request shall not pass
 
     def authorize_user_from_key(
