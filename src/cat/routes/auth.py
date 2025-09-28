@@ -13,7 +13,8 @@ from cat.auth.permissions import (
 )
 from cat import utils
 
-router = APIRouter()
+
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 # TODOAUTH TODOV2 /logout endpoint
 # TODOAUTH TODOV2 /token/refresh

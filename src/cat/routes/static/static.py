@@ -15,7 +15,7 @@ from cat.auth.permissions import check_permissions, AuthResource, AuthPermission
 
 # TODOV2: test these routes
 
-router = APIRouter()
+router = APIRouter(prefix="/static", tags=["Static Files"])
 
 
 class UploadedFile(utils.BaseModelDict):

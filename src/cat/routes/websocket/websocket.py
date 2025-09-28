@@ -5,7 +5,7 @@ from cat.auth.permissions import AuthPermission, AuthResource
 from cat.auth.connection import WebsocketAuth
 from cat.log import log
 
-router = APIRouter()
+router = APIRouter(tags=["Websocket"])
 
 
 @router.websocket("/ws")

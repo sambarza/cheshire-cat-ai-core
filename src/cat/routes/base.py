@@ -12,7 +12,7 @@ from cat.types.chats import ChatRequest, ChatResponse
 from cat.utils import BaseModelDict
 
 
-router = APIRouter()
+router = APIRouter(tags=["Home"])
 
 
 class StatusResponse(BaseModelDict):

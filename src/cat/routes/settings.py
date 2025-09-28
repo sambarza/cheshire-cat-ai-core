@@ -5,7 +5,7 @@ from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
 from cat.db.models import SettingDB
 
 
-router = APIRouter()
+router = APIRouter(prefix="/settings", tags=["Settings"])
 
 class Setting(BaseModel):
     name: str

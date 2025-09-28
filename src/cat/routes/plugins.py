@@ -9,13 +9,13 @@ from cat.mad_hatter.registry import registry_search_plugins, registry_download_p
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
 from cat.mad_hatter.plugin_manifest import PluginManifest
 
-router = APIRouter()
+router = APIRouter(prefix="/plugins", tags=["Plugins"])
 
 
 # GET plugins
 @router.get("")
 async def get_available_plugins(
-    query: str = None,
+    search: str = None,
     cat=check_permissions(AuthResource.PLUGIN, AuthPermission.LIST),
     # author: str = None, to be activated in case of more granular search
     # tag: str = None, to be activated in case of more granular search
@@ -23,7 +23,7 @@ async def get_available_plugins(
     """List available plugins"""
 
     # retrieve plugins from official repo
-    registry_plugins = await registry_search_plugins(query)
+    registry_plugins = await registry_search_plugins(search)
     # index registry plugins by url
     registry_plugins_index = {}
     for p in registry_plugins:
@@ -47,7 +47,7 @@ async def get_available_plugins(
         manifest.local_info["upgrade"] = None
         # filter by query
         plugin_text = manifest.model_dump_json()
-        if (query is None) or (query.lower() in plugin_text):
+        if (search is None) or (search.lower() in plugin_text):
             if r is not None:
                 if r.version is not None and r.version != p.manifest.version:
                     manifest["upgrade"] = r["version"]
