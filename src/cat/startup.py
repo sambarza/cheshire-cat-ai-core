@@ -19,7 +19,7 @@ from cat.routes import (
     chats,
     contexts
 )
-from cat.routes.connectors import registry, servers
+from cat.routes.mcp import connectors
 from cat.routes.websocket import websocket
 from cat.routes.static import static
 from cat.routes.openapi import get_openapi_configuration_function
@@ -80,7 +80,7 @@ if cors_enabled == "true":
 # Add routers
 for r in [
     base, auth, chats, contexts, settings,
-    plugins, servers, registry, static, websocket
+    plugins, connectors, static, websocket
 ]:
     cheshire_cat_api.include_router(r.router)
 

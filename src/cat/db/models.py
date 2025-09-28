@@ -1,19 +1,28 @@
 
-from typing import List, Tuple
 from uuid import uuid4
 
 from tortoise import Tortoise, fields
 from tortoise.models import Model
 
-from cat.types.messages import Message
 
-# TODOV2: indexes
+##############################
+### globally scoped tables ###
+########################## ###
 
 class SettingDB(Model):
     name = fields.CharField(pk=True, max_length=1000)
     value = fields.JSONField()
     class Meta:
         table = "ccat_global_settings"
+
+"""
+class PluginDB(Model):
+    name = fields.CharField(pk=True, max_length=1000)
+    active = fields.BooleanField(default=True)
+    settings = fields.JSONField()
+    class Meta:
+        table = "ccat_global_plugins"
+"""
 
 ##########################
 ### user scoped tables ###
@@ -32,6 +41,22 @@ class UserSettingDB(UserScopedModelDB):
     class Meta:
         table = "ccat_settings"
 
+class ConnectorDB(UserScopedModelDB):
+    url = fields.CharField(max_length=1000)
+    active = fields.BooleanField(default=True)
+    secret = fields.JSONField() # TODOV2: should be encrypted, also plugin settings
+    manifest = fields.JSONField(default={})
+
+    class Meta:
+        table = "ccat_connectors"
+
+class ContextDB(UserScopedModelDB):
+    instructions = fields.TextField()
+    resources = fields.JSONField()
+
+    class Meta:
+        table = "ccat_contexts"
+
 class ChatDB(UserScopedModelDB):
     messages = fields.JSONField()
     context = fields.ForeignKeyField(
@@ -41,12 +66,6 @@ class ChatDB(UserScopedModelDB):
     class Meta:
         table = "ccat_chats"
 
-class ContextDB(UserScopedModelDB):
-    instructions = fields.TextField()
-    resources = fields.JSONField()
-
-    class Meta:
-        table = "ccat_contexts"
 
 
 # necessary for relationships

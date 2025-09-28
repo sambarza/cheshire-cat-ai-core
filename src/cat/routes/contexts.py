@@ -1,6 +1,4 @@
 from typing import List
-from uuid import UUID
-from pydantic import BaseModel
 
 from cat.types.messages import Message
 from cat.types.chats import Context

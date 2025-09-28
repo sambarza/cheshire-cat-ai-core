@@ -184,16 +184,16 @@ Auth system semplifications (TODO review):
 - intenral user_id, to avoid throwing around email, could be a uuid5 (based on namespace installation_id)
 - some packages used by core occupy a lot of space and do basically nothing (find alts)
   `du -h .venv/lib/python3.13/site-packages --max-depth=1 | sort -hr`
+- `@hook` decorator should support autocomplete for the hooks nemas, and allow custom strings
+- check for memory leaks (see Luca Gobbi's setup for locust)
 
 ## Questions
 
-- should core plugins be shipped in an internal folder in the external plugins?
 - should core plugins hooks have priority 0 so they go first?
 - should all hooks be able to return a ChatResponse and interrupt the flow with the direct final response?
 - new plugins with custom requirements may not work as expected (need a restart).
-- should we ship a small LLM and embedder via llama.cpp or other lightweight runner?
 - as there are docker and pyPI releases, makes no sense to have a `develop` branch
-- move settings out of plugins?
+- move plugin settings out of plugin folder and into DB?
 - should we finally get rid of `BaseModelDict`?
 
 

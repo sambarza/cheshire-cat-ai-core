@@ -15,7 +15,6 @@ class CRUDSelect(BaseModel):
     id: UUID
     name: str
     updated_at: datetime
-    #user_id: UUID
 
 class CRUDUpdate(BaseModel):
     name: str = "No name"
