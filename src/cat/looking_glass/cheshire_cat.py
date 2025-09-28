@@ -1,10 +1,6 @@
 import sys
 from uuid import uuid4
 
-from typing import List, Dict
-from typing_extensions import Protocol
-
-from cat.db.database import init_db
 from cat.db.models import SettingDB
 from cat.factory.factory import Factory
 from cat.protocols.model_context.client import MCPClients
@@ -12,18 +8,6 @@ from cat.log import log
 from cat.mad_hatter.mad_hatter import MadHatter
 
 
-class Procedure(Protocol):
-    name: str
-    procedure_type: str  # "tool" or "form"
-
-    # {
-    #   "description": [],
-    #   "start_examples": [],
-    # }
-    triggers_map: Dict[str, List[str]]
-
-
-# main class
 class CheshireCat:
     """The Cheshire Cat.
 

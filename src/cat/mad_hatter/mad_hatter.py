@@ -100,10 +100,10 @@ class MadHatter:
             except Exception:
                 log.error(f"Could not load plugin in {folder}")
 
-        await self.sync_decorated()
+        await self.refresh_cache()
 
     # Load decorated functions from active plugins into MadHatter
-    async def sync_decorated(self):
+    async def refresh_cache(self):
         # emptying cache
         self.hooks = {}
         self.tools = []
@@ -132,10 +132,11 @@ class MadHatter:
         # TODOV2: this loop was previously in CheshireCat, needs a reference tot he fastapi app
         # TODOV2: use a hook so plugins can update tools embeddings and other post sync operations
         for endpoint in self.endpoints:
+            # TODOV2: it never gets into this loop!
             endpoint.activate(self.fastapi_app)
 
-    # check if plugin exists
     def plugin_exists(self, plugin_id) -> bool:
+        """Check if a plugin exists locally."""
         return plugin_id in self.plugins.keys()
 
     async def get_active_plugins(self):
@@ -147,16 +148,14 @@ class MadHatter:
         ap.value = list(set(active_plugins))
         await ap.save()
 
-    # activate / deactivate plugin
     async def toggle_plugin(self, plugin_id):
+        """Activate / deactivate a plugin."""
 
         if not self.plugin_exists(plugin_id):
             raise Exception(f"Plugin {plugin_id} not present in plugins folder")
 
         active_plugins = await self.get_active_plugins()
         plugin_is_active = plugin_id in active_plugins
-
-        log.warning(active_plugins)
 
         # update list of active plugins
         if plugin_is_active:
@@ -172,22 +171,21 @@ class MadHatter:
             # Activate the plugin
             try:
                 self.plugins[plugin_id].activate()
+                # Add the plugin in the list of active plugins
+                active_plugins.append(plugin_id)
             except Exception as e:
                 # Couldn't activate the plugin
                 raise e
 
-            # Add the plugin in the list of active plugins
-            active_plugins.append(plugin_id)
-
         # update DB with list of active plugins, delete duplicate plugins
         await self.set_active_plugins(active_plugins)
-
         # update cache
-        await self.sync_decorated()
+        await self.refresh_cache()
 
 
-    # execute requested hook
     def execute_hook(self, hook_name, *args, cat) -> Any:
+        """Execute a hook."""
+
         # check if hook is supported
         if hook_name not in self.hooks.keys():
             log.debug(f"Hook {hook_name} not present in any plugin")
@@ -239,8 +237,9 @@ class MadHatter:
         # tea_cup has passed through all hooks. Return final output
         return tea_cup
 
-    # get plugin object (used from within a plugin)
     def get_plugin(self):
+        """Get plugin object (used from within a plugin)"""
+        
         # who's calling?
         calling_frame = inspect.currentframe().f_back
         # Get the module associated with the frame
