@@ -155,7 +155,7 @@ class StrayCat:
 
         Examples
         --------
-        Send a chat message during conversation from a hook, tool or form
+        Send a chat message during conversation
         >>> cat.send_chat_message("Hello, dear!")
 
         Using a `CatMessage` object

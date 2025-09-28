@@ -15,8 +15,6 @@ from cat.mad_hatter.decorators.hook import CatHook
 from cat.mad_hatter.decorators.tool import CatTool
 from cat.mad_hatter.decorators.endpoint import CatEndpoint
 
-from cat.experimental.form import CatForm
-
 
 # This class is responsible for plugins functionality:
 # - loading
@@ -36,7 +34,6 @@ class MadHatter:
             str, List[CatHook]
         ] = {}  # dict of active plugins hooks ( hook_name -> [CatHook, CatHook, ...])
         self.tools: List[CatTool] = []  # list of active plugins tools
-        self.forms: List[CatForm] = []  # list of active plugins forms
         self.endpoints: List[CatEndpoint] = []  # list of active plugins endpoints
 
 
@@ -107,22 +104,18 @@ class MadHatter:
 
     # Load decorated functions from active plugins into MadHatter
     async def sync_decorated(self):
-        # emptying tools, hooks and forms
+        # emptying cache
         self.hooks = {}
         self.tools = []
-        self.forms = []
         self.endpoints = []
 
         active_plugins = await self.get_active_plugins()
 
         for _, plugin in self.plugins.items():
-            # load hooks, tools, forms and endpoints from active plugins
+            # load decorated funcs from active plugins
             if plugin.id in active_plugins:
-                # cache tools
+
                 self.tools += plugin.tools
-
-                self.forms += plugin.forms
-
                 self.endpoints += plugin.endpoints
 
                 # cache hooks (indexed by hook name)
@@ -263,6 +256,3 @@ class MadHatter:
         name = plugin_suffix.split("/")[0]
         return self.plugins[name]
 
-    @property
-    def procedures(self):
-        return self.tools + self.forms

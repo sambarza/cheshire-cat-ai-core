@@ -24,10 +24,8 @@ def serialize_obj(obj, related_fields: list[str]) -> dict:
 
         # reverse FK / M2M → has .related_objects when prefetched
         elif hasattr(related, "related_objects"):
-            #if related.related_objects is not None:  # prefetched
+            # if related.related_objects is not None:  # prefetched
             data[field] = [r.__dict__.copy() for r in related.related_objects]
-            #else:  # fallback, triggers queries (avoid if possible)
-            #    data[field] = [r.__dict__.copy() for r in related]
 
         # forward FK (single related object)
         else:

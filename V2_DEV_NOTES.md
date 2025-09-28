@@ -102,6 +102,8 @@
 - `StrayCat.working_memory.history` is not kept in RAM, as it is passed by the client and easily found in `cat.chat_request.messages`; history construction is delegated to plugins (so you can decide whether to keep it stored client side, cat side - with custom endpoints - or another service side).
 - there is no more distinction between
 - A specialized factory is responsible to generate objects for AuthHandler, LLM, Embedder. The factory uses hooks you already had to gather all custom classes from plugins.
+- `CatForm` used via the `@form` decorator are not included in core and have been moved to a plugin `form`. It was interesting to do research on this, but we ended up overengineering them: LLMs are way more powerful now and MCP has `elicitation` directly baked into tools.
+- Caches are managed directly via an indexed SQL table, so all previous cache versions have been deleted.
 
 ## Hooks
 

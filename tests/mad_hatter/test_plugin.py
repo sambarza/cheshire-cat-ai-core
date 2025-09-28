@@ -115,22 +115,6 @@ def test_activate_plugin(plugin):
         assert isinstance(endpoint, CatEndpoint)
         assert endpoint.plugin_id == "mock_plugin"
 
-    # forms
-    assert len(plugin.forms) == get_mock_plugin_info()["forms"]
-    form = plugin.forms[0]
-    assert type(form) is type(PizzaForm)
-    assert type(form.model_class) is type(PizzaOrder)
-    assert form.plugin_id == "mock_plugin"
-    assert form.name == "PizzaForm"
-    assert form.description == "Pizza Order"
-    assert len(form.start_examples) == 2
-    assert "order a pizza" in form.start_examples
-    assert "I want pizza" in form.start_examples
-    assert len(form.stop_examples) == 2
-    assert "stop pizza order" in form.stop_examples
-    assert "I do not want a pizza anymore" in form.stop_examples
-    assert form.ask_confirm is True
-
     # overrides by @plugin decorator
     assert len(plugin.overrides) == 4
     assert set(plugin.overrides.keys()) == {

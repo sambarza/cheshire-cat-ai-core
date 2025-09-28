@@ -116,8 +116,8 @@ async def install_plugin_from_registry(
         tmp_plugin_path = await registry_download_plugin(payload.url)
         manifest = await cat.mad_hatter.install_plugin(tmp_plugin_path)
     except Exception as e:
-        log.error("Could not download plugin form registry")
-        raise HTTPException(status_code=500, detail="Could not download plugin form registry")
+        log.error("Could not download plugin from registry")
+        raise HTTPException(status_code=500, detail="Could not download plugin from registry")
 
     return manifest
 

@@ -30,7 +30,7 @@ class CheshireCat:
     This is the main class that manages the whole AI application.
     It contains references to all the main modules and is responsible for the bootstrapping of the application.
 
-    In most cases you will not need to interact with this class directly, but rather with class `StrayCat` which will be available in your plugin's hooks, tools, forms end endpoints.
+    In most cases you will not need to interact with this class directly, but rather with class `StrayCat` which will be available in your plugin's hooks, tools and endpoints.
 
     Attributes
     ----------

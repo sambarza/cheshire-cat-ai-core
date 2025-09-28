@@ -43,7 +43,6 @@ The Cheshire Cat is a framework to build custom AI agents:
 - (🐘 Built-in RAG with Qdrant) now a plugin
 
 
-
 ## Quickstart
 
 To make Cheshire Cat run on your machine, you just need [`docker`](https://docs.docker.com/get-docker/) installed:
@@ -57,90 +56,6 @@ docker run --rm -it -p 1865:80 ghcr.io/cheshire-cat-ai/core:latest
 Enjoy the Cat!  
 Follow instructions on how to run it properly with [docker compose and volumes](https://cheshire-cat-ai.github.io/docs/quickstart/installation-configuration/).
 
-## Minimal plugin example
-
-<details>
-    <summary>
-        Hooks (events)
-    </summary>
-
-```python
-from cat.mad_hatter.decorators import hook
-
-# hooks are an event system to get finegraned control over your assistant
-@hook
-def agent_prompt_prefix(prefix, cat):
-    prefix = """You are Marvin the socks seller, a poetic vendor of socks.
-You are an expert in socks, and you reply with exactly one rhyme.
-"""
-    return prefix
-```
-</details>
-
-<details>
-    <summary>
-        Tools
-    </summary>
-
-```python
-from cat.mad_hatter.decorators import tool
-
-# langchain inspired tools (function calling)
-@tool(return_direct=True)
-def socks_prices(color, cat):
-    """How much do socks cost? Input is the sock color."""
-    prices = {
-        "black": 5,
-        "white": 10,
-        "pink": 50,
-    }
-
-    price = prices.get(color, 0)
-    return f"{price} bucks, meeeow!" 
-```
-</details>
-
-<details>
-    <summary>
-        Conversational Forms
-    </summary>
-
-## Conversational form example
-
-```python
-from pydantic import BaseModel
-from cat.experimental.form import form, CatForm
-
-# data structure to fill up
-class PizzaOrder(BaseModel):
-    pizza_type: str
-    phone: int
-
-# forms let you control goal oriented conversations
-@form
-class PizzaForm(CatForm):
-    description = "Pizza Order"
-    model_class = PizzaOrder
-    start_examples = [
-        "order a pizza!",
-        "I want pizza"
-    ]
-    stop_examples = [
-        "stop pizza order",
-        "not hungry anymore",
-    ]
-    ask_confirm = True
-
-    def submit(self, form_data):
-        
-        # do the actual order here!
-
-        # return to convo
-        return {
-            "output": f"Pizza order on its way: {form_data}"
-        }
-```
-</details>
 
 ## Docs and Resources
 

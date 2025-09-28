@@ -11,7 +11,6 @@ from pydantic import BaseModel, ValidationError
 from packaging.requirements import Requirement
 
 from cat.mad_hatter.decorators import CatTool, CatHook, CatPluginDecorator, CatEndpoint
-from cat.experimental.form import CatForm
 from cat.mad_hatter.plugin_manifest import PluginManifest
 from cat import utils
 from cat.log import log
@@ -56,12 +55,11 @@ class Plugin:
         # plugin manifest (name, decription, thumb, etc.)
         self._manifest: PluginManifest = self._load_manifest()
 
-        # list of tools, forms and hooks contained in the plugin.
+        # Cache of decorated functions contained in the plugin.
         #   The MadHatter will cache them for easier access,
         #   but they are created and stored in each plugin instance
         self._hooks: List[CatHook] = []  # list of plugin hooks
         self._tools: List[CatTool] = []  # list of plugin tools
-        self._forms: List[CatForm] = []  # list of plugin forms
         self._endpoints: List[CatEndpoint] = [] # list of plugin endpoints
 
         # list of @plugin decorated functions overriding default plugin behaviour
@@ -74,7 +72,7 @@ class Plugin:
         except Exception as e:
             raise e
 
-        # Load of hook, tools, forms and endpoints
+        # Load of hook, tools and endpoints
         self._load_decorated_functions()
 
         # by default, plugin settings are saved inside the plugin folder
@@ -107,7 +105,6 @@ class Plugin:
 
         self._hooks = []
         self._tools = []
-        self._forms = []
         self._deactivate_endpoints()
         self._plugin_overrides = {}
 
@@ -291,7 +288,6 @@ class Plugin:
     def _load_decorated_functions(self):
         hooks = []
         tools = []
-        forms = []
         endpoints = []
         plugin_overrides = []
 
@@ -315,7 +311,6 @@ class Plugin:
                 # Collect references from the plugin module as before
                 hooks += getmembers(plugin_module, self._is_cat_hook)
                 tools += getmembers(plugin_module, self._is_cat_tool)
-                forms += getmembers(plugin_module, self._is_cat_form)
                 endpoints += getmembers(plugin_module, self._is_custom_endpoint)
                 plugin_overrides += getmembers(plugin_module, self._is_cat_plugin_override)
 
@@ -327,7 +322,6 @@ class Plugin:
         # clean and enrich instances
         self._hooks = list(map(self._clean_hook, hooks))
         self._tools = list(map(self._clean_tool, tools))
-        self._forms = list(map(self._clean_form, forms))
         self._endpoints = list(map(self._clean_endpoint, endpoints))
         self._plugin_overrides = {override.name: override for override in list(map(self._clean_plugin_override, plugin_overrides))}
 
@@ -358,12 +352,6 @@ class Plugin:
         t.plugin_id = self._id
         return t
 
-    def _clean_form(self, form: CatForm):
-        # getmembers returns a tuple
-        f = form[1]
-        f.plugin_id = self._id
-        return f
-    
     def _clean_endpoint(self, endpoint: CatEndpoint):
         # getmembers returns a tuple
         f = endpoint[1]
@@ -379,16 +367,6 @@ class Plugin:
     @staticmethod
     def _is_cat_hook(obj):
         return isinstance(obj, CatHook)
-
-    @staticmethod
-    def _is_cat_form(obj):
-        if not isclass(obj) or obj is CatForm:
-            return False
-
-        if not issubclass(obj, CatForm) or not obj._autopilot:
-            return False
-
-        return True
 
     # a plugin tool function has to be decorated with @tool
     # (which returns an instance of CatTool)
@@ -427,10 +405,6 @@ class Plugin:
     @property
     def tools(self):
         return self._tools
-
-    @property
-    def forms(self):
-        return self._forms
 
     @property
     def endpoints(self):
