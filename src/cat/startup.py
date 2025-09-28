@@ -44,10 +44,6 @@ async def lifespan(app: FastAPI):
     # set reference to the cat in fastapi state
     app.state.ccat = ccat
 
-    # startup message with admin, public and swagger addresses
-    # TODOV2: only the first 
-    log.welcome()
-
     yield
     
     # cleanup

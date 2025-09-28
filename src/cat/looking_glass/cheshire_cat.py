@@ -79,6 +79,10 @@ class CheshireCat:
             if setting is None:
                 setting = SettingDB(name=name, value=value)
                 await setting.save()
+
+                # only at first startup
+                if name == "installation_id":
+                    log.welcome()
     
     async def execute_agent(self, slug, cat):
         """Execute an agent from its slug."""
