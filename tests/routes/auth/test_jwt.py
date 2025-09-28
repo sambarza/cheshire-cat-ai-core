@@ -8,7 +8,7 @@ from tests.utils import send_websocket_message, send_http_message
 
 # TODOAUTH: test token refresh / invalidation / logoff
 
-
+JWT_ALGO = "HS256"
 
 def test_is_jwt(client):
     assert not is_jwt("not_a_jwt.not_a_jwt.not_a_jwt")
@@ -16,7 +16,7 @@ def test_is_jwt(client):
     actual_jwt = jwt.encode(
         {"username": "Alice"},
         "some_secret",
-        algorithm=get_env("CCAT_JWT_ALGORITHM"),
+        algorithm=JWT_ALGO,
     )
     assert is_jwt(actual_jwt)
 
@@ -57,7 +57,7 @@ def test_issue_jwt(client):
         payload = jwt.decode(
             received_token,
             get_env("CCAT_JWT_SECRET"),
-            algorithms=[get_env("CCAT_JWT_ALGORITHM")],
+            algorithms=[JWT_ALGO],
         )
         assert payload["username"] == "admin"
         assert (
@@ -186,7 +186,7 @@ def test_jwt_self_signature_passes(client, admin_headers):
         token = jwt.encode(
             {"sub": user["id"], "username": user["username"]},
             "meow_jwt",
-            algorithm=get_env("CCAT_JWT_ALGORITHM"),
+            algorithm=JWT_ALGO,
         )
 
         headers = {
@@ -217,7 +217,7 @@ def test_jwt_self_signature_fails(client, admin_headers):
         token = jwt.encode(
             {"sub": user["id"], "username": user["username"]},
             "wrong_secret",
-            algorithm=get_env("CCAT_JWT_ALGORITHM"),
+            algorithm=JWT_ALGO,
         )
 
         # not allowed because CCAT_JWT_SECRET for client is `meow_jwt`

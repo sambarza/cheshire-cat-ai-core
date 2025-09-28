@@ -53,7 +53,7 @@ class AuthHandlerDefault(BaseAuthHandler):
             payload = jwt.decode(
                 token,
                 get_env("CCAT_JWT_SECRET"),
-                algorithms=[get_env("CCAT_JWT_ALGORITHM")],
+                algorithms=["HS256"],
             )
 
             return AuthUserInfo(

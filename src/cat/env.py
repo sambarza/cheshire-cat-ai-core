@@ -14,7 +14,6 @@ def get_supported_env_variables():
         "CCAT_CORS_ALLOWED_ORIGINS": None,
         "CCAT_SQL": "sqlite:///data/sqlite/core.db", # TODOV2: db could be encrypted by default # postgresql+asyncpg://user:password@localhost/dbname
         "CCAT_JWT_SECRET": "meow_jwt",
-        "CCAT_JWT_ALGORITHM": "HS256",
         "CCAT_JWT_EXPIRE_MINUTES": str(60 * 24),  # JWT expires after 1 day
         "CCAT_HTTPS_PROXY_MODE": "false",
         "CCAT_CORS_FORWARDED_ALLOW_IPS": "*",

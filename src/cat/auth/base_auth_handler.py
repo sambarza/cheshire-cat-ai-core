@@ -63,7 +63,7 @@ class BaseAuthHandler(ABC):  # TODOAUTH: pydantic model?
         return jwt.encode(
             jwt_content,
             get_env("CCAT_JWT_SECRET"),
-            algorithm=get_env("CCAT_JWT_ALGORITHM"),
+            algorithm="HS256",
         )
     
     @abstractmethod
