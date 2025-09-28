@@ -51,9 +51,9 @@ async def wipe_collections(
         ret = vector_memory.delete_collection(c)
         to_return[c] = ret
     
-    ccat: CheshireCat = request.app.state.ccat
-    ccat.load_memory()  # recreate the long term memories
-    ccat.mad_hatter.find_plugins()
+    #ccat: CheshireCat = request.app.state.ccat
+    #ccat.load_memory()  # recreate the long term memories
+    #ccat.mad_hatter.find_plugins() # should not be needed!
 
     return {
         "deleted": to_return,
@@ -81,9 +81,9 @@ async def wipe_single_collection(
     ret = vector_memory.delete_collection(collection_id)
     to_return[collection_id] = ret
 
-    ccat: CheshireCat = request.app.state.ccat
-    ccat.load_memory()  # recreate the long term memories
-    ccat.mad_hatter.find_plugins()
+    #ccat: CheshireCat = request.app.state.ccat
+    #ccat.load_memory()  # recreate the long term memories
+    #ccat.mad_hatter.find_plugins() # should not be needed!
 
     return {
         "deleted": to_return,

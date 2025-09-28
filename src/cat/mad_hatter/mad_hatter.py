@@ -3,7 +3,7 @@ import glob
 import shutil
 import inspect
 from copy import deepcopy
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Callable
 from pathlib import Path
 
 from cat.log import log
@@ -30,12 +30,13 @@ class MadHatter:
         # for a list of active plugins (stored in db), see MadHatter.get_active_plugins
         self.plugins: Dict[str, Plugin] = {}
 
-        self.hooks: Dict[
-            str, List[CatHook]
-        ] = {}  # dict of active plugins hooks ( hook_name -> [CatHook, CatHook, ...])
-        self.tools: List[CatTool] = []  # list of active plugins tools
-        self.endpoints: List[CatEndpoint] = []  # list of active plugins endpoints
+        # caches for decorated functions
+        self.hooks: Dict[str, List[CatHook]] = {}
+        self.tools: List[CatTool] = []
+        self.endpoints: List[CatEndpoint] = []
 
+        # callback out of the hook system to notify other components about a refresh
+        self.on_refresh_callbacks: List[Callable] = []
 
     async def install_plugin(self, package_plugin):
         # extract zip/tar file into plugin folder
@@ -100,40 +101,33 @@ class MadHatter:
             except Exception:
                 log.error(f"Could not load plugin in {folder}")
 
-        await self.refresh_cache()
+        await self.refresh_caches()
 
     # Load decorated functions from active plugins into MadHatter
-    async def refresh_cache(self):
-        # emptying cache
+    async def refresh_caches(self):
+        # emptying caches
         self.hooks = {}
         self.tools = []
         self.endpoints = []
 
-        active_plugins = await self.get_active_plugins()
-
         for _, plugin in self.plugins.items():
-            # load decorated funcs from active plugins
-            if plugin.id in active_plugins:
+            # load decorated funcs from plugins (only active ones have them populated)
+            self.tools += plugin.tools
+            self.endpoints += plugin.endpoints
 
-                self.tools += plugin.tools
-                self.endpoints += plugin.endpoints
-
-                # cache hooks (indexed by hook name)
-                for h in plugin.hooks:
-                    if h.name not in self.hooks.keys():
-                        self.hooks[h.name] = []
-                    self.hooks[h.name].append(h)
+            # cache hooks (indexed by hook name)
+            for h in plugin.hooks:
+                if h.name not in self.hooks.keys():
+                    self.hooks[h.name] = []
+                self.hooks[h.name].append(h)
 
         # sort each hooks list by priority
         for hook_name in self.hooks.keys():
             self.hooks[hook_name].sort(key=lambda x: x.priority, reverse=True)
 
-        # notify sync has finished (the Cat will ensure all tools are embedded in vector memory)
-        # TODOV2: this loop was previously in CheshireCat, needs a reference tot he fastapi app
-        # TODOV2: use a hook so plugins can update tools embeddings and other post sync operations
-        for endpoint in self.endpoints:
-            # TODOV2: it never gets into this loop!
-            endpoint.activate(self.fastapi_app)
+        # Notify subscribers about finished refresh
+        for callback in self.on_refresh_callbacks:
+            await utils.run_sync_or_async(callback)
 
     def plugin_exists(self, plugin_id) -> bool:
         """Check if a plugin exists locally."""
@@ -180,7 +174,7 @@ class MadHatter:
         # update DB with list of active plugins, delete duplicate plugins
         await self.set_active_plugins(active_plugins)
         # update cache
-        await self.refresh_cache()
+        await self.refresh_caches()
 
 
     def execute_hook(self, hook_name, *args, cat) -> Any:
@@ -239,7 +233,7 @@ class MadHatter:
 
     def get_plugin(self):
         """Get plugin object (used from within a plugin)"""
-        
+
         # who's calling?
         calling_frame = inspect.currentframe().f_back
         # Get the module associated with the frame

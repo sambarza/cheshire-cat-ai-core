@@ -1,44 +1,52 @@
-
-
+from typing import Any, Dict
 from cat.factory.defaults import (
     AuthHandlerDefault, LLMDefault, EmbedderDefault, AgentDefault
 )
+from cat.utils import BaseModelDict
 
 
-# this class so slim can easily be methods in CheshireCat
+class FactoryCategory(BaseModelDict):
+    default: Any
+    objects: Dict[str, Any] = {}
+
+
 class Factory:
 
-    def __init__(self, mad_hatter):
-        self.mad_hatter = mad_hatter
+    def __init__(self):
 
-    category_defaults = {
-        "auth_handler" : AuthHandlerDefault(),
-        "llm"          : LLMDefault(),
-        "embedder"     : EmbedderDefault(),
-        "agent"        : AgentDefault(),
-    }
+        self.categories = {
+            "auth_handler" : FactoryCategory(
+                default = AuthHandlerDefault()
+            ),
+            "llm" : FactoryCategory(
+                default = LLMDefault()
+            ),
+            "embedder" : FactoryCategory(
+                default = EmbedderDefault()
+            ),
+            "agent" : FactoryCategory(
+                default = AgentDefault()
+            ),
+        }
 
+    async def load_objects(self, mad_hatter):
+        """Collect objects instantiated by plugins (llms, embedders, auth handlers, agents)."""
 
-    async def load_objects(self, category: str):
-        """Collect objects instantiated by plugins (llms, embedders, auth handlers)."""
+        for category_name, category in self.categories.items():
+            category.objects = mad_hatter.execute_hook(
+                f"factory_allowed_{category_name}s", {}, cat=None
+            )
+            # TODO: should add type checks
 
-        if category not in self.category_defaults.keys():
-            raise Exception(f"Category '{category}' is not supported by Factory")
+            if len(category.objects) == 0:
+                category.objects = {
+                    "default": category.default
+                }
 
-        objects_dict = self.mad_hatter.execute_hook(
-            f"factory_allowed_{category}s", {}, cat=None
-        )
-        if len(objects_dict) == 0:
-            objects_dict = {
-                "default": self.category_defaults[category]
-            }
-            
-        return objects_dict
-    
+    def get_objects(self, category_name: str):
+        return self.categories[category_name].objects
 
-    def get_default(self, category: str):
-        if category not in self.category_defaults.keys():
-            raise Exception(f"Category '{category}' is not supported by Factory")
-        return self.category_defaults[category]
+    def get_default(self, category_name: str):
+        return self.categories[category_name].default
 
 

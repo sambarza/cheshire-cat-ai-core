@@ -37,28 +37,23 @@ class CheshireCat:
             # ensure core DB settings
             await self.populate_db()
 
-            # instantiate MadHatter and trigger first discovery
+            # instantiate MadHatter
             self.mad_hatter = MadHatter()
-            await self.mad_hatter.find_plugins()
-
+            self.mad_hatter.on_refresh_callbacks.append(
+                self.on_mad_hatter_refresh
+            )
+            
             # init Factory
-            self.factory = Factory(self.mad_hatter)
+            self.factory = Factory()
 
-            # init MCP client(s)
-            self.mcp_clients = MCPClients()
-
+            #  Trigger plugin discovery
+            await self.mad_hatter.find_plugins()
+            
             # allows plugins to do something before cat components are loaded
             self.mad_hatter.execute_hook("before_cat_bootstrap", cat=self)
-
-            # load AuthHandlers
-            self.auth_handlers = await self.factory.load_objects("auth_handler")
-
-            # load LLM and embedder
-            self.llms = await self.factory.load_objects("llm")
-            self.embedders = await self.factory.load_objects("embedder")
             
-            # load Agents
-            self.agents = await self.factory.load_objects("agent")
+            # init MCP client(s)
+            self.mcp_clients = MCPClients()
 
             # allows plugins to do something after the cat bootstrap is complete
             self.mad_hatter.execute_hook("after_cat_bootstrap", cat=self)
@@ -83,30 +78,22 @@ class CheshireCat:
                 # only at first startup
                 if name == "installation_id":
                     log.welcome()
-    
-    async def execute_agent(self, slug, cat):
-        """Execute an agent from its slug."""
 
-        # prepare input to be passed to the agent.
-        #   Info will be extracted from working memory
-        # Note: agent_input works both as a dict and as an object
-        # TODOV2: hook before_agent_starts is not active anymore
-        #self.mad_hatter.execute_hook(
-        #    "before_agent_starts", cat=cat
-        #)
+    async def on_mad_hatter_refresh(self):
+        
+        # Get objects from plugins
+        await self.factory.load_objects(self.mad_hatter)
 
-        # should we run the agent?
-        # TODOV2: hook agent_fast_reply is not active anymore
-        #agent_fast_reply = self.mad_hatter.execute_hook(
-        #]    "agent_fast_reply", {}, cat=cat
-        #)
+        self.auth_handlers = self.factory.get_objects("auth_handler")
+        self.llms = self.factory.get_objects("llm")
+        self.embedders = self.factory.get_objects("embedder")
+        self.agents = self.factory.get_objects("agent")
 
-        if slug not in self.agents.keys():
-            log.warning(f"Agent {slug} not found. Running default agent")
-            selected_agent = self.factory.get_default("agent")
-        else:
-            selected_agent = self.agents[slug]
+        # update endpoints
+        for endpoint in self.mad_hatter.endpoints:
+            endpoint.activate(self.fastapi_app)
 
-        await selected_agent.execute(cat)
+        # allow plugins to hook the refresh (e.g. to embed tools)
+        self.mad_hatter.execute_hook("after_mad_hatter_refresh", cat=self)
 
 

@@ -227,10 +227,9 @@ class StrayCat:
     async def llm(
             self,
             system_prompt: str,
-            prompt_variables: dict = {},
             messages: list[Message] = [],
+            model: str | None = None,
             tools: list[CatTool] = [],
-            model: str | None = None,  # TODOV2 the default?
             stream: bool = False,
             execution_name: str = "prompt"
         ) -> Message: # TODOV2: does not return a string anymore
@@ -282,9 +281,6 @@ class StrayCat:
             "llm_callbacks", callbacks, cat=self
         )
 
-        # ensure prompt variables and placeholders in system_prompt match
-        prompt_variables, system_prompt = utils.match_prompt_variables(prompt_variables, system_prompt)
-        
         # here we deal with motherfucking langchain
         prompt = ChatPromptTemplate(
             messages=[
@@ -294,7 +290,10 @@ class StrayCat:
             ] + [m.langchainfy() for m in messages]
         )
         
-        llm_with_tools = self._llm
+        if model:
+            llm_with_tools = self._ccat.llms[model]
+        else:
+            llm_with_tools = self._llm
         if hasattr(self._llm, "bind_tools"):
             llm_with_tools = self._llm.bind_tools([
                 t.langchainfy() for t in tools
@@ -308,7 +307,7 @@ class StrayCat:
         )
 
         langchain_msg = await chain.ainvoke(
-            prompt_variables,
+            {},
             config=RunnableConfig(callbacks=callbacks)
         )
 
@@ -322,15 +321,9 @@ class StrayCat:
             default_value,
             cat=self
         )
-
-
+    
     async def execute_agent(self, slug):
-        try:
-            await self._ccat.execute_agent(slug, self)
-        except Exception as e:
-            log.error(f"Could not execute agent {slug}: {e}")
-            raise e
-        
+        await self._ccat.agents[slug].execute(self)
 
     async def get_system_prompt(self) -> str:
 
@@ -599,15 +592,23 @@ Allowed classes are:
         return self.__user_data
     
     @property
+    def agent(self):
+        """Instance of the requested agent.
+        """
+        slug = self.chat_request.agent
+        if slug not in self._ccat.agents:
+            raise Exception(f'Agent "{slug}" not found')
+        return self._ccat.agents[slug]
+
+    @property
     def _llm(self):
         """Instance of langchain `LLM`.
         Only use it if you directly want to deal with langchain, prefer method `cat.llm(prompt)` otherwise.
         """
-        ccat = self._ccat
-        requested_llm = self.chat_request.model
-        if requested_llm and requested_llm in ccat.llms:
-            return ccat.llms[requested_llm]
-        return ccat.factory.get_default("llm")
+        slug = self.chat_request.model
+        if slug not in self._ccat.llms:
+            raise Exception(f'Model "{slug}" not found')
+        return self._ccat.llms[slug]
 
     @property
     def _embedder(self):
@@ -626,11 +627,10 @@ Allowed classes are:
         >>> await cat.embedder.aembed_query("Oh dear!")
         [0.2, 0.02, 0.4, ...]
         """
-        ccat = self._ccat
-        requested_embedder = self.chat_request.model # TODOV2: should come from DB options
-        if requested_embedder and requested_embedder in ccat.embedders:
-            return ccat.llms[requested_embedder]
-        return ccat.factory.get_default("embedder")
+        slug = self.chat_request.embedder
+        if slug not in self._ccat.embedders:
+            raise Exception(f'Embedder "{slug}" not found')
+        return self._ccat.embedders[slug]
 
     @property
     def mad_hatter(self):

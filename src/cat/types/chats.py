@@ -15,7 +15,7 @@ class ChatRequest(BaseModel):
 
     agent: str = "default" # name of the agent to run.
     model: str = "default" # e.g. "openai:gpt-5"
-    stream: bool = True # whether to stream tokens or not
+    embedder: str = "default"
     context: Context = Context()
     messages: List[Message] = [
         Message(
@@ -26,6 +26,7 @@ class ChatRequest(BaseModel):
             )
         )
     ]
+    stream: bool = True # whether to stream tokens or not
     # TODOV2: not sure how the client sends context other than MCP, messages and instructions?
     # TODOV2: should this object be immutable?
 
