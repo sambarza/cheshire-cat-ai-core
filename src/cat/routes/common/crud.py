@@ -7,11 +7,10 @@ from fastapi import APIRouter
 from fastapi import APIRouter, HTTPException, Depends, Body, Query
 
 from tortoise.models import Model
-from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 
-from cat.log import log
 from cat.looking_glass.stray_cat import StrayCat
 from cat.auth.permissions import AuthPermission, AuthResource, check_permissions
+from .schemas import Page
 
 def serialize_obj(obj, related_fields: list[str]) -> dict:
     data = obj.__dict__.copy()
@@ -56,10 +55,6 @@ def create_crud(
     SelectSchema, CreateSchema, UpdateSchema = \
         select_schema, create_schema, update_schema
     
-    class PageSchema(BaseModel):
-        items: List[SelectSchema]
-        cursor: str
-    
     router = APIRouter(
         prefix=prefix,
         tags=[tag]
@@ -70,7 +65,7 @@ def create_crud(
         search: Optional[str] = Query(None, description="Search query"),
         # TODOV2: pagination
         cat: StrayCat = check_permissions(auth_resource, AuthPermission.LIST),
-    ) -> PageSchema:
+    ) -> Page[SelectSchema]:
         
         if restrict_by_user_id:
             q = DBModel.filter(user_id=cat.user_id)
@@ -84,7 +79,7 @@ def create_crud(
         #    stmt = stmt.where(func.lower(func.cast(DBModel.body, text)).ilike(f"%{search.lower()}%"))
         await DBModel.fetch_for_list(objs, *related_fields)
 
-        return PageSchema(
+        return Page(
             items=[
                 serialize_obj(obj, related_fields) for obj in objs
             ],

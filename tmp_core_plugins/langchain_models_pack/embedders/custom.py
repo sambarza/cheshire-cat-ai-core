@@ -14,7 +14,7 @@ class CustomOllamaEmbeddings(Embeddings):
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         payload = json.dumps({"model": self.model , "input": texts})
-        ret = httpx.post(self.url, data=payload, timeout=None)
+        ret = httpx.post(self.url, data=payload, timeout=None) # TODOV2: use async
         ret.raise_for_status()
         return ret.json()["embeddings"]
 
