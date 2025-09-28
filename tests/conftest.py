@@ -20,26 +20,10 @@ from tests.utils import create_mock_plugin_zip
 
 FAKE_TIMESTAMP = 1705855981
 
-# get rid of tmp files and folders used for testing
-def clean_up_mocks():
-    # clean up service files and mocks
-    to_be_removed = [
-        "tmp_test",
-        "tmp_cache",
-    ]
-    for tbr in to_be_removed:
-        if os.path.exists(tbr):
-            if os.path.isdir(tbr):
-                shutil.rmtree(tbr)
-            else:
-                os.remove(tbr)
-
 
 def clean_up_envs():
     # env variables
     os.environ["CCAT_DEBUG"] = "false" # do not autoreload
-    # in case tests setup a file system cache, use a different file system cache dir
-    os.environ["CCAT_CACHE_DIR"] = "tmp_test"
 
 
 @pytest.fixture(scope="function")
@@ -73,7 +57,6 @@ def patches(monkeypatch, tmp_path):
 @pytest.fixture(scope="function")
 def app(patches) -> Generator[FastAPI, Any, None]:
     
-    clean_up_mocks()
     clean_up_envs()
 
     from cat.startup import cheshire_cat_api # will instantiate the cat
@@ -82,7 +65,6 @@ def app(patches) -> Generator[FastAPI, Any, None]:
     #cheshire_cat_api.mount("/static", StaticFiles(directory=cat.utils.get_static_path()), name="static")
     yield cheshire_cat_api
 
-    clean_up_mocks()
     clean_up_envs()
 
 

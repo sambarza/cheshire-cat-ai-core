@@ -61,9 +61,6 @@ class BaseAuth(ABC):
                 # StrayCat is passed to the endpoint
                 yield cat
 
-                # save working memory and delete StrayCat after endpoint execution
-                cat.update_working_memory_cache()
-                del cat
                 return
 
         # if no StrayCat was obtained, raise exception

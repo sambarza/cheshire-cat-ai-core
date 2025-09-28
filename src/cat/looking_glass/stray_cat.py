@@ -17,7 +17,6 @@ from cat.memory.working_memory import WorkingMemory
 from cat.types.chats import ChatRequest, ChatResponse
 from cat.types.messages import Message
 from cat.mad_hatter.decorators import CatTool
-from cat.cache.cache_item import CacheItem
 from cat import utils
 from cat.log import log
 
@@ -76,8 +75,6 @@ class StrayCat:
         # pointer to CheshireCat instance
         self._ccat = ccat
 
-        # get working memory from cache or create a new one
-        self.load_working_memory_from_cache()
 
     def __repr__(self):
         return f"StrayCat(user_id={self.user_id}, user_name={self.user_data.name})"
@@ -89,19 +86,17 @@ class StrayCat:
         if self.message_callback:
             await self.message_callback(data)
 
-
-    def load_working_memory_from_cache(self):
-        """Load the working memory from the cache."""
+    async def load_working_memory(self):
+        """Load working memory from DB."""
         
-        self.working_memory = \
-            self.cache.get_value(f"{self.user_id}_working_memory") or WorkingMemory()
+        # TODOV2: load from DB
+        self.working_memory = WorkingMemory()
 
-    def update_working_memory_cache(self):
-        """Update the working memory in the cache."""
+    async def save_working_memory(self):
+        """Save working memory to DB."""
 
-        updated_cache_item = CacheItem(f"{self.user_id}_working_memory", self.working_memory, -1)
-        self.cache.insert(updated_cache_item)
-
+        # TODOV2: save to DB
+        pass
 
     # TODOV2: take away `ws` and simplify these methods so it is only one
     async def send_ws_message(self, content: str | dict, msg_type: MSG_TYPES = "notification"):
@@ -413,6 +408,9 @@ class StrayCat:
 
         log.info(self.chat_request)
 
+        # get working memory from DB or create a new one
+        await self.load_working_memory()
+
         # Run a totally custom reply (skips all the side effects of the framework)
         fast_reply = self.mad_hatter.execute_hook(
             "fast_reply", {}, cat=self
@@ -435,9 +433,11 @@ class StrayCat:
             "before_cat_sends_message", self.chat_response, cat=self
         )
 
+        # save working memory to DB
+        await self.save_working_memory()
+
         # Return final reply
         log.info(self.chat_response)
-
         return self.chat_response
 
 
@@ -654,11 +654,6 @@ Allowed classes are:
         {"num_cats": 44, "rows": 6, "remainder": 0}
         """
         return self._ccat.mad_hatter
-    
-    @property
-    def cache(self):
-        """Gives access to internal cache."""
-        return self._ccat.cache
     
     @property
     def mcp(self):

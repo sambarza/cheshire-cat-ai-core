@@ -21,9 +21,6 @@ async def websocket_endpoint(
             # Receive the next message from WebSocket.
             user_message = await websocket.receive_json()
 
-            # http endpoints may have been called while waiting for a message
-            cat.load_working_memory_from_cache()
-
             async for msg in cat.run(user_message):
                 await websocket.send_json(msg)
 

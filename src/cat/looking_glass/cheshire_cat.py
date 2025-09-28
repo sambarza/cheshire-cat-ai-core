@@ -10,7 +10,6 @@ from cat.factory.factory import Factory
 from cat.protocols.model_context.client import MCPClients
 from cat.log import log
 from cat.mad_hatter.mad_hatter import MadHatter
-from cat.cache.cache_manager import CacheManager
 
 
 class Procedure(Protocol):
@@ -76,9 +75,6 @@ class CheshireCat:
             
             # load Agents
             self.agents = await self.factory.load_objects("agent")
-
-            # Cache for sessions / working memories et al.
-            self.cache = CacheManager().cache
 
             # allows plugins to do something after the cat bootstrap is complete
             self.mad_hatter.execute_hook("after_cat_bootstrap", cat=self)
