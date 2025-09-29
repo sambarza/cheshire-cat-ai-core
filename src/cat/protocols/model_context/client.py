@@ -6,6 +6,8 @@ from fastmcp.tools import Tool
 from fastmcp.prompts import Prompt
 from fastmcp.resources import Resource
 
+from cat.log import log
+
 
 # Create in memory server for testing, otherwise tests get slow
 server = FastMCP("TestInMemoryServer")
@@ -36,6 +38,7 @@ class MCPClient(Client):
     def __init__(self, user_id):
 
         # TODO: get tokens / api keys from DB
+        
         super().__init__(
             transport=StreamableHttpTransport(url="http://localhost:8000/mcp")
         )
@@ -43,13 +46,18 @@ class MCPClient(Client):
         self.cached_tools = None
         self.cached_resources = None
         self.cached_prompts = None
-        # TODO: invalidate caches when MCP server notifies (should keep open connection)
+        # TODO: invalidate caches when MCP server notifies
 
     async def list_tools(self):
         if self.cached_tools:
             return self.cached_tools
-        async with self:
-            tools = await super().list_tools()
+        
+        try:
+            async with self:
+                tools = await super().list_tools()
+        except Exception:
+            log.error(f"Error during MCP client init")
+            return []
         
         self.cached_tools = tools
         return tools

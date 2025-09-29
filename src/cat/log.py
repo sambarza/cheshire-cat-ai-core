@@ -1,6 +1,5 @@
 """The log engine."""
 
-import logging
 import sys
 import json
 import traceback
@@ -42,10 +41,6 @@ class CatLogEngine:
     def __init__(self):
         self.LOG_LEVEL = get_log_level()
         self.default_log()
-
-        # workaround for pdfminer logging
-        # https://github.com/pdfminer/pdfminer.six/issues/347
-        logging.getLogger("pdfminer").setLevel(logging.WARNING)
 
     def show_log_level(self, record):
         """Allows to show stuff in the log based on the global setting.
@@ -104,18 +99,13 @@ class CatLogEngine:
     def error(self, msg):
         """Logs an ERROR message"""
         self.log(msg, level="ERROR")
-
         # Only print the traceback if an exception handler is being executed
-        if sys.exc_info()[0] is not None:
-            traceback.print_exc()
+        self.print_short_traceback()
 
     def critical(self, msg):
         """Logs a CRITICAL message"""
         self.log(msg, level="CRITICAL")
-        
-        # Only print the traceback if an exception handler is being executed
-        if sys.exc_info()[0] is not None:
-            traceback.print_exc()
+        self.print_short_traceback()
 
     def log(self, msg, level="DEBUG"):
         """Log a message
@@ -143,7 +133,16 @@ class CatLogEngine:
         for line in lines:
             logger.log(level, line)
 
-
+    def print_short_traceback(self):
+        if sys.exc_info()[0] is not None:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            formatted_traceback = \
+                traceback.format_exception(exc_type, exc_value, exc_traceback)
+            if len(formatted_traceback) > 10:
+                formatted_traceback = formatted_traceback[-10:]
+            for err in formatted_traceback:
+                print(self.colored_text(err, "red"))
+                
     def welcome(self):
         """Welcome message in the terminal."""
         secure = "s" if get_env("CCAT_CORE_USE_SECURE_PROTOCOLS") in ("true", "1") else ""
@@ -224,7 +223,6 @@ class CatLogEngine:
             print(self.colored_text("========================================", "green"))
         
         return langchain_prompt
-
 
     def langchain_log_output(self, langchain_output, title):
         if(get_env("CCAT_DEBUG") == "true"):
