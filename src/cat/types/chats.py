@@ -22,7 +22,6 @@ class ChatRequest(BaseModel):
         )
     ]
     stream: bool = True # whether to stream tokens or not
-    # TODOV2: not sure how the client sends context other than MCP, messages and instructions?
     # TODOV2: should this object be immutable?
 
 
