@@ -4,8 +4,9 @@ import mimetypes
 import glob
 from uuid import uuid5, NAMESPACE_URL
 from typing import List
+from pydantic import BaseModel
 
-from fastapi import UploadFile, File
+from fastapi import UploadFile, File, Path
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -23,7 +24,7 @@ class UploadedFile(utils.BaseModelDict):
     url: str
     mime_type: str
 
-class UploadedFileResponse(utils.BaseModelDict):
+class UploadedFileResponse(BaseModel):
     url: str
     mime_type: str
 
@@ -31,7 +32,7 @@ class UploadedFileResponse(utils.BaseModelDict):
 async def upload_file(
     file: UploadFile = File(...),
     cat=check_permissions(AuthResource.STATIC, AuthPermission.WRITE)
-):
+) -> UploadedFileResponse:
     hashed_user_id = str(uuid5(NAMESPACE_URL, str(cat.user_id)))
     save_dir = os.path.join(utils.get_static_path(), hashed_user_id)
     os.makedirs(save_dir, exist_ok=True)
@@ -87,7 +88,7 @@ async def get_static_files(
 
 @router.get("/{path:path}")
 async def get_static_file(
-    path,
+    path: str = Path(...),
     cat=check_permissions(AuthResource.STATIC, AuthPermission.READ)
 )-> FileResponse:
     static_dir = utils.get_static_path()
