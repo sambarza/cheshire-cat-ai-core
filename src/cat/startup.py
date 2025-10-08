@@ -1,9 +1,6 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.routing import APIRoute
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from scalar_fastapi import get_scalar_api_reference
 from tortoise import Tortoise
@@ -12,12 +9,13 @@ from cat.db.database import init_db
 from cat.log import log
 from cat.env import get_env
 from cat.routes import (
-    base,
+    home,
     auth,
     settings,
     plugins,
     chats,
-    contexts
+    contexts,
+    status
 )
 from cat.routes.mcp import connectors
 from cat.routes.websocket import websocket
@@ -32,18 +30,9 @@ async def lifespan(app: FastAPI):
     # init DB
     await init_db()
 
-    #       ^._.^
-    #
-    # loads Cat and plugins
-    # Every endpoint can access the cat instance via request.app.state.ccat
-    # - Not using middleware because I can't make it work with both http and websocket;
-    # - Not using Depends because it only supports callables (not instances)
-    # - Starlette allows this: https://www.starlette.io/applications/#storing-state-on-the-app-instance
+    #  ^._.^ 
     ccat = CheshireCat()
     await ccat.bootstrap(app)
-    
-    # set reference to the cat in fastapi state
-    app.state.ccat = ccat
 
     yield
     
@@ -79,12 +68,13 @@ if cors_enabled == "true":
 
 # Add routers
 for r in [
-    base, auth, chats, contexts, settings,
+    home, status, auth, chats, contexts, settings,
     plugins, connectors, static, websocket
 ]:
     cheshire_cat_api.include_router(r.router)
 
 
+# Endpoint playground
 @cheshire_cat_api.get("/docs", include_in_schema=False)
 async def scalar_docs():
     cheshire_cat_api.openapi = get_openapi_configuration_function(cheshire_cat_api)

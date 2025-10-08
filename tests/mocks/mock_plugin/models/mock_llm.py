@@ -4,7 +4,7 @@ from typing import List, Type
 from langchain_core.language_models.fake_chat_models import FakeListChatModel
 
 from cat.mad_hatter.decorators import hook
-from cat.factory.llm import LLMSettings
+from cat.factory.defaults.llm import LLMSettings
 
 class TestLLMConfig(LLMSettings):
     """Fake LLM for testing purposes."""

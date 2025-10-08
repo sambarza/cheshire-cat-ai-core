@@ -11,7 +11,6 @@ AuthLit
 
 class AuthResource(str, Enum):
     """Enum of core authorization resources. Can be extended via plugin."""
-    STATUS = "STATUS"
     CHAT = "CHAT"
     SETTING = "SETTING"
     PLUGIN = "PLUGIN"
@@ -48,10 +47,6 @@ def get_base_permissions() -> Dict[AuthResource, List[AuthPermission]]:
 
     # TODOV2: should include plugins defined permissions
     return {
-        AuthResource.STATUS: [
-            AuthPermission.LIST,
-            AuthPermission.READ
-        ],
         AuthResource.CHAT: all_permissions,
         AuthResource.STATIC: all_permissions,
     }

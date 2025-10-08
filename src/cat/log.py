@@ -8,7 +8,6 @@ from loguru import logger
 
 from cat.env import get_env
 
-
 def get_log_level():
     """Return the global LOG level."""
     return get_env("CCAT_LOG_LEVEL")

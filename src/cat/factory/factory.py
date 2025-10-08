@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Literal
 from cat.factory.defaults import (
     AuthHandlerDefault, LLMDefault, EmbedderDefault, AgentDefault
 )
@@ -7,6 +7,8 @@ from cat.utils import BaseModelDict
 
 class FactoryCategory(BaseModelDict):
     default: Any
+    keep_default: bool
+    at_least_one: bool
     objects: Dict[str, Any] = {}
 
 
@@ -16,21 +18,34 @@ class Factory:
 
         self.categories = {
             "auth_handler" : FactoryCategory(
-                default = AuthHandlerDefault()
+                default = AuthHandlerDefault(),
+                keep_default=False,
+                at_least_one=True
             ),
             "llm" : FactoryCategory(
-                default = LLMDefault()
+                default = LLMDefault(),
+                keep_default=False,
+                at_least_one=True
             ),
             "embedder" : FactoryCategory(
-                default = EmbedderDefault()
+                default = EmbedderDefault(),
+                keep_default=False,
+                at_least_one=True
             ),
             "agent" : FactoryCategory(
-                default = AgentDefault()
+                default = AgentDefault(),
+                keep_default=True,
+                at_least_one=True
             ),
+            #"mcp" : FactoryCategory(
+            #    default = None,
+            #    keep_default=False,
+            #    at_least_one=False
+            #),
         }
 
     async def load_objects(self, mad_hatter):
-        """Collect objects instantiated by plugins (llms, embedders, auth handlers, agents)."""
+        """Collect objects instantiated by plugins (llms, auth handlers, agents, etc)."""
 
         for category_name, category in self.categories.items():
             category.objects = mad_hatter.execute_hook(
@@ -38,11 +53,9 @@ class Factory:
             )
             # TODO: should add type checks
 
-            if len(category.objects) == 0:
-                category.objects = {
-                    "default": category.default
-                }
-
+            if category.keep_default or (category.at_least_one and len(category.objects) == 0):
+                category.objects["default"] = category.default
+                
     def get_objects(self, category_name: str):
         return self.categories[category_name].objects
 

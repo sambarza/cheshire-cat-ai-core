@@ -32,7 +32,10 @@ class CheshireCat:
         # bootstrap the Cat! ^._.^
 
         try:
-            self.fastapi_app = fastapi_app # reference to the FastAPI object
+            # reference to the FastAPI object
+            self.fastapi_app = fastapi_app
+            # reference to the cat in fastapi state
+            fastapi_app.state.ccat = self
 
             # ensure core DB settings
             await self.populate_db()
@@ -88,6 +91,7 @@ class CheshireCat:
         self.llms = self.factory.get_objects("llm")
         self.embedders = self.factory.get_objects("embedder")
         self.agents = self.factory.get_objects("agent")
+        #self.mcps = self.factory.get_objects("mcp")
 
         # update endpoints
         for endpoint in self.mad_hatter.endpoints:
