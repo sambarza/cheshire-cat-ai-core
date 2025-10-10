@@ -1,3 +1,4 @@
+from typing import Literal
 from mcp import types as mcp_types
 from pydantic import field_serializer, BaseModel
 
@@ -5,20 +6,24 @@ class Resource(mcp_types.Resource):
     @field_serializer("uri")
     def serialize_uri(self, uri):
         return str(self.uri)
+    
+ContentTypeLiteral = Literal[
+    "text", "image", "audio", "resource_link", "resource"
+]
 
 class TextContent(mcp_types.TextContent):
-    pass
+    type: ContentTypeLiteral = "text"
 
 class ImageContent(mcp_types.ImageContent):
-    pass
+    type: ContentTypeLiteral = "image"
 
 class AudioContent(mcp_types.AudioContent):
-    pass
+    type: ContentTypeLiteral = "audio"
 
 class ResourceLink(mcp_types.ResourceLink):
-    pass
+    type: ContentTypeLiteral = "resource_link"
 
 class EmbeddedResource(mcp_types.EmbeddedResource):
-    pass
+    type: ContentTypeLiteral = "resource"
 
 ContentBlock = TextContent | ImageContent | AudioContent | ResourceLink | EmbeddedResource

@@ -1,5 +1,4 @@
 from typing import Dict
-from uuid import UUID
 from pydantic import BaseModel, HttpUrl
 
 from cat.auth.permissions import AuthResource
@@ -29,7 +28,7 @@ class ConnectorCreateUpdate(CRUDUpdate, Connector):
 router = create_crud(
     db_model=ConnectorDB,
     prefix="/connectors",
-    tag="MCP Servers",
+    tag="Connectors (MCP)",
     auth_resource=AuthResource.CONNECTOR,
     restrict_by_user_id=True,
     select_schema=ConnectorSelect,

@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from langchain_core.messages import (
     HumanMessage,
     AIMessage,
-    ToolCall, # should it be explicitly used?
     ToolMessage
 )
 

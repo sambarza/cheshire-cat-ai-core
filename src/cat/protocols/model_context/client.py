@@ -1,52 +1,34 @@
-from datetime import datetime
 from cachetools import TTLCache
-from fastmcp import FastMCP
-from fastmcp.client import Client, StreamableHttpTransport
-from fastmcp.tools import Tool
-from fastmcp.prompts import Prompt
-from fastmcp.resources import Resource
+from fastmcp.client import Client
 
 from cat.log import log
 
 
-# Create in memory server for testing, otherwise tests get slow
-server = FastMCP("TestInMemoryServer")
-
-@server.tool
-async def add(a: int, b: int) -> int:
-    return a + b
-
-@server.tool
-async def get_the_time() -> str:
-    return str(datetime.now())
-
-@server.tool
-async def get_the_timezone(city) -> str:
-    return f"Time in {city} is {datetime.now()}"
-
-@server.prompt
-def explain_topic(topic: str, language: str) -> str:
-    return f"Can you explain {topic} in {language}?"
-
-@server.resource("resource://welcome-message")
-def get_resource() -> str:
-    return "This is a welcoming resource"
-
-
 class MCPClient(Client):
+    """Cat MCP client is scoped by user_id and does not keep a live connection to servers.
+        We use caches waiting for the protocol to become stateless.
+    """
 
     def __init__(self, user_id):
 
-        # TODO: get tokens / api keys from DB
-        
-        super().__init__(
-            transport=StreamableHttpTransport(url="http://localhost:8000/mcp")
-        )
+        # TODO: get addresses / tokens / api keys from DB
+        config = {
+            "mcpServers": {
+                "my": {
+                    "url": "http://localhost:8000/mcp"
+                },
+                "my2": {
+                    "url": "http://localhost:8001/mcp"
+                }
+            }
+        }
+
+        super().__init__(config)
 
         self.cached_tools = None
         self.cached_resources = None
         self.cached_prompts = None
-        # TODO: invalidate caches when MCP server notifies
+        # TODO: invalidate caches? when MCP server notifies
 
     async def list_tools(self):
         if self.cached_tools:
@@ -60,13 +42,15 @@ class MCPClient(Client):
             return []
         
         self.cached_tools = tools
+        log.warning(self.cached_tools)
         return tools
 
 
 class MCPClients():
+    """Keep a cache of user scoped MCP clients"""
 
     def __init__(self):
-        self.clients = TTLCache(maxsize=100, ttl=60*10)
+        self.clients = TTLCache(maxsize=1000, ttl=60*10)
     
     def __getitem__(self, user_id):
         if user_id not in self.clients:

@@ -85,13 +85,13 @@ class StrayCat:
         if self.message_callback:
             await self.message_callback(data)
 
-    async def load_working_memory(self):
+    async def _load_working_memory(self):
         """Load working memory from DB."""
         
         # TODOV2: load from DB
         self.working_memory = WorkingMemory()
 
-    async def save_working_memory(self):
+    async def _save_working_memory(self):
         """Save working memory to DB."""
 
         # TODOV2: save to DB
@@ -347,7 +347,6 @@ class StrayCat:
             CatTool.from_fastmcp(t, self.mcp.call_tool)
             for t in mcp_tools
         ]
-
         return mcp_tools + self.mad_hatter.tools
     
 
@@ -362,7 +361,6 @@ class StrayCat:
             
         raise Exception(f"Tool {name} not found")
             
-
 
     async def __call__(
         self,
@@ -392,16 +390,14 @@ class StrayCat:
         # Store message_callback to send messages back to the client
         self.message_callback = message_callback
 
-        # Both request and response are available during the whole flow
+        # Both request and response are available during the whole run
         self.chat_request = chat_request
-        self.chat_response = ChatResponse(
-            messages=[]
-        )
+        self.chat_response = ChatResponse()
 
-        log.info(self.chat_request)
+        log.info(self.chat_request.model_dump())
 
         # get working memory from DB or create a new one
-        await self.load_working_memory()
+        await self._load_working_memory()
 
         # Run a totally custom reply (skips all the side effects of the framework)
         fast_reply = self.mad_hatter.execute_hook(
@@ -426,10 +422,10 @@ class StrayCat:
         )
 
         # save working memory to DB
-        await self.save_working_memory()
+        await self._save_working_memory()
 
         # Return final reply
-        log.info(self.chat_response)
+        log.info(self.chat_response.model_dump())
         return self.chat_response
 
 

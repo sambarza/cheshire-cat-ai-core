@@ -26,4 +26,4 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    messages: List[Message]
+    messages: List[Message] = []

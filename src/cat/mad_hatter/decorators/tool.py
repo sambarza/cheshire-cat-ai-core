@@ -92,7 +92,7 @@ class CatTool:
         cat : StrayCat
             Session object.
         tool_call : dict
-            Dictionary representing the choice of tool made by the LLM
+            Dictionary representing the choice of tool and its args (produced by LLM)
 
         Returns
         -------
@@ -100,6 +100,10 @@ class CatTool:
             A Message with role="tool" and the tool output.
         """
 
+        # Emit AGUI events
+        await self.emit_agui_tool_start_events(cat, tool_call)
+
+        # execute the tool
         if self.is_internal:
             # internal tool
             tool_output = await run_sync_or_async(
@@ -109,25 +113,33 @@ class CatTool:
             # MCP tool
             async with cat.mcp:
                 tool_output = await self.func(self.name, tool_call["args"])
-                tool_output = tool_output.content[0].text # TODO: many types here, also embedded resources
         
-        # Emit AGUI events
-        await self.emit_agui_tool_start_events(cat, tool_call)
-
-        # Ensure the output is a string or None, 
-        if (tool_output is not None) and (not isinstance(tool_output, str)):
-            tool_output = str(tool_output)
-
+        # Standardize output
+        tool_output = self.standardize_output(tool_call, tool_output) 
+        
         # Emit AGUI events
         await self.emit_agui_tool_end_events(cat, tool_call, tool_output)
 
         # TODOV2: should return something analogous to:
         #   https://modelcontextprotocol.info/specification/2024-11-05/server/tools/#tool-result
         #   Only supporting text for now
+        return tool_output
+
+    def standardize_output(self, tool_call, tool_output):
+
+        text = ""
+
+        if isinstance(tool_output, str):
+            text = tool_output
+        elif hasattr(tool_output, "content"):
+            text += tool_output.content[0].text # TODO: many content blocks here of different types, also embedded resources
+        else:
+            raise Exception("Cannot convert tool output")
+        
         return Message(
             role="tool",
             content=TextContent(
-                type="tool",
+                text=text,
                 tool={
                     "in": tool_call,
                     "out": tool_output
@@ -173,7 +185,7 @@ class CatTool:
                 timestamp=int(time.time()),
                 message_id=str(uuid4()), # shold be the id of the last user message
                 tool_call_id=str(tool_call["id"]),
-                content=tool_output
+                content=str(tool_output)
             )
         )
 
