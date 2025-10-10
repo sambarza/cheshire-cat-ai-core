@@ -347,6 +347,7 @@ class StrayCat:
             CatTool.from_fastmcp(t, self.mcp.call_tool)
             for t in mcp_tools
         ]
+        log.warning(self.mad_hatter.tools)
         return mcp_tools + self.mad_hatter.tools
     
 

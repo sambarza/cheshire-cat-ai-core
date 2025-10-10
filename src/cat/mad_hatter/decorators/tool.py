@@ -2,6 +2,7 @@ import time
 from uuid import uuid4
 from inspect import signature
 from typing import Callable, List, Dict
+from functools import wraps
 
 from langchain_core.tools import StructuredTool
 from fastmcp.tools.tool import FunctionTool, ParsedFunction
@@ -190,12 +191,21 @@ class CatTool:
         )
 
 
-def tool(
-    func: Callable, return_direct: bool = False, examples: List[str] = []
-) -> Callable:
-    return CatTool.from_decorated_function(
-        func,
-        return_direct=return_direct,
-        examples=examples
-    )
+def tool(*args, return_direct: bool = False, examples: List[str] = []) -> CatTool:
+
+    if len(args) == 1 and callable(args[0]):
+        return CatTool.from_decorated_function(
+            args[0],
+            return_direct=return_direct,
+            examples=examples
+        )
+    else:
+        def wrapper(func):
+            return CatTool.from_decorated_function(
+                func,
+                return_direct=return_direct,
+                examples=examples
+            )
+        return wrapper
+
 
