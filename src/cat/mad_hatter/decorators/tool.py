@@ -1,9 +1,7 @@
 import time
-import functools
-import inspect
 from uuid import uuid4
 from inspect import signature
-from typing import Union, Callable, List, Dict, Any, Literal
+from typing import Callable, List, Dict
 
 from langchain_core.tools import StructuredTool
 from fastmcp.tools.tool import FunctionTool, ParsedFunction

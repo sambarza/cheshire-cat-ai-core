@@ -104,6 +104,10 @@
 - A specialized factory is responsible to generate objects for AuthHandler, LLM, Embedder. The factory uses hooks you already had to gather all custom classes from plugins.
 - `CatForm` used via the `@form` decorator are not included in core and have been moved to a plugin `form`. It was interesting to do research on this, but we ended up overengineering them: LLMs are way more powerful now and MCP has `elicitation` directly baked into tools.
 - Caches are managed directly via an indexed SQL table, so all previous cache versions have been deleted.
+- We've got a stabler and easier typing for Cat internals. Import the classes like this:
+  ```python
+  from cat.types import Message, Resource # and all other types
+  ```
 
 ## Hooks
 

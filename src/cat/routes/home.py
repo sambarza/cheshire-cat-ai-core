@@ -2,7 +2,7 @@ import json
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse, HTMLResponse, RedirectResponse
 
-from cat.types.chats import ChatRequest, ChatResponse
+from cat.types import ChatRequest, ChatResponse
 from cat.auth.permissions import AuthResource, AuthPermission, check_permissions
 
 router = APIRouter(prefix="", tags=["Home"])
