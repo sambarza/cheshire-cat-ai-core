@@ -1,7 +1,7 @@
 from typing import List
 from pydantic import BaseModel
 
-from mcp.types import TextContent
+from .text_content import TextContent
 
 from .messages import Message
 from .contexts import Context
