@@ -1,8 +1,7 @@
 from typing import List
 from uuid import UUID
 
-from cat.types.contexts import Context
-from cat.types.messages import Message
+from cat.types import Message, Context
 from cat.auth.permissions import AuthResource
 from cat.db.models import ChatDB
 from .common.crud import create_crud

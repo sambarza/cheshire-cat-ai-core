@@ -9,8 +9,8 @@ from langchain_core.messages import (
     ToolMessage
 )
 
-from .text_content import TextContent
-from .content_block import ContentBlock
+from .__types_adapter import TextContent, ContentBlock
+
 
 class Message(BaseModel):
     """Single message exchanged between user and assistant, part of a conversation."""

@@ -1,7 +1,7 @@
 import pytest
 
 from cat.auth.permissions import AuthUserInfo
-from cat.types.messages import ChatResponse, ChatRequest
+from cat.types import ChatResponse, ChatRequest
 from cat.looking_glass.stray_cat import StrayCat
 from cat.memory.working_memory import WorkingMemory
 from cat.mad_hatter.decorators.hook import CatHook

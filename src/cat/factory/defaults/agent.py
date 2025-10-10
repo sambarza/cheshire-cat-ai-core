@@ -1,4 +1,4 @@
-from cat.types.messages import Message
+from cat.types import Message
 
 class AgentDefault:
 

@@ -1,5 +1,5 @@
 import shutil
-from cat.types.messages import ChatRequest, Message, MessageContent
+from cat.types import ChatRequest, Message, TextContent
 from urllib.parse import urlencode
 
 
@@ -17,7 +17,7 @@ def get_chat_request(msg="meow"):
         messages=[
             Message(
                 role="user",
-                content=MessageContent(
+                content=TextContent(
                     type="text",
                     text=msg
                 )

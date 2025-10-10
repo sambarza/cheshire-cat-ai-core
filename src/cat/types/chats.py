@@ -1,10 +1,10 @@
 from typing import List
 from pydantic import BaseModel
 
-from .text_content import TextContent
-
 from .messages import Message
 from .contexts import Context
+from .__types_adapter import TextContent
+
 
 class ChatRequest(BaseModel):
 

@@ -1,6 +1,6 @@
 
 from cat.mad_hatter.decorators import hook
-from cat.types.messages import ChatRequest, Message, MessageContent
+from cat.types import ChatRequest, Message, TextContent
 
 from .convo import UserMessage
 
@@ -19,7 +19,7 @@ def fast_reply(_, cat):
             messages = [
                 Message(
                     role="user",
-                    content=MessageContent(
+                    content=TextContent(
                         type="text",
                         text=user_message_json.text
                     )

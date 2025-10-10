@@ -14,8 +14,7 @@ from cat.auth.permissions import AuthUserInfo
 from cat.looking_glass.cheshire_cat import CheshireCat
 from cat.looking_glass.callbacks import NewTokenHandler
 from cat.memory.working_memory import WorkingMemory
-from cat.types.chats import ChatRequest, ChatResponse
-from cat.types.messages import Message
+from cat.types import Message, ChatRequest, ChatResponse
 from cat.mad_hatter.decorators import CatTool
 from cat import utils
 from cat.log import log

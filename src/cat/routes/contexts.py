@@ -1,7 +1,6 @@
 from typing import List
 
-from cat.types.messages import Message
-from cat.types.chats import Context
+from cat.types import Message, Context
 from cat.auth.permissions import AuthResource
 from cat.db.models import ContextDB
 from .common.crud import create_crud

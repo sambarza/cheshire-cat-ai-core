@@ -1,6 +1,6 @@
 from langchain_core.messages import AIMessage, HumanMessage
 
-from cat.types.messages import Role, UserMessage, CatMessage
+from cat.types import Role, UserMessage, CatMessage
 from cat.memory.working_memory import WorkingMemory
 
 

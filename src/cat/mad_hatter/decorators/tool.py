@@ -10,7 +10,7 @@ from fastmcp.tools.tool import FunctionTool, ParsedFunction
 
 from ag_ui.core.events import EventType # take away after they fix the bug
 from cat.protocols.agui import events
-from cat.types.messages import Message, TextContent
+from cat.types import Message, TextContent
 from cat.utils import run_sync_or_async
 
 

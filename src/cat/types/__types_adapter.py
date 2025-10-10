@@ -1,14 +1,24 @@
-from mcp.types import Resource
-from mcp.types import TextContent
-from mcp.types import ImageContent
-from mcp.types import AudioContent
-from mcp.types import ResourceLink
-from mcp.types import EmbeddedResource
+from mcp import types as mcp_types
+from pydantic import field_serializer, BaseModel
 
-class AdapterResource(Resource):
+class Resource(mcp_types.Resource):
+    @field_serializer("uri")
+    def serialize_uri(self, uri):
+        return str(self.uri)
+
+class TextContent(mcp_types.TextContent):
     pass
 
-class AdapterTextContent(TextContent):
+class ImageContent(mcp_types.ImageContent):
     pass
 
-AdapterContentBlock = TextContent | ImageContent | AudioContent | ResourceLink | EmbeddedResource
+class AudioContent(mcp_types.AudioContent):
+    pass
+
+class ResourceLink(mcp_types.ResourceLink):
+    pass
+
+class EmbeddedResource(mcp_types.EmbeddedResource):
+    pass
+
+ContentBlock = TextContent | ImageContent | AudioContent | ResourceLink | EmbeddedResource
