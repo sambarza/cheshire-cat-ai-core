@@ -9,8 +9,8 @@ from langchain_core.messages import (
     ToolMessage
 )
 
-from mcp.types import ContentBlock, TextContent
-
+from .text_content import TextContent
+from .content_block import ContentBlock
 
 class Message(BaseModel):
     """Single message exchanged between user and assistant, part of a conversation."""
