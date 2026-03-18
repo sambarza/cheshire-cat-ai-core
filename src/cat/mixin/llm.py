@@ -9,18 +9,22 @@ if TYPE_CHECKING:
     from cat.types import Message
     from cat.mad_hatter.decorators import Tool
 
+from ag_ui.encoder import EventEncoder
 
 class LLMMixin:
     """Mixin for LLM and client streaming methods."""
 
-    async def send_json(self, data: Dict):
+    encoder = EventEncoder(accept="application/json")
+    
+    async def send_json(self, data: str):
         """Send JSON data to the client via stream callback."""
         if hasattr(self.request.state, "stream_callback"):
             await self.request.state.stream_callback(data)
 
     async def agui_event(self, event: events.BaseEvent):
         """Send an AGUI event to the client."""
-        await self.send_json(dict(event))
+
+        await self.send_json(event)
 
     async def llm(
         self,

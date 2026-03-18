@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from cat import Agent
     from cat.types import Task
 
+from ag_ui.encoder import EventEncoder
 
 class AgentStream:
     """
@@ -121,6 +122,9 @@ class AGUIStream(AgentStream):
     AGUI protocol streaming implementation.
     Adds AGUI lifecycle events and formats as Server-Sent Events (SSE).
     """
+    
+    # Create an event encoder to properly format SSE events
+    encoder = EventEncoder(accept="application/json")
 
     def __init__(self, agent: "Agent", task: "Task"):
         super().__init__(agent, task)
@@ -157,4 +161,7 @@ class AGUIStream(AgentStream):
         Yields formatted SSE messages for AGUI clients.
         """
         async for event in self._stream_events():
-            yield f"data: {json.dumps(dict(event))}\n\n"
+
+            encoded_event = AGUIStream.encoder.encode(event)
+
+            yield encoded_event
