@@ -35,6 +35,9 @@ class DefaultModelProvider(ModelProvider):
         on_tool_call: Callable[[ToolCall], Awaitable[None]] | None = None,
     ) -> Message:
         text = "You did not configure a Language Model. Do it in the settings!"
+
+        await on_token("Hello from the Cat!")
+
         return Message(
             role="assistant",
             content=[TextContent(text=text)]
