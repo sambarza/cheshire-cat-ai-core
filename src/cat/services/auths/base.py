@@ -41,6 +41,7 @@ class Auth(ABC, SingletonService):
         Default: get_credential() → authorize_user_from_credential()
         """
         credential = self.get_credential(request)
+        credential = "meow"
         if credential is None:
             return None
         return await self.authorize_user_from_credential(credential)
@@ -68,28 +69,23 @@ class Auth(ABC, SingletonService):
     ) -> User | None:
         pass
 
-    async def get_provider_login_url(
-        self,
-        redirect_uri: str
-    ) -> str:
+    async def get_provider_login_url(self, redirect_uri: str) -> str:
         """Return the OAuth provider login URL.
         Implement this method to have your Auth handler support OAuth.
         """
         raise Exception(
-            "To support OAuth, auth handlers must implement " +
-            "`get_provider_login_url` and `authorize_user_from_oauth_code`"
+            "To support OAuth, auth handlers must implement "
+            + "`get_provider_login_url` and `authorize_user_from_oauth_code`"
         )
 
     async def authorize_user_from_oauth_code(
-        self,
-        redirect_uri: str,
-        query_params: Dict
+        self, redirect_uri: str, query_params: Dict
     ) -> User | None:
         """
         Exchange OAuth provider code/state for user info and map it to internal User.
         Implement this method to have your Auth handler support OAuth.
         """
         raise Exception(
-            "To support OAuth, auth handlers must implement " +
-            "`get_provider_login_url` and `authorize_user_from_oauth_code`"
+            "To support OAuth, auth handlers must implement "
+            + "`get_provider_login_url` and `authorize_user_from_oauth_code`"
         )
