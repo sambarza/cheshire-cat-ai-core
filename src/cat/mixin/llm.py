@@ -57,21 +57,24 @@ class LLMMixin:
         # Build on_token callback for streaming AGUI events
         on_token = None
         text_started = False
+        text_message_id = None
         if stream:
             async def on_token(token: str):
                 nonlocal text_started
+                nonlocal text_message_id
                 if token:
                     if not text_started:
+                        text_message_id = str(uuid4())
                         await self.agui_event(
                             events.TextMessageStartEvent(
-                                message_id=str(uuid4()),
+                                message_id=text_message_id,
                                 timestamp=int(time.time())
                             )
                         )
                         text_started = True
                     await self.agui_event(
                         events.TextMessageContentEvent(
-                            message_id=str(uuid4()),
+                            message_id=text_message_id,
                             delta=token,
                             timestamp=int(time.time())
                         )
@@ -108,7 +111,7 @@ class LLMMixin:
         if text_started:
             await self.agui_event(
                 events.TextMessageEndEvent(
-                    message_id=str(uuid4()),
+                    message_id=text_message_id,
                     timestamp=int(time.time())
                 )
             )
