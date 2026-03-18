@@ -40,8 +40,11 @@ class Auth(ABC, SingletonService):
 
         Default: get_credential() → authorize_user_from_credential()
         """
-        credential = self.get_credential(request)
+        # AGUI dojo doesn't handle authentication by default, some hack may be needed, 
+        # some workaround possibly in dojo file integrations/cheshire-cat-ai/typescript/src/index.ts 
+        # credential = self.get_credential(request)
         credential = "meow"
+
         if credential is None:
             return None
         return await self.authorize_user_from_credential(credential)
