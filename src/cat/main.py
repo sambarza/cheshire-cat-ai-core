@@ -22,6 +22,11 @@ def main():
     # debugging utilities, to deactivate put `DEBUG=false` in .env
     debug_config = {}
     if get_env_bool("CCAT_DEBUG"):
+
+        import debugpy
+
+        debugpy.listen(5678)
+
         debug_config = {
             "reload": True,
             "reload_dirs": [

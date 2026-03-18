@@ -44,6 +44,11 @@ packages = ["src/cat"]
 [tool.uv]
 package = true
 
+[dependency-groups]
+dev = [
+    "debugpy>=1.8.20",
+]
+
 [project.scripts]
 # CLI
 cat = "cat.main:main"
